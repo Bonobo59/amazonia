@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazonia — module de jeu</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1a14;--panel:#16251d;--panel2:#1d3126;--line:#2c4636;--txt:#e8efe9;--mut:#9fb3a6;--green:#3aa43c;--orange:#f39200;--blue:#36a9e1;--gold:#e0b93a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Nunito,system-ui,sans-serif}
+h1,h2,h3{font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:.04em;font-weight:400;margin:0}
+button{font:inherit;cursor:pointer}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 16px;background:#0b130e;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:60}
+.top h1{font-size:30px;color:#bfe3b0}
+.sub{color:var(--mut);font-size:13px}
+.spacer{flex:1}
+.live{flex:1 1 0;min-width:0;font-size:14px;color:#e8efe9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:1px solid var(--line);padding-left:12px}
+.live .lastl{color:#ffe6b8}
+.btn{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-weight:700;font-size:14px}
+.btn:hover:not(:disabled){border-color:#6a9a7a}
+.btn.pri{background:var(--green);border-color:var(--green);color:#fff}
+.btn.warn{background:#7a4b12;border-color:#a8681b}
+.btn.sel{outline:2px solid #fff}
+.btn:disabled{opacity:.35;cursor:default}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--mut);padding:7px 10px;font-weight:700;font-size:13px}
+.seg button.on{background:var(--panel2);color:var(--txt)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.menu{position:relative}
+.menu .dd{display:none;position:absolute;right:0;top:110%;background:#132119;border:1px solid var(--line);border-radius:10px;min-width:230px;padding:6px;box-shadow:0 10px 30px #000a}
+.menu.open .dd{display:block}
+.dd button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--txt);padding:9px 10px;border-radius:7px;font-weight:700}
+.dd button:hover:not(:disabled){background:var(--panel2)}
+.dd button:disabled{opacity:.35}
+.dd hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;padding:14px 16px;max-width:1800px;margin:0 auto}
+@media (max-width:1100px){.wrap{grid-template-columns:1fr}}
+main{min-width:0}
+
+/* Ligne des joueurs */
+.sumbar{display:flex;flex-direction:column;gap:8px}
+.sum{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;border-left:5px solid #555}
+.sum.F{border-left-color:var(--green)}.sum.orange{border-left-color:var(--orange)}.sum.bleu{border-left-color:var(--blue)}
+.sum.active{box-shadow:0 0 0 2px #fff6;background:var(--panel2)}
+.sum h3{font-size:21px;min-width:72px}
+.sum .chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:4px;background:#0e1812;border-radius:14px;padding:2px 9px 2px 3px;font-weight:800;font-size:14px}
+.chip img{height:24px}
+.chip .tk{position:relative;display:inline-flex;width:26px;height:26px}
+.chip .tk img{height:26px}
+.chip .tk b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;text-shadow:0 0 3px #000,0 0 2px #000}
+.chip .ic{display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff}
+.sum .fp{width:24px;margin-left:8px}
+
+/* Barre d'action */
+.abar{position:sticky;top:56px;z-index:55;box-shadow:0 8px 24px #000c;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 12px;margin-bottom:10px;display:flex;flex-direction:column;gap:5px}
+.abar .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.abar .who{font-family:"Bebas Neue";font-size:26px;letter-spacing:.04em;line-height:1}
+.whoc{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:96px;margin-right:4px;gap:2px}
+.whom{display:flex;align-items:center;gap:4px;font-size:24px;font-weight:900;color:#ffe9a3;background:#3b3410;border:2px solid #ffd54a;border-radius:16px;padding:1px 10px 1px 3px;margin-top:2px}
+.whom img{height:30px}
+.whos{font-size:15px;color:#cfdcd3!important;color:var(--mut);font-weight:700;max-width:180px}
+.backb{font-size:20px;padding:4px 12px}
+.btn.mini{padding:3px 7px;font-size:12px}
+.restok{display:flex;align-items:center;gap:3px;padding-left:6px;border-left:1px solid var(--line)}
+.tokpick.rp{grid-template-columns:none!important;grid-template-rows:repeat(2,36px);grid-auto-flow:column;grid-auto-columns:36px}
+.resopt{display:flex;flex-direction:column;gap:4px}
+.ropt{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;min-width:96px;font-weight:800}
+.ropt img{height:34px}
+.ropt .coin,.ropt .coin img{width:38px;height:38px}
+.ropt .coin b{font-size:22px;color:#2a1c00}
+.ropt img{height:38px}
+.tbg{display:flex;gap:6px;flex-wrap:nowrap}
+.prompt.fp2{flex:1 1 220px;min-width:0}
+.resbox{display:flex;flex-direction:column;gap:3px}
+.resbox div{display:flex;align-items:center;gap:3px}
+.resbox img{height:24px}
+.fxrow{display:flex;gap:4px}
+.fillc{display:inline-flex;flex-direction:column;align-items:center;gap:3px;padding:4px;font-size:11.5px}
+.fillc img{height:76px;border-radius:5px}
+.bigbar .fillc{padding:6px;font-size:13px;max-width:170px;white-space:normal}
+.bigbar .fillc img,.bigbar .fillc .card{height:200px;width:auto}
+.bigbar .fillc .card img{height:200px;width:auto}
+.fillc .card{box-shadow:none;border-radius:6px}
+.fillc:disabled{opacity:.35}
+.fillc.dsel{outline:3px solid #e74c3c;opacity:.75}
+.abar .prompt{font-size:14px;color:#ffe6b8;font-weight:700}
+.abar .hint{font-size:12px;color:var(--mut)}
+.tokpick{display:flex;gap:4px}
+.tokpick{display:grid!important;grid-template-columns:repeat(3,36px);gap:3px}
+.tokpick button{background:none;border:2px solid transparent;border-radius:50%;padding:0;width:36px;height:36px}
+.tokpick button img{width:100%}
+.tokpick button.sel{border-color:#fff}
+.tokpick button:disabled{opacity:.25}
+
+/* Plateau central */
+.boardWrap{container-type:inline-size;position:relative}
+.board{position:relative;width:100%;aspect-ratio:2212/1671;background:url(img/boards/central.webp) center/100% 100% no-repeat;border-radius:1cqw;box-shadow:0 10px 30px #0008}
+.t{position:absolute;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 .2cqw .15cqw #000b)}
+.t img{width:100%;display:block}
+.hexhit{position:absolute;transform:translate(-50%,-50%);width:11.3cqw;height:9.79cqw;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);z-index:5}
+.hexhit:hover{background:#ffffff14}
+.hexhit.selz{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 86.6' preserveAspectRatio='none'%3E%3Cpolygon points='25,2 75,2 98,43.3 75,84.6 25,84.6 2,43.3' fill='rgba(255,255,255,.15)' stroke='%23fff' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+.hexhit.tgt{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 86.6' preserveAspectRatio='none'%3E%3Cpolygon points='25,2 75,2 98,43.3 75,84.6 25,84.6 2,43.3' fill='rgba(229,57,53,.18)' stroke='%23e53935' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% 100% no-repeat;cursor:pointer;animation:hpulse 1.1s infinite}
+@keyframes hpulse{50%{opacity:.5}}
+.arena{position:absolute;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:.2cqw;z-index:4;border-radius:.6cqw}
+.arena img{width:2.4cqw;filter:drop-shadow(0 .15cqw .1cqw #000a)}
+.t.glow{filter:drop-shadow(0 0 .25cqw #fff) drop-shadow(0 0 .6cqw #ffffffaa) drop-shadow(0 .2cqw .15cqw #000b)}
+.arena.tgt{outline:.35cqw solid #ffd54a;cursor:pointer;background:#ffd54a22}
+.evslot{position:absolute;z-index:4}
+.tip{position:fixed;z-index:200;background:#000d;color:#fff;font-size:12px;padding:4px 8px;border-radius:6px;pointer-events:none;white-space:nowrap;display:none}
+
+.river{position:relative;width:100%;height:16.5cqw;margin-top:.6cqw}
+.river .slot{position:absolute;top:0;transform:translateX(-50%)}
+.river .slot.tgt .card{outline:.35cqw solid #ffd54a;box-shadow:0 0 2cqw #ffd54a88;cursor:pointer}
+.river .lbl{position:absolute;bottom:-.2cqw;transform:translateX(-50%);font-size:1.05cqw;color:var(--mut);white-space:nowrap}
+.card{border-radius:.55cqw;overflow:hidden;box-shadow:0 .3cqw 1cqw #000a;background:#233;cursor:pointer;display:block}
+.card img{width:100%;display:block}
+.card.ph{border:2px dashed #557;background:repeating-linear-gradient(45deg,#1a2530,#1a2530 8px,#1d2a36 8px,#1d2a36 16px);display:flex;align-items:center;justify-content:center;text-align:center;color:#9ab;font-size:12px;padding:6px;cursor:default}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+.panel h2{font-size:22px;margin-bottom:8px;color:#cfe6c6}
+.side{display:flex;flex-direction:column;gap:14px}
+.decks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.deck{text-align:center;font-size:12px;color:var(--mut)}
+.deck .stack{position:relative;margin:0 auto 4px}
+.deck .stack .card{position:absolute;inset:0}
+.deck b{color:var(--txt)}
+.objs{display:flex;gap:8px;flex-wrap:wrap}
+.objs .card{width:100%}
+.res{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.evrow{display:flex;gap:12px;align-items:center}
+.evdeck{position:relative;width:110px;flex:none}
+.evdeck img{width:100%;border-radius:8px;display:block;box-shadow:0 4px 12px #000a}
+.evdeck b{position:absolute;right:6px;bottom:4px;background:#000c;border-radius:10px;padding:0 7px;font-size:13px}
+.evslots{display:flex;gap:6px;margin-bottom:6px}
+.evslots img,.evslots .evs{width:38px;height:38px;border-radius:50%}
+.evslots .evs{border:2px dashed #4b6b57;display:inline-block}
+#evpanel .owned .card.lx{width:110px}
+.log{list-style:none;margin:0;padding:0;font-size:12.5px;max-height:420px;overflow:auto;display:flex;flex-direction:column;gap:3px}
+.log li{padding:4px 6px;border-radius:6px;background:#0e1812;color:#cfdcd3}
+.log li.h{background:#24402f;color:#fff;font-weight:800}
+
+.players{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+.pl{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+.pl.F{border-top:4px solid var(--green)}.pl.orange{border-top:4px solid var(--orange)}.pl.bleu{border-top:4px solid var(--blue)}
+.pl header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pl header h2{font-size:24px}
+.pboard{container-type:inline-size;position:relative}
+.pboard .img{position:relative;width:100%;background-size:100% 100%;border-radius:8px}
+.ov{position:absolute;transform:translate(-50%,-50%);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:.4cqw}
+.zoneF{position:absolute;display:flex;flex-wrap:wrap;align-content:center;justify-content:center}
+.zoneF img{width:5.6cqw;margin:-.3cqw .05cqw}
+.tray{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;padding:8px;background:#0e1812;border-radius:10px}
+.grp{display:flex;align-items:center;gap:3px;padding:3px 9px 3px 4px;background:#1a2a20;border-radius:20px;font-size:13px;font-weight:800}
+.grp img{height:28px}
+.grp .l{font-weight:600;color:var(--mut)}
+.hand{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:flex-end}
+.hand .card{width:70px}
+.hand .card.ph{width:62px;height:86px;font-size:11px}
+.hand .hl{width:100%;font-size:12px;color:var(--mut)}
+.pboard .fpile{position:absolute;width:12.4cqw;transform:translate(-50%,-50%);filter:drop-shadow(0 .4cqw .3cqw #000b);pointer-events:none}
+.pboard .pile{position:absolute;width:12.6cqw;transform:translate(-50%,-50%);filter:drop-shadow(0 .4cqw .3cqw #000b);pointer-events:none}
+.pboard .ctuck{position:absolute;width:19cqw;transform:translateX(-50%);border-radius:.8cqw;box-shadow:0 0 .4cqw #000a}
+.pboard .ctuck:hover{transform:translate(-50%,2.5cqw);z-index:50!important}
+.hslot.ctok .card{outline:3px solid #4caf50}
+.pboard .tuck{position:absolute;top:0;width:26.2cqw;border-radius:.6cqw;box-shadow:0 0 .4cqw #000a}
+.pboard .tuck:hover{transform:translateY(-3cqw);z-index:50!important}
+.side-hand{gap:8px}
+.side-hand>.card,.side-hand>.hslot{width:calc(50% - 4px)}
+.side-hand .hslot .card{width:100%}
+.hslot.dsel .card{outline:3px solid #e74c3c;box-shadow:0 0 14px #e74c3caa;opacity:.75}
+.hslot.dsel{position:relative}
+.hslot.dsel::after{content:'✕';position:absolute;top:6px;right:8px;color:#fff;background:#e74c3c;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:800}
+.hslot.tgt .card{outline:3px solid #ffd54a;box-shadow:0 0 14px #ffd54a99;cursor:pointer}
+.side-hand .card.ph{aspect-ratio:422/589;height:auto;font-size:11px;flex-direction:column}
+.owned{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.owned .card{width:54px}
+.owned .card.lx{width:76px}
+.note{font-size:12px;color:var(--mut);font-style:italic}
+
+.flyer{position:fixed;z-index:500;pointer-events:none;transition:left .8s cubic-bezier(.5,-.2,.4,1),top .8s cubic-bezier(.4,0,.3,1.2),transform .8s;filter:drop-shadow(0 6px 6px #000a)}
+.bump{animation:bump .45s}
+@keyframes bump{40%{transform:scale(1.25);box-shadow:0 0 0 3px #ffd54a}}
+.t.flip{animation:flip .7s ease-in-out}
+@keyframes flip{0%{transform:translate(-50%,-50%) scaleX(1)}47%{transform:translate(-50%,-50%) scaleX(0) scaleY(1.15)}100%{transform:translate(-50%,-50%) scaleX(1)}}
+.tokbtn{display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 4px;font-size:16px}
+.tokbtn img{height:48px}
+.tokbtn.sel{outline:3px solid #ffd54a;background:#3b3410}
+.fxpile{position:relative;width:56px;height:76px;background:#0e1812;border:2px solid var(--line);border-radius:12px;cursor:pointer;padding:0}
+.fxpile img{position:absolute;left:50%;transform:translateX(-50%);width:38px;filter:drop-shadow(0 2px 2px #000a)}
+.fxpile b{position:absolute;top:2px;right:6px;font-size:13px;color:var(--mut)}
+.fxpile:hover:not(:disabled){border-color:#6a9a7a}
+.fxpile.sel{border-color:#ffd54a;background:#3b3410;box-shadow:0 0 12px #ffd54a66}
+.fxpile:disabled{opacity:.3;cursor:default}
+.harv{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px}
+.harv .toks{display:flex}
+.harv .toks img{height:44px;margin-right:-14px}
+.harv .toks img:last-child{margin-right:0}
+.harv .arrow{font-size:18px;color:var(--mut);margin:0 2px}
+.coin{position:relative;display:inline-flex;width:46px;height:46px}
+.coin img{width:46px;height:46px}
+.coin b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;color:#3a2a00;font-weight:900;text-shadow:0 0 3px #fff,0 0 2px #fff}
+.sum .lines{display:flex;flex-direction:column;gap:5px}
+.sum .ln{display:flex;gap:4px;align-items:center;flex-wrap:nowrap}
+.sum .ln .chip:not(.big){padding:2px 7px 2px 2px;font-size:13px}
+.sum .ln .chip:not(.big) img{height:21px}
+.sum h3{min-width:0!important;font-size:21px}
+.sum{gap:8px!important;padding:8px 10px!important}
+.sum .l{font-weight:600;color:var(--mut);font-size:12px}
+.sum.blanc{border-left-color:#c8ced6}
+.chip.next{font-size:14px;font-weight:600;color:#cfe6c6;padding:3px 10px 3px 3px}
+.chip.next b{font-size:19px;color:#fff}
+.chip.next img{height:28px}
+.shd{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:86px}
+.shd img{width:42px;height:42px}
+.shd h3{font-size:18px!important;text-align:center;line-height:1}
+.projs{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.proj .card{width:100%}
+.pown{display:flex;gap:4px;justify-content:center;margin-top:4px}
+.pown svg,.pown img{width:26px;height:26px}
+.tokpick button.blk{position:relative;opacity:.8}
+.tokpick button.blk::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#e53935;font-size:30px;font-weight:900;text-shadow:0 0 3px #fff}
+.whom.wf .tk{position:relative;display:inline-flex;width:30px;height:30px}
+.whom.wf .tk img{height:30px}
+.whom.wf .tk b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;text-shadow:0 0 3px #000}
+.tokup{animation:tokup 1.5s ease-in-out;position:relative;z-index:80}
+@keyframes tokup{0%{transform:scale(1)}30%{transform:scale(2.2)}45%{transform:scale(2.2) rotateY(90deg)}60%{transform:scale(2.2) rotateY(0)}80%{transform:scale(2.2)}100%{transform:scale(1)}}
+.cycle{position:relative;width:210px;height:118px}
+.cyarr{position:absolute;inset:0;width:100%;height:100%}
+.cyarr path{fill:none;stroke:#fff;stroke-width:2.4;opacity:.85}
+.cyn{position:absolute;display:flex;align-items:center;gap:3px;background:#0e1812;border-radius:14px;padding:2px 8px 2px 2px;font-weight:800;font-size:15px}
+.cyn .cyl{font-style:normal;position:absolute;top:100%;left:50%;transform:translateX(-50%);font-size:10px;color:var(--mut);white-space:nowrap;font-weight:600}
+.cyn .tk{position:relative;display:inline-flex;width:24px;height:24px}.cyn .tk img{height:24px}
+.cyn .tk b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;text-shadow:0 0 3px #000}
+.cyA{left:0;top:34px;font-size:24px;background:#24402f;box-shadow:0 0 0 2px #ffd54a;padding:3px 12px 3px 3px}
+.cyA .tk,.cyA .tk img{width:34px;height:34px}
+.cyB{left:140px;top:2px}.cyC{left:140px;top:74px}
+.goals{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.goal{display:flex;align-items:center;gap:3px;background:#0e1812;border:1px solid #2c4636;border-radius:12px;padding:1px 3px 1px 7px;font-size:12px;font-weight:800;color:#cfdcd3}
+.goal img{height:20px}
+.goal .emo{font-size:15px}
+.frrem{display:flex;align-items:center;gap:4px;margin-top:4px;padding:3px 8px 3px 3px;background:#0e1812;border-radius:16px;width:max-content}
+.frrem img{height:24px}.frrem .frlogo{height:28px;margin-right:4px}.frsep{color:var(--mut);margin:0 3px}
+.frc{position:relative;margin-bottom:8px}.frc .card{width:100%}
+.frs{position:absolute;top:50.4%;width:17%;aspect-ratio:1;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;pointer-events:none}
+.frs img{width:150%;border-radius:6px;box-shadow:0 3px 10px #000c;pointer-events:auto;cursor:pointer;transform:rotate(-4deg)}
+#frpanel .owned .card.frd{width:31%}
+.vpsm{display:flex;align-items:center;gap:3px;font-size:18px;font-weight:800}
+.vpsm img{height:28px}
+.vpcol{margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:6px}
+.vpcol .vpbig{margin-left:0}
+.pl.blanc{border-top:4px solid #c8ced6}
+.chip.big{font-size:22px;padding:3px 12px 3px 4px;background:#24402f;box-shadow:0 0 0 2px #ffd54a}
+.chip.big img,.chip.big .tk,.chip.big .tk img{height:34px;width:34px}
+.vpbig{display:flex;align-items:center;gap:4px;margin-left:auto;background:#3b3410;border:2px solid #ffd54a;border-radius:16px;padding:2px 12px 2px 4px;font-size:26px;font-weight:900;color:#ffe9a3}
+.vpbig img{height:38px}
+.abtn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:3px 5px 4px;background:#fff;color:var(--pc);border:3px solid var(--pc);border-radius:12px;box-shadow:0 3px 0 color-mix(in srgb,var(--pc) 55%,#000)}
+.abtn:disabled{opacity:.55;box-shadow:none;pointer-events:none}
+.abw{display:inline-flex}
+.tip{white-space:normal!important;max-width:320px;line-height:1.35;font-size:13px!important;padding:7px 10px!important}
+.pbtn img{height:76px!important;background:#fff}
+.abtn span{font-family:"Bebas Neue",Impact,sans-serif;font-size:16px;letter-spacing:.05em;line-height:1}
+.abtn img{height:56px;border-radius:5px}
+.abtn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 5px 0 color-mix(in srgb,var(--pc) 55%,#000);border-color:var(--pc)}
+.abtn:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 color-mix(in srgb,var(--pc) 55%,#000)}
+.startm{position:fixed;inset:0;z-index:400;background:radial-gradient(ellipse at center,#1d3126ee,#0b130eff);display:flex;align-items:center;justify-content:center}
+.startm.off{display:none}
+.sbox{text-align:center;padding:30px}
+.sbox h1{font-size:96px;color:#bfe3b0;letter-spacing:.08em}
+.sbtns{display:flex;flex-direction:column;gap:12px;margin-top:26px;align-items:stretch;min-width:360px}
+.btn.big{font-size:20px;padding:14px 20px;display:flex;flex-direction:column;gap:3px}
+.btn.big small{font-size:13px;font-weight:600;opacity:.85}
+.pop{position:fixed;z-index:350;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;transition:opacity .3s,transform .35s cubic-bezier(.3,1.6,.5,1)}
+.pop.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.pbox{background:#132119f2;border:3px solid #ffd54a;border-radius:20px;padding:20px 30px;text-align:center;box-shadow:0 20px 80px #000e,0 0 40px #ffd54a55;min-width:340px}
+.ptitle{font-family:"Bebas Neue",Impact;font-size:40px;color:#ffd54a;letter-spacing:.06em}
+.pname{font-size:22px;font-weight:900;margin-top:6px}
+.psub{color:var(--mut);font-size:15px}
+.pcard{width:300px;border-radius:12px;margin-top:8px;animation:pcard .9s ease-out}
+@keyframes pcard{0%{transform:scale(.3) rotate(-12deg);opacity:0}70%{transform:scale(1.08) rotate(2deg)}100%{transform:none;opacity:1}}
+.prow{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:800;margin:10px 0;opacity:0;animation:prow .45s forwards}
+.prow svg,.plogo{width:44px;height:44px}
+.prow .pg{margin-left:auto;color:#ffe9a3;display:flex;align-items:center}
+.prow .coin,.prow .coin img{width:48px;height:48px}
+.prow .coin b{font-size:20px;color:#2a1c00}
+.phalf{height:90px;border-radius:6px;background:#fff}
+@keyframes prow{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+.vpstar{position:relative;width:170px;height:170px;margin:0 auto}
+.vpstar img{position:absolute;inset:20px;width:130px;animation:vpgrow 1s cubic-bezier(.3,1.7,.5,1);filter:drop-shadow(0 0 20px #ffd54a)}
+@keyframes vpgrow{0%{transform:scale(.1) rotate(-90deg)}100%{transform:scale(1) rotate(0)}}
+.vpstar i{position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;background:#ffd54a;box-shadow:0 0 8px #ffd54a;animation:burst 1.3s var(--d) ease-out infinite}
+.vpstar i:nth-child(2n){background:#fff;width:7px;height:7px}
+@keyframes burst{0%{transform:translate(-50%,-50%) rotate(var(--a)) translateY(0);opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--a)) translateY(-110px);opacity:0}}
+.seatcfg{margin-top:22px;display:flex;flex-direction:column;gap:10px;align-items:stretch;min-width:380px}
+.seatrow{display:flex;align-items:center;gap:12px;background:#132119;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800;font-size:17px}
+.seatrow .sp{flex:1;text-align:left}
+.seatrow .seg button{padding:8px 14px;font-size:14px}
+.zoom{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:300;cursor:zoom-out}
+.zoom.on{display:flex}
+.zarr{background:#ffffff1a;border:1px solid #ffffff44;color:#fff;font-size:54px;line-height:1;width:64px;height:96px;border-radius:14px;margin:0 22px;cursor:pointer}
+.zarr:hover{background:#ffffff33}
+.zarr:disabled{opacity:.15;cursor:default}
+.zcount{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:#cfdcd3;font-weight:700}
+.zoom img{max-width:92vw;max-height:88vh;border-radius:14px}
+.flash{position:fixed;right:18px;bottom:18px;z-index:240;pointer-events:none;opacity:0;transform:translateY(20px);transition:opacity .35s,transform .35s}
+.flash.on{opacity:1;transform:none}
+.flash img{max-width:230px;max-height:320px;border-radius:12px;box-shadow:0 10px 40px #000c}
+.hov{position:fixed;z-index:260;pointer-events:none;opacity:0;transition:opacity .18s}
+.hov.on{opacity:1}
+.hov img{display:block;max-height:62vh;max-width:44vw;border-radius:14px;box-shadow:0 14px 50px #000d}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#24402f;border:1px solid #4f7a5f;padding:10px 16px;border-radius:10px;font-weight:700;z-index:250;opacity:0;transition:opacity .3s;pointer-events:none;max-width:80vw}
+.toast.on{opacity:1}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:280}
+.modal.on{display:flex}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-width:560px;width:92vw}
+.modal .box h2{font-size:26px;margin-bottom:10px}
+.modal .box p{color:#cfdcd3;font-size:14px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>AMAZONIA</h1>
+  <span class="sub" id="roundLbl"></span><span class="live" id="liveLbl"></span>
+  <span class="sub">Vue :</span>
+  <div class="seg" id="viewSeg"></div>
+  <button class="btn" id="bUndo" title="Revenir au début du tour (ou juste après une pioche / une révélation)">↶ Retour en arrière</button>
+  <div class="menu" id="menu">
+    <button class="btn" id="bMenu">☰ Menu</button>
+    <div class="dd">
+      <button data-m="home">Menu principal</button>
+      <button data-m="new">Nouvelle partie (même nombre de joueurs)</button>
+      <button data-m="undo">Retour au début du tour</button>
+      <hr>
+      <button data-m="manual">Outils manuels (effets de cartes) : <span id="manLbl">off</span></button>
+      <button data-m="endround">Forcer la fin de manche</button>
+      <button data-m="aispeed">Vitesse de l’IA : <span id="aiSpd">normale</span></button>
+      <hr>
+      <button data-m="export">Copier l’état de la partie</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <main>
+    <div class="abar" id="abar"></div>
+    <div class="boardWrap">
+      <div class="board" id="board"></div>
+      <div class="river" id="river"></div>
+    </div>
+    <section class="players" id="players"></section>
+  </main>
+  <aside class="side">
+    <div class="sumbar" id="sumbar"></div>
+    <div class="panel" id="handPanel" style="display:none"></div>
+    <div class="panel"><h2>Objectifs en jeu</h2><div class="objs" id="objs"></div></div>
+    <div class="panel" id="evpanel"><h2>Événement</h2><div id="evbox"></div></div>
+    <div class="panel" id="frpanel"><h2>Fresque</h2><div id="frbox"></div></div>
+    <div class="panel"><h2>Journal</h2><ul class="log" id="log"></ul></div>
+  </aside>
+</div>
+
+<div class="startm" id="startm"><div class="sbox">
+  <h1>AMAZONIA</h1><p class="sub">Module de jeu · même écran</p>
+  <div class="sbtns">
+    <button class="btn pri big" data-cfg="3">Nouvelle partie · 3 joueurs<small>1 Protecteur + 2 Exploitants</small></button>
+    <button class="btn pri big" data-cfg="4">Nouvelle partie · 4 joueurs<small>1 Protecteur + 3 Exploitants</small></button>
+    <button class="btn big" id="bResume" data-start="resume">Reprendre la partie<small id="resumeInfo"></small></button>
+  </div><div class="seatcfg" id="seatcfg" style="display:none"></div><p class="sub" id="aiStats" style="margin-top:18px"></p></div></div>
+<div class="zoom" id="zoom"><button class="zarr" id="zPrev">‹</button><img id="zoomImg" alt=""><button class="zarr" id="zNext">›</button><div class="zcount" id="zCount"></div></div>
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+<div class="flash" id="flash"></div>
+<div class="tip" id="tip"></div>
+<div class="pop" id="pop"></div>
+<div class="hov" id="hov"><img alt=""></div>
+
+<script>
+/* =========================================================
+   DONNÉES
+   ========================================================= */
+const BW = 2212, BH = 1671;
+const P = (x, y) => ({ x: x / BW * 100, y: y / BH * 100 });
+const ZONES = [
+  { id:'z01',x:593,y:630,kind:'plain' },{ id:'z02',x:593,y:865,kind:'base',baseColor:'gris' },{ id:'z03',x:593,y:1098,kind:'oil' },
+  { id:'z04',x:787,y:510,kind:'base',baseColor:'blanc' },{ id:'z05',x:787,y:745,kind:'oil' },{ id:'z06',x:787,y:980,kind:'mine' },{ id:'z07',x:787,y:1215,kind:'plain' },
+  { id:'z08',x:987,y:395,kind:'oil' },{ id:'z09',x:987,y:630,kind:'mine' },{ id:'z10',x:987,y:865,kind:'mine' },{ id:'z11',x:987,y:1100,kind:'oil' },{ id:'z12',x:987,y:1335,kind:'plain' },
+  { id:'z13',x:1185,y:510,kind:'plain' },{ id:'z14',x:1185,y:745,kind:'oil' },{ id:'z15',x:1185,y:980,kind:'mine' },{ id:'z16',x:1185,y:1215,kind:'base',baseColor:'blanc' },
+  { id:'z17',x:1380,y:630,kind:'plain' },{ id:'z18',x:1380,y:865,kind:'base',baseColor:'gris' },{ id:'z19',x:1380,y:1098,kind:'oil' },
+];
+ZONES.forEach(z => z.adj = ZONES.filter(o => o !== z && Math.hypot(o.x - z.x, o.y - z.y) < 260).map(o => o.id));
+const ZB = Object.fromEntries(ZONES.map(z => [z.id, z]));
+const KIND_LABEL = { mine:'Gisement minier', oil:'Gisement pétrolier', plain:'Zone', base:'Emplacement de départ' };
+
+const TRACK = {
+  prestige: [950,1060,1170,1275,1380,1485,1593].map(x => P(x, 97)),
+  conscience: [95,203,313,420,523,633,740,848,953,1062,1170,1278,1385].map(x => P(x, 207)),
+  donation: [1345,1240,1130,1022,913,805,703,595,487,375].map(y => P(133, y)),
+  donationSlots: { 3:P(325,1028), 6:P(325,707), 9:P(325,385) },
+  align: { politique:[160,268,372].map(y=>P(1945,y)), judiciaire:[675,780,885].map(y=>P(1945,y)), media:[1180,1285,1390].map(y=>P(1945,y)) },
+  arenaBox: { politique:{ex:[1690,55,1915,265],F:[1690,275,1915,480]}, judiciaire:{ex:[1690,570,1915,775],F:[1690,785,1915,990]}, media:{ex:[1690,1075,1915,1280],F:[1690,1290,1915,1500]} },
+  river: [237,545,857,1165,1476].map(x => x / BW * 100),
+  riverCost: [[1,1],[1,2],[2,3],[2,4],[3,5]],
+  luxe: 1938 / BW * 100,
+};
+const ARENAS = ['politique','judiciaire','media'];
+const ARENA_LABEL = { politique:'politique', judiciaire:'judiciaire', media:'médiatique' };
+const MIN_WOODED = [4,6,8];            // alignement judiciaire : ligne 0 (haut) / 1 / 2 (bas)
+const POLITIQUE_GAIN = [[3,1],[2,2],[1,3]]; // [$ par jeton de participation, cases de Conscience]
+const MEDIA_DRAW = [[3,3,1],[2,2,2],[1,1,3]]; // [Atouts, Contrats, Enquêtes]
+const EVENT_SLOTS = 3;                 // jetons Or/Pétrole nécessaires pour révéler un Événement
+const PROD = { betail:'Bétail', coca:'Coca', soja:'Soja' };
+
+const PROTECTEURS = ['Léopard','Capucin','Tapir','Ara','Caïman','Anaconda','Pécari','Toucan','Boto','Dendrobate','Harpie','Capybara','Pirarucu','Paresseux','Agouti',
+  'Quilombolas','Chaman','Journaliste','Juriste','Cacique','Députée','Cueilleurs','Planteurs','Piroguiers','Ribeirinhos','Cartographe','Guerrières','Chasseurs','Artiviste','Manifestants',
+  'Yurupari','Motelo Mama','Urcututo','Boitatá','Mapinguari','Chullachaqui','Anhangá','Curupira','Tunche','Yacuruna','Mayantu','Caipora','Mãe do Ouro','Capelobo','Iara']
+  .map((name,i) => ({ id:'P'+String(i+1).padStart(2,'0'), name, type: i<15?'Animal':i<30?'Personne':'Esprit', img:`img/cards/pr${String(i+1).padStart(2,'0')}.webp` }));
+const ENQUETES = ['Enquête sur la Fondation Amazonie','Enquête sur le Cartel','Tests sanitaires sur la contamination de l’eau','Enquête climatique','Enquête sur la Déforestation','Trafic de bois exotique','Enquête sur les lobbys','Enquête sur les orpailleurs','Enquête sur les normes','Enquête sur contrat frauduleux','Enquête sur un trafic animal','Enquête sur l’exploitation des autochtones','Enquête sur le blanchiment d’argent','Enquête sur une marée noire','Enquête sur l’appropriation culturelle']
+  .map((name,i) => ({ id:'Enq'+String(i+1).padStart(2,'0'), name, img:`img/cards/en${String(i+1).padStart(2,'0')}.webp` }));
+const LUXE = ['Voitures de luxe','Jet privé','Penthouse','Bijoux en diamants','Domaine','Club de foot','Oeuvre d’art','Yacht','Voyage dans l’espace','Montre de luxe','Grand cru','Ile privée']
+  .map((name,i) => ({ id:'L'+String(i+1).padStart(2,'0'), name, img:`img/cards/lx${String(i+1).padStart(2,'0')}.webp` }));
+const EVENEMENTS = ['Glissement de terrain','Incendie incontrôlable','Sécheresse extrême','Épidémie','Érosion des sols','Pluie torrentielle','Pluie torrentielle','Recul des habitats']
+  .map((name,i) => ({ id:'Ev'+(i+1), name, img:`img/cards/ev${String(i+1).padStart(2,'0')}.webp` }));
+const OBJECTIFS = [['Surveillance de la déforestation','Piste d’atterrissage'],['Coopérative d’agroforesterie','Abattoir'],['Résistance contre le narcotrafic','Laboratoire'],['Pépinière communautaire','Front pionnier de soja'],['Autodémarcation des territoires','Barrage hydroélectrique']]
+  .map(([f,e],i) => ({ id:'Obj'+String(i+1).padStart(2,'0'), foret:f, expl:e, img:`img/cards/ob${String(i+1).padStart(2,'0')}.webp`, back:`img/cards/obb${String(i+1).padStart(2,'0')}.webp` }));
+const CARD = Object.fromEntries([...PROTECTEURS,...ENQUETES,...LUXE,...EVENEMENTS,...OBJECTIFS].map(c => [c.id, c]));
+const BACK = { pr:'img/cards/back_pr.webp', en:'img/cards/back_en.webp', lx:'img/cards/back_lx.webp', ev:'img/cards/back_ev.webp' };
+const TOK = n => `img/tok/${n}.png`;
+let EXPL = ['orange','bleu'];
+const NAMES = { F:'le Protecteur', orange:'Orange', bleu:'Bleu', blanc:'Blanc' };
+const CAP = t => t.charAt(0).toUpperCase()+t.slice(1);
+const NAME = s => s==='F' ? 'le Protecteur' : (EXPL.includes(s) ? 'Exploitant '+(EXPL.indexOf(s)+1) : (NAMES[s]||s));
+const COLOR = { F:'#3aa43c', orange:'#f39200', bleu:'#36a9e1', blanc:'#8f99a6' };
+/* Carte 3 joueurs (2 camps par Exploitant) / 4 joueurs (1 camp chacun) */
+const LAYOUT = {
+  3:{ z01:'plain', z02:'base', z04:'base', z07:'plain', z12:'plain', z13:'plain', z16:'base', z17:'plain', z18:'base' },
+  4:{ z01:'base',  z02:'plain', z04:'plain', z07:'plain', z12:'base', z13:'plain', z16:'plain', z17:'base', z18:'plain' },
+};
+const BASE_OWNER = { 3:{ z04:'orange', z16:'orange', z02:'bleu', z18:'bleu' }, 4:{ z01:'orange', z17:'bleu', z12:'blanc' } };
+function applyLayout(n){ for (const id in LAYOUT[n]) ZB[id].kind=LAYOUT[n][id]; const b=document.getElementById('board'); if(b) b.style.backgroundImage=`url(img/boards/${n===4?'central4':'central'}.webp)`; }
+
+const EXPL_ACTIONS = { deforester:'Déforester', exploiter:'Exploiter', recolter:'Récolter', acheter:'Acheter', influencer:'Influencer' };
+const FOREST_ACTIONS = { reboiser:'Reboiser', proteger:'Protéger', resister:'Résister', mobiliser:'Mobiliser', militer:'Militer' };
+
+/* =========================================================
+   OUTILS
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function toast(m){ if(SIM||FAST) return; const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+const sumv = o => Object.values(o).reduce((a,b)=>a+b,0);
+
+/* =========================================================
+   ÉTAT
+   ========================================================= */
+let S, UNDO = [], VIEW = 'orange', MANUAL = false;
+let UI = { tok:null, flow:null, T:{zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]} };   // état d'interface (non sauvegardé)
+
+function newGame(nb){ PREVM=null; DISPVP={}; DISPDON={};
+  nb = nb || (S&&S.nb) || 3; applyLayout(nb);
+  const seats = nb===4 ? ['F','orange','bleu','blanc'] : ['F','orange','bleu']; EXPL = seats.slice(1);
+  const s = {
+    v:2, round:1, over:null,
+    nb, seats,              // sens horaire : Orange est à gauche du Protecteur
+    firstPlayer:'orange', order:[], turnIdx:0,
+    zones:Object.fromEntries(ZONES.map(z=>[z.id,{forest:0,res:null,piece:null,meeple:false}])),
+    reserve:{forest:44,or:8,petrole:12},
+    conscience:0, align:{politique:1,judiciaire:1,media:1},
+    arenas:Object.fromEntries(ARENAS.map(a=>[a,Object.fromEntries(seats.map(x=>[x,0]))])),
+    decks:{}, river:[], luxe:[], objectifs:[], discard:[],
+    eventSlots:0,
+    forest:{A:10,B:0,C:4,onAct:{reboiser:0,proteger:0,resister:0,mobiliser:0,militer:0},meeples:9,hand:[],events:[],evUsed:[],published:[]},
+    expl:{}, turn:null, pending:[], log:[],
+    flags:{}, projects:[], block:null, mayantu:false, imposed:{},
+  };
+  // A. plateau central
+  ZONES.forEach(z => { const st=s.zones[z.id];
+    if(z.kind==='mine'){st.res='or';st.forest=3;s.reserve.or--;s.reserve.forest-=3;}
+    if(z.kind==='oil'){st.res='petrole';st.forest=2;s.reserve.petrole--;s.reserve.forest-=2;}
+    if(z.kind==='plain'){st.forest=1;s.reserve.forest--;}
+  });
+  s.reserve.forest -= 14; // 10 en A + 4 en C
+  // C. objectifs, F. protecteurs + rivière, H. enquêtes, I. luxe, Q. événements
+  s.decks.objectifs = shuffle(OBJECTIFS.map(o=>o.id)); s.objectifs = s.decks.objectifs.splice(0,2);
+  s.decks.protecteurs = shuffle(PROTECTEURS.map(c=>c.id)); s.river = s.decks.protecteurs.splice(0,5).map(id=>({k:'pr',id}));
+  s.decks.enquetes = shuffle(ENQUETES.map(c=>c.id)); s.forest.hand = s.decks.enquetes.splice(0,3);
+  const lx = shuffle(LUXE.map(c=>c.id)); s.luxe = lx.splice(0,3); s.decks.luxeOut = lx;
+  s.decks.evenements = shuffle(EVENEMENTS.map(c=>c.id));
+  s.decks.atouts = shuffle(ATOUTS.map(c=>c.id)); s.discardAt=[];
+  s.decks.contrats = shuffle(CONTRATS.map(c=>c.id)); s.discardCt=[];
+  s.fresque = { deck:shuffle(FRESQUES.map(f=>f.id)), active:[], done:[], max:1 };
+  // K-P. exploitants
+  const own = BASE_OWNER[nb];
+  for (const c of EXPL) s.expl[c] = { color:c, money:2, vp:0, donation:0, meeplesHand:3, meeplesDon:[3,6,9], participation:4,
+    tokens:[1,1,1,1,2,2].map(v=>({v,used:null})), prod:{betail:2,coca:1,soja:3}, storage:{forest:0,petrole:0,or:0},
+    cards:{Animal:[],Personne:[],Esprit:[]}, luxe:[], atouts:[], contrats:[], ctDone:[], bases:[] };
+  ZONES.filter(z=>z.kind==='base').forEach(z=>{ const c=own[z.id]; s.zones[z.id].piece={type:'base',owner:c}; s.expl[c].bases.push(z.id); });
+  S = s;
+  newFresque();
+  for (const c of EXPL){ S.expl[c].atouts = S.decks.atouts.splice(0,3); S.expl[c].contrats = S.decks.contrats.splice(0,3); } // O. 3 Atouts chacun
+  startRound();
+  log('Nouvelle partie : mise en place effectuée (3 joueurs).', true);
+}
+
+function log(t, h){ S.log.push({t,h:!!h}); if(S.log.length>200) S.log.shift(); }
+let TURNSNAP=null;
+function markInfo(){ UI.needSnap=true; }
+function takeCheckpoint(){ if (UI.needSnap && !S.pending.length && !UI.flow && !UI.ask && !UI.extra){ TURNSNAP=JSON.stringify(S); UNDO=[]; UI.needSnap=false; } }
+function backToCheckpoint(){ // annule la dernière action (sans revenir avant une pioche / une révélation)
+  if (!UNDO.length) return toast('Rien à annuler depuis le début du tour (ou la dernière pioche).');
+  S=JSON.parse(UNDO.pop()); UI={tok:null,flow:null}; PREVM=null; VIEW=cur()||VIEW; render(); toast('Dernière action annulée.'); }
+function snapshot(){ if(SIM) return; UNDO.push(JSON.stringify(S)); if(UNDO.length>60) UNDO.shift(); }
+function undo(){ return backToCheckpoint(); }
+function oldUndo(){ if(!UNDO.length) return toast('Rien à annuler.'); S = JSON.parse(UNDO.pop()); UI={tok:null,flow:null}; render(); toast('Action annulée.'); }
+
+/* =========================================================
+   ORDRE DE JEU
+   ========================================================= */
+function startRound(){
+  const i = S.seats.indexOf(S.firstPlayer);
+  const n=S.seats.length, cyc = S.seats.map((_,k) => S.seats[(i+k)%n]);
+  S.order = [...cyc,...cyc,...cyc]; // 3 tours chacun (6 jetons d'action = 3 × 2)
+  S.turnIdx = 0; S.flags = { donation:false, evRevealed:false, projet:false, contrat:false, bought:{} };
+  beginTurn();
+}
+const cur = () => S.turn ? S.turn.seat : null;
+function beginTurn(){
+  if (S.turnIdx >= S.order.length) { S.turn = null; return; }
+  const seat = S.order[S.turnIdx];
+  S.turn = { seat, actions:0, usedRes:false, riverChanged:false };
+  if (seat==='F'){ if (S.block) log('Tunche : fin du blocage.'); S.block=null; S.mayantu=false; }
+  UI = { tok:null, flow:null, needSnap:true };
+  VIEW = isAI(seat) ? (S.seats.find(x=>!isAI(x))||seat) : seat;
+}
+function endTurn(){
+  snapshot();
+  const seat = cur();
+  if (seat === 'F') { // les jetons posés sur les actions passent en B
+    const n = sumv(S.forest.onAct); S.forest.B += n; for (const k in S.forest.onAct) S.forest.onAct[k]=0;
+  }
+  log(`Fin du tour de ${NAME(seat)}.`);
+  if (S.turn.riverChanged) { compactRiver(); queueRefill(); }
+  S.turnIdx++;
+  if (!S.pending.length) beginTurn(); else { S.afterPending = 'nextTurn'; VIEW = 'F'; }
+  render();
+}
+
+/* =========================================================
+   RÈGLES — UTILITAIRES DE PLATEAU
+   ========================================================= */
+const Z = id => S.zones[id];
+const isWooded = id => Z(id).forest >= 1;
+const isDense = id => Z(id).forest >= 3;
+const isEmpty = id => { const z=Z(id); return !z.forest && !z.res && !z.piece && !z.meeple; };
+const woodedCount = () => ZONES.filter(z=>isWooded(z.id)).length;
+const minWooded = () => MIN_WOODED[S.align.judiciaire];
+function occupied(c){ return ZONES.filter(z=>Z(z.id).piece && Z(z.id).piece.owner===c).map(z=>z.id); }
+function explAdj(c){ const set=new Set(); occupied(c).forEach(id=>ZB[id].adj.forEach(a=>set.add(a))); return [...set]; }
+function forestMeeplesOnBoard(){ return ZONES.filter(z=>Z(z.id).meeple).length; }
+function forestMeeplesInArenas(){ return ARENAS.reduce((n,a)=>n+S.arenas[a].F,0); }
+
+function emptyRegionFrom(id){ // zones vides connectées, adjacentes à id
+  const seen=new Set(), stack=ZB[id].adj.filter(isEmpty);
+  while(stack.length){ const z=stack.pop(); if(seen.has(z)) continue; seen.add(z); ZB[z].adj.filter(isEmpty).forEach(a=>{ if(!seen.has(a)) stack.push(a); }); }
+  return seen.size;
+}
+function harvestValue(id){
+  const p = Z(id).piece;
+  if (p.kind==='soja') return 1;
+  if (p.kind==='betail') return emptyRegionFrom(id);
+  if (p.kind==='coca') return ZB[id].adj.filter(a=>{ const q=Z(a).piece; return q && (q.type==='base'||q.type==='prod'); }).length;
+  return 0;
+}
+function weaken(id, by){
+  const z=Z(id), p=z.piece; if(!p||p.type!=='prod') return;
+  if (p.weak) { z.piece=null; S.expl[p.owner].prod[p.kind]++; log(`${PROD[p.kind]} ${NAME(p.owner)} retiré : il retourne dans sa réserve.`); fly(TOK(`${p.owner}_${p.kind}_v`),{zone:id},{sel:`#sum-${p.owner} h3`}); }
+  else { p.weak=true; log(`${PROD[p.kind]} ${NAME(p.owner)} affaibli.`); ANIM.push({type:'flip',zone:id,from:TOK(`${p.owner}_${p.kind}_r`),to:TOK(`${p.owner}_${p.kind}_v`)}); }
+}
+function upgradeToken(c){ const e=S.expl[c]; let k=-1; for(let i=e.tokens.length-1;i>=0;i--) if(e.tokens[i].v===1){ k=i; break; }
+  if (k<0) return; e.tokens[k].v=2; log(`${CAP(NAME(c))} retourne un jeton ① en ② (2 Personnes).`); ANIM.push({type:'tokup',c,i:k}); }
+function gainVP(c, n, why){ const e=S.expl[c]; if (DISPVP[c]===undefined) DISPVP[c]=e.vp; const from=e.vp; e.vp += n; log(`${CAP(NAME(c))} gagne ${n} Prestige (${why}).`, true); vpPopup(c, n, why, from, e.vp); }
+function moveConscience(n, why){
+  for (let i=0;i<n;i++){ if (S.conscience>=12) break; S.conscience++; }
+  log(`Conscience écologique +${n} → ${S.conscience} (${why}).`, true);
+  if (S.conscience>=12 && !S.over) { S.over = { winner:'F', why:'La Conscience écologique atteint la dernière case.' }; log('🌳 Le Protecteur gagne la partie !', true); }
+}
+function regenerate(n){ const k=Math.min(n,S.forest.C); S.forest.C-=k; S.forest.A+=k; log(`Le Protecteur régénère ${k} jeton(s) (C → A).`); }
+
+/* =========================================================
+   RIVIÈRE
+   ========================================================= */
+function compactRiver(){ const cards=S.river.filter(Boolean); while(cards.length<5) cards.push(null); S.river=cards; }
+function queueRefill(){ S.river.forEach((c,i)=>{ if(!c) S.pending.push({type:'refill',slot:i}); }); }
+function fillSlot(i, how, enqId){
+  if (how==='en') { S.river[i]={k:'en',id:enqId}; S.forest.hand=S.forest.hand.filter(x=>x!==enqId); log(`Le Protecteur place une Enquête face cachée dans la Rivière (emplacement ${i+1}).`); }
+  else { markInfo(); const id=S.decks.protecteurs.shift(); if(!id){ log('Pioche Protecteurs vide.'); S.river[i]=null; } else { S.river[i]={k:'pr',id}; log(`Rivière ${i+1} : ${CARD[id].name}.`); } }
+}
+function resolvePending(){
+  if (S.pending.length) return;
+  const a = S.afterPending; S.afterPending=null;
+  if (a==='nextTurn') beginTurn();
+  if (a==='endRound2') endRound2();
+}
+
+/* =========================================================
+   ACTIONS — moteur « clic sur la cible »
+   Chaque point d'action se résout en cliquant directement sur une cible
+   (zone, Arène, carte). Force 2 = 2 clics de suite.
+   ========================================================= */
+function placeOnEvent(kind){
+  S.eventSlots++; (S.eventToks=S.eventToks||[]).push(kind); fly(TOK(kind==='or'?'or_r':'petrole_r'),{sel:`#sum-${cur()} .c-${kind}`},{sel:'#evdeck'});
+  log(`Le jeton ${kind==='or'?'Or':'Pétrole'} est posé sur l’Événement (${S.eventSlots}/${EVENT_SLOTS}).`);
+  if (S.eventSlots>=EVENT_SLOTS){
+    const id=S.decks.evenements.shift(); S.eventSlots=0; S.eventToks=[]; markInfo();
+    if (id&&S.turn&&cur()!=='F') tct().flags.C19=true;
+    if (id){ S.forest.events.push(id); S.flags.evRevealed=true; log(`⚠ Événement révélé : ${CARD[id].name} — nouvelle action pour le Protecteur.`, true); }
+  }
+}
+function useResource(kind, mode){
+  const c=cur(), e=S.expl[c];
+  if (!e.storage[kind]) return toast('Aucun jeton disponible.');
+  if (mode==='cash'){ snapshot(); e.storage[kind]--; const g=kind==='or'?5:3; e.money+=g; S.turn.usedRes=true; placeOnEvent(kind); log(`${CAP(NAME(c))} convertit 1 ${kind==='or'?'Or':'Pétrole'} en ${g} $.`); render(); }
+  else { UI.extra=kind; render(); }
+}
+function startExplAction(act, value, extraFrom){
+  const c=cur(), e=S.expl[c];
+  snapshot();
+  if (extraFrom){ e.storage[extraFrom]--; S.turn.usedRes=true; placeOnEvent(extraFrom); log(`${CAP(NAME(c))} utilise 1 ${extraFrom==='or'?'Or':'Pétrole'} : action supplémentaire (valeur ${value}).`); }
+  else { e.tokens[UI.tok].used=act; S.turn.actions++; UI.tok=null; }
+  const firstKind=['betail','coca','soja'].find(k=>e.prod[k]>0)||null;
+  if (act==='deforester'){ const b=['C14','C18'].filter(x=>hasCt(c,x)).length; if(b){ value+=b; log(`Contrat : +${b} Forêt déforestée.`); } }
+  if (act==='exploiter' && hasCt(c,'C17')){ value+=1; log('Contrat Diversification : +1 production placée.'); }
+  if (e.bonusNext){ value+=e.bonusNext; log(`${CAP(NAME(c))} : +${e.bonusNext} grâce au Barrage.`); e.bonusNext=0; }
+  if (S.imposed[c]&&S.imposed[c].length&&!extraFrom){ S.imposed[c].shift(); if(!S.imposed[c].length) delete S.imposed[c]; }
+  UI.flow={act,total:value,done:0,owner:c,hit:[],prodKind:firstKind,sel:null,moveFrom:null};
+  log(`${CAP(NAME(c))} : ${EXPL_ACTIONS[act]} (×${value}).`, true);
+  render();
+}
+function startForestAction(act, X, evId){
+  snapshot();
+  const F=S.forest; F.A-=X; S.turn.actions++; for(let i=0;i<X;i++) ANIM.push({type:'fly',img:TOK('foret_r'),from:{sel:'#sum-F .c-A'},to:{sel:'#sum-F .c-B'},delay:i*110,size:28});
+  if (evId){ F.events=F.events.filter(x=>x!==evId); F.evUsed.push(evId); log(`Le Protecteur déclenche « ${CARD[evId].name} » (force ${X}).`, true); if (X===3) moveConscience(1,'catastrophe de force 3'); flash(CARD[evId].img); UI.effDone=finishEffect; EV_EFFECT[evId](X, finishEffect); return; }
+  if (act!=='reboiser') F.onAct[act]+=X;
+  UI.flow={act,total:act==='mobiliser'?1:X,X,done:0,owner:'F',hit:[],sel:null};
+  log(`Le Protecteur : ${FOREST_ACTIONS[act]} (force ${X}).`, true);
+  render();
+}
+function flowStep(){ UI.effDone=null; const f=UI.flow; f.done++; f.sel=null; f.moveFrom=null; if (f.done>=f.total) return endFlow(); render(); }
+function endFlow(){ const f=UI.flow; UI.flow=null; checkObjectives(); if (f&&f.after) return f.after(); render(); }
+function finishEffect(){ UI.flow=null; UI.ask=null; UI.effDone=null; checkObjectives(); render(); }
+const forestAvail = () => 9 - forestMeeplesOnBoard() - forestMeeplesInArenas();
+const allZ = () => ZONES.map(z=>z.id);
+
+/* Cibles du point d'action en cours */
+function flowTargets(){
+  if (UI.ask) return UI.ask;
+  const f=UI.flow, T={zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[],prompt:'',hint:''};
+  if (!f) return T;
+  const add=(ids,fn)=>ids.forEach(id=>T.zones[id]=()=>fn(id));
+  if (f.owner!=='F'){
+    const c=f.owner, e=S.expl[c], adj=explAdj(c);
+    if (f.act==='deforester'){
+      const min=minWooded(), wc=woodedCount();
+      add(adj.filter(id=>isWooded(id)&&!Z(id).meeple&&(Z(id).forest>1||wc-1>=min)), id=>{
+        deforestOne(c,id);
+        flowStep(); });
+      if (!S.mayantu) add(adj.filter(id=>Z(id).meeple), id=>{ Z(id).meeple=false; tct().meeples++; fly(TOK('foret_meeple_r'),{zone:id},{sel:'#sum-F h3'}); log(`${CAP(NAME(c))} chasse un Peuple de la Forêt.`); S.pending.unshift({type:'forestArena'}); flowStep(); });
+      T.prompt='Cliquez une zone : retire 1 Forêt — ou le Peuple de la Forêt s’il y en a un.';
+      if (adj.some(id=>isWooded(id)&&!Z(id).meeple) && wc-1<min) T.hint=`Minimum ${min} zones boisées (alignement judiciaire) : impossible de vider une zone.`;
+    }
+    if (f.act==='exploiter'){
+      for (const k of ['betail','coca','soja']) T.buttons.push({lbl:`×${e.prod[k]}`,img:TOK(`${c}_${k}_r`),tip:PROD[k],sel:f.prodKind===k,dis:!e.prod[k],fn:()=>{f.prodKind=k;render();}});
+      const exTg = hasCt(c,'C05') ? [...new Set([...adj, ...allZ().filter(id=>ZB[id].adj.some(a=>{ const p=Z(a).piece; return p&&p.owner&&p.owner!==c; }))])] : adj;
+      if (f.prodKind && e.prod[f.prodKind]) add(exTg.filter(isEmpty), id=>{ const k=f.prodKind; e.prod[k]--; Z(id).piece={type:'prod',kind:k,owner:c,weak:false}; fly(TOK(`${c}_${k}_r`),{sel:`#abar [data-k="${k}"]`,alt:`#sum-${c} h3`},{zone:id,hide:true}); log(`${CAP(NAME(c))} place ${PROD[k]}.`); if(!e.prod[k]) f.prodKind=['betail','coca','soja'].find(q=>e.prod[q]>0)||null; flowStep(); });
+      add(adj.filter(id=>{const p=Z(id).piece;return p&&p.type==='prod'&&p.owner!==c;}), id=>{ weaken(id); flowStep(); });
+      T.prompt='Cliquez une zone vide pour y placer la production choisie, ou une production adverse pour l’affaiblir.';
+    }
+    if (f.act==='recolter'){
+      if (e.storage.forest) T.buttons.push({lbl:'Bois stocké',harv:{imgs:Array(e.storage.forest).fill(TOK('foret_r')),gain:e.storage.forest*(hasCt(c,'C04')?2:1)},fn:()=>{ const n=e.storage.forest, bon=hasCt(c,'C04')?n:0; e.money+=n+bon; if(bon) log(`Contrat : +${bon} $ sur le bois.`); tct().wood++; if(!tct().kinds.includes('bois')) tct().kinds.push('bois'); e.storage.forest=0; S.forest.C+=n; for(let i=0;i<n;i++) fly(TOK('foret_r'),{sel:`#sum-${c} .c-bois`},{sel:'#sum-F .c-C'}); log(`${CAP(NAME(c))} vend ${n} bois (+${n} $). Jetons → C du Protecteur.`); flowStep(); }});
+      for (const k of ['soja','betail','coca']){
+        const ids=allZ().filter(id=>{const p=Z(id).piece;return p&&p.type==='prod'&&p.owner===c&&p.kind===k;});
+        if (ids.length){ const g=ids.reduce((s,id)=>s+harvestValue(id),0);
+          T.buttons.push({lbl:`Tous mes ${PROD[k]}`,harv:{imgs:ids.map(id=>TOK(`${c}_${k}_${Z(id).piece.weak?'v':'r'}`)),gain:S.flags.erosion?Math.max(0,g-3):g},fn:()=>{ harvestKind(c,k); flowStep(); }}); }
+      }
+      T.prompt='Choisissez le type à récolter.';
+      if (!T.buttons.length) T.hint='Rien à récolter.';
+    }
+    if (f.act==='acheter'){
+      const lc=10+S.conscience;
+      if (e.money>=lc) S.luxe.forEach((id,i)=>T.luxe[i]=()=>{ if(e.money<lc) return toast(`Il faut ${lc} $.`); S.luxe.splice(i,1); e.money-=lc; e.luxe.push(id); S.flags.bought.luxe=true; log(`${CAP(NAME(c))} achète « ${CARD[id].name} » (${lc} $).`); gainVP(c,1,'Bien de luxe'); flowStep(); });
+      S.river.forEach((sl,i)=>{ const cost=Math.max(0,TRACK.riverCost[i][1]-(hasCt(c,'C09')?1:0)); if (sl&&sl.k==='pr'&&!sl.hidden&&e.money>=cost) T.river[i]=()=>{
+        if (e.money<cost || S.river[i]!==sl) return toast(`Il faut ${cost} $.`); const card=CARD[sl.id]; e.money-=cost; e.cards[card.type].push(card.id); S.river[i]=null; S.turn.riverChanged=true; S.flags.bought[card.type]=true;
+        log(`${CAP(NAME(c))} achète ${card.name} (${card.type}) pour ${cost} $.`);
+        if (card.type==='Esprit'&&e.cards.Esprit.length%3===0) gainVP(c,1,'3 Esprits');
+        if (card.type==='Personne'&&e.cards.Personne.length%2===0) upgradeToken(c);
+        flowStep(); }; });
+      for (const n of [1,2,3]) T.buttons.push({lbl:`Don ${n} $`,dis:e.money<n||e.donation>=9||e.donation+n>9,fn:()=>{
+        if (e.money<n) return toast(`Il faut ${n} $.`); const from=e.donation; e.money-=n; e.donation=Math.min(9,e.donation+n+(hasCt(c,'C10')?1:0)); S.flags.donation=true; stepTrack('don',c,from,e.donation); log(`${CAP(NAME(c))} donne ${n} $ à la Fondation (${from} → ${e.donation}).`);
+        for (const s of [3,6,9]) if (from<s&&e.donation>=s&&e.meeplesDon.includes(s)){ e.meeplesDon=e.meeplesDon.filter(x=>x!==s); e.meeplesHand++; log(`${CAP(NAME(c))} récupère un meeple (palier ${s}).`); regenerate(3); }
+        flowStep(); }});
+      e.atouts.forEach(id=>{ if (e.money>=atCost(c,id)) T.hand[id]=()=>{ playAtout(c,id,()=>flowStep()); }; });
+      T.prompt=`Cliquez une carte de la Rivière (coût en $ sous l’emplacement), un Bien de luxe (${lc} $), un Atout de votre main (coût en haut à gauche), ou faites un don.`;
+    }
+    if (f.act==='influencer'){
+      if (e.meeplesHand){ ARENAS.forEach(a=>T.arenas[a+'|ex']=()=>{ e.meeplesHand--; S.arenas[a][c]++; log(`${CAP(NAME(c))} influence l’Arène ${ARENA_LABEL[a]}.`);
+        if (hasCt(c,'C06')&&e.meeplesHand){ e.meeplesHand--; S.arenas[a][c]++; log('Contrat Appel aux dons : +1 meeple dans l’Arène.'); }
+        if (hasCt(c,'C11')){ e.money++; log('Contrat Conseils stratégiques : +1 $.'); }
+        flowStep(); }); T.prompt='Cliquez une Arène (partie grise) pour y placer un meeple.'; }
+      else if (!f.moveFrom){ ARENAS.filter(a=>S.arenas[a][c]).forEach(a=>T.arenas[a+'|ex']=()=>{ f.moveFrom=a; render(); }); T.prompt='Tous vos meeples sont placés : cliquez l’Arène d’où le retirer.'; }
+      else { ARENAS.filter(a=>a!==f.moveFrom).forEach(a=>T.arenas[a+'|ex']=()=>{ S.arenas[f.moveFrom][c]--; S.arenas[a][c]++; log(`${CAP(NAME(c))} déplace un meeple vers l’Arène ${ARENA_LABEL[a]}.`); flowStep(); }); T.prompt='Cliquez l’Arène d’arrivée.'; }
+      const na=hasCt(c,'C15')?2:1, nc=hasCt(c,'C20')?2:1;
+      T.buttons.push({lbl:`Piocher ${na} Atout${na>1?'s':''}`,fn:()=>{ drawAtouts(c,na); flowStep(); }});
+      T.buttons.push({lbl:`Piocher ${nc} Contrat${nc>1?'s':''}`,fn:()=>{ drawContrats(c,nc); flowStep(); }});
+    }
+  } else {
+    const F=S.forest;
+    if (f.act==='reboiser'){ add(allZ().filter(id=>{const z=Z(id);return !z.piece&&z.forest<3;}), id=>{ Z(id).forest++; log('Le Protecteur reboise une zone.'); fly(TOK('foret_r'),{sel:'#sum-F .c-A'},{zone:id}); flowStep(); }); T.prompt='Cliquez une zone vide ou boisée (max 3 Forêt) pour reboiser.'; }
+    if (f.act==='proteger'){
+      if (!f.sel){
+        if (forestAvail()>0) add(allZ().filter(id=>isDense(id)&&!Z(id).meeple), id=>{ Z(id).meeple=true; log('Le Protecteur place un Peuple sur une zone dense.'); flowStep(); });
+        add(allZ().filter(id=>Z(id).meeple), id=>{ f.sel=id; render(); });
+        T.prompt='Cliquez une zone dense pour y placer un Peuple, ou un Peuple pour le déplacer.';
+      } else {
+        const from=f.sel, mv=(id,txt)=>{ Z(from).meeple=false; Z(id).meeple=true; log(txt); flowStep(); };
+        add(ZB[from].adj.filter(a=>isWooded(a)&&!Z(a).meeple), id=>mv(id,'Le Protecteur déplace un Peuple vers une zone boisée adjacente.'));
+        if (forestAvail()<=0) add(allZ().filter(id=>isDense(id)&&!Z(id).meeple&&!ZB[from].adj.includes(id)), id=>mv(id,'Le Protecteur repositionne un Peuple sur une zone dense.'));
+        T.buttons.push({lbl:'Annuler la sélection',fn:()=>{ f.sel=null; render(); }});
+        T.prompt='Cliquez la zone d’arrivée (zone boisée adjacente).';
+      }
+    }
+    if (f.act==='resister'){ add(allZ().filter(id=>{const p=Z(id).piece;return p&&p.type==='prod'&&!f.hit.includes(id)&&ZB[id].adj.some(a=>Z(a).meeple);}), id=>{ f.hit.push(id); weaken(id); flowStep(); }); T.prompt='Cliquez une production adjacente à un Peuple (productions différentes).'; }
+    if (f.act==='mobiliser'){
+      S.river.forEach((sl,i)=>{ if (!sl||TRACK.riverCost[i][0]!==f.X) return;
+        if (sl.k==='pr') T.river[i]=()=>{ const c=CARD[sl.id]; S.river[i]=null; S.turn.riverChanged=true; log(`Le Protecteur mobilise ${c.name} (${c.type}).`, true); UI.flow=null; flash(c.img); runProtector(sl.id, ()=>placeInFresque(sl.id, finishEffect)); };
+        if (sl.k==='en' && i<pubSlots()) T.river[i]=()=>{ UI.flow=null; publish(i,false,finishEffect); }; });
+      T.prompt=`Cliquez une carte Protecteur de coût ${f.X}, ou une Enquête sur un emplacement de publication (📰) de coût ${f.X}.`;
+    }
+    if (f.act==='militer'){
+      if (forestAvail()>0) ARENAS.forEach(a=>T.arenas[a+'|F']=()=>{ S.arenas[a].F++; log(`Le Protecteur milite dans l’Arène ${ARENA_LABEL[a]}.`); flowStep(); });
+      T.buttons.push({lbl:`Piocher 1 Enquête (${F.hand.length}/3)`,dis:!S.decks.enquetes.length,fn:()=>{ F.hand.push(S.decks.enquetes.shift()); markInfo(); log('Le Protecteur pioche 1 Enquête.'); if (F.hand.length>3) S.pending.unshift({type:'discardEnq'}); flowStep(); }});
+      T.prompt='Cliquez une Arène (partie verte) pour y placer un Peuple, ou piochez une Enquête.';
+      if (forestAvail()<=0) T.hint='Plus de Peuple disponible.';
+    }
+  }
+  return T;
+}
+function hasTargets(T){ return Object.keys(T.hand||{}).length||Object.keys(T.zones).length||Object.keys(T.arenas).length||Object.keys(T.river).length||Object.keys(T.luxe).length||T.buttons.some(b=>!b.dis&&b.fn); }
+
+/* =========================================================
+   FIN DE MANCHE
+   ========================================================= */
+function endRound(){
+  snapshot(); UI={tok:null,flow:null};
+  log(`— Fin de la manche ${S.round} —`, true);
+  // b) Rapport de force
+  for (const a of ARENAS){
+    const f=S.arenas[a].F, x=EXPL.reduce((n,c)=>n+S.arenas[a][c],0);
+    if (f>x){ if (S.align[a]<2){ S.align[a]++; log(`Arène ${ARENA_LABEL[a]} : le Protecteur l’emporte (${f}–${x}), l’alignement descend.`); } else moveConscience(1,`Arène ${ARENA_LABEL[a]} déjà en bas`); }
+    else if (x>f){ if (S.align[a]>0){ S.align[a]--; log(`Arène ${ARENA_LABEL[a]} : les Exploitants l’emportent (${x}–${f}), l’alignement monte.`); }
+      else for (const c of EXPL) if (S.arenas[a][c]){ const g=2*S.arenas[a][c]; S.expl[c].money+=g; log(`${CAP(NAME(c))} gagne ${g} $ (Arène ${ARENA_LABEL[a]} déjà en haut).`); } }
+    else log(`Arène ${ARENA_LABEL[a]} : égalité (${f}–${x}).`);
+    for (const c of EXPL){ S.expl[c].meeplesHand+=S.arenas[a][c]; } S.arenas[a]=Object.fromEntries(S.seats.map(x=>[x,0]));
+  }
+  // c) Revenus
+  for (const c of EXPL){ const n=S.expl[c].cards.Animal.length; if(n){ S.expl[c].money+=2*n; log(`${CAP(NAME(c))} : revenus +${2*n} $ (${n} Animal).`); } }
+  // d) Victoire des Exploitants
+  const top=Math.max(...EXPL.map(c=>S.expl[c].vp));
+  if (top>=4){ const cands=EXPL.filter(c=>S.expl[c].vp===top).sort((a,b)=>S.expl[b].money-S.expl[a].money); S.over={winner:cands[0],why:`${CAP(NAME(cands[0]))} atteint ${top} Prestige.`}; log(`🏆 ${NAME(cands[0])} gagne la partie !`, true); render(); return; }
+  // e) Conscience
+  const before=S.conscience; moveConscience(1,'fin de manche');
+  if ((before===3&&S.conscience===4)||(before===7&&S.conscience===8)){
+    const m=Math.max(...EXPL.map(c=>S.expl[c].donation)), lead=EXPL.filter(c=>S.expl[c].donation===m);
+    if (m>0 && lead.length===1) gainVP(lead[0],1,'Premier donateur de la Fondation'); else log('Premiers donateurs ex aequo (ou aucun don) : pas de Prestige.');
+  }
+  if (S.over){ render(); return; }
+  // f) Régénération / récupération
+  const F=S.forest; F.B+=sumv(F.onAct); for(const k in F.onAct) F.onAct[k]=0;
+  for(let i=0;i<Math.min(F.C,6);i++) ANIM.push({type:'fly',img:TOK('foret_r'),from:{sel:'#sum-F .c-C'},to:{sel:'#sum-F .c-A'},delay:i*90,size:28});
+  for(let i=0;i<Math.min(F.B,6);i++) ANIM.push({type:'fly',img:TOK('foret_r'),from:{sel:'#sum-F .c-B'},to:{sel:'#sum-F .c-C'},delay:900+i*90,size:28});
+  F.A+=F.C; F.C=F.B; F.B=0; log(`Régénération : A = ${F.A}, C = ${F.C}.`);
+  for (const c of EXPL) S.expl[c].tokens.forEach(t=>t.used=null);
+  // g) Pioche
+  const [na,,ne]=MEDIA_DRAW[S.align.media];
+  const [,nct]=MEDIA_DRAW[S.align.media];
+  for (const c of EXPL){ drawAtouts(c, na); drawContrats(c, nct); }
+  for (let i=0;i<ne&&S.decks.enquetes.length;i++) F.hand.push(S.decks.enquetes.shift());
+  log(`Pioche : le Protecteur pioche ${ne} Enquête(s) (alignement médiatique). Atouts et Contrats piochés selon l’alignement médiatique.`);
+  for (let k=F.hand.length-3;k>0;k--) S.pending.push({type:'discardEnq'});
+  // h) Rivière
+  if (S.river[0]){ if (S.river[0].k==='pr') S.discard.push(S.river[0].id); log('La première carte de la Rivière est défaussée.'); }
+  S.river[0]=null; compactRiver(); queueRefill();
+  S.afterPending='endRound2'; if (!S.pending.length) endRound2(); else { S.turn=null; VIEW='F'; }
+  render();
+}
+function endRound2(){
+  const i=S.seats.indexOf(S.firstPlayer); S.firstPlayer=S.seats[(i+1)%S.seats.length];
+  S.round++; log(`Manche ${S.round} : ${NAME(S.firstPlayer)} reçoit le pion Premier joueur.`, true);
+  startRound();
+}
+
+/* =========================================================
+   EFFETS DES CARTES — moteur de choix guidés (UI.ask)
+   ========================================================= */
+const isProd = id => { const p=Z(id).piece; return !!(p&&p.type==='prod'); };
+const prodOf = (id,k) => { const p=Z(id).piece; return !!(p&&p.type==='prod'&&(!k||p.kind===k)); };
+const prodZones = k => allZ().filter(id=>prodOf(id,k));
+function ask(o){ const a=Object.assign({zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[],prompt:'',hint:''},o);
+  if (!Object.keys(a.zones).length&&!Object.keys(a.arenas).length&&!Object.keys(a.river).length&&!a.buttons.some(b=>b.fn&&!b.dis)) a.buttons.push({lbl:'Aucune cible — continuer',fn:()=>askDone(UI.effDone||finishEffect)});
+  UI.ask=a; render(); }
+function askDone(next){ UI.ask=null; if (next) next(); else render(); }
+// Choisir jusqu'à n zones distinctes parmi candidates(), appliquer fn(id), puis then()
+function pickZones(title, prompt, cand, n, fn, then, opts={}){
+  const chosen=[];
+  const step=()=>{
+    if (chosen.length>=n) return askDone(then);
+    const ids=cand(chosen).filter(id=>opts.repeat||!chosen.includes(id));
+    if (!ids.length) { log(`${title} : plus de cible possible.`); return askDone(then); }
+    const zones={}; ids.forEach(id=>zones[id]=()=>{ chosen.push(id); fn(id); step(); });
+    ask({title,prompt:`${prompt} (${chosen.length+1}/${n})`,zones,buttons:[{lbl:'Terminer',fn:()=>askDone(then)}]});
+  };
+  step();
+}
+function chooseExpl(title, prompt, fn, filter){
+  const bs=EXPL.filter(c=>!filter||filter(c)).map(c=>({lbl:NAME(c),fn:()=>{ UI.ask=null; fn(c); }}));
+  if (!bs.length){ log(`${title} : aucun Exploitant concerné.`); return fn(null); }
+  ask({title,prompt,buttons:bs});
+}
+function gainForest(n, why){ // jetons gagnés → A (pris en C puis dans la réserve)
+  let k=0; while(k<n && S.forest.C){ S.forest.C--; S.forest.A++; k++; } while(k<n && S.reserve.forest){ S.reserve.forest--; S.forest.A++; k++; }
+  log(`Le Protecteur gagne ${k} jeton(s) Forêt (${why}).`); for(let i=0;i<Math.min(k,4);i++) fly(TOK('foret_r'),{sel:'#sum-F .c-C'},{sel:'#sum-F .c-A'});
+}
+function placeFromC(id){ if (!S.forest.C) return false; S.forest.C--; Z(id).forest++; fly(TOK('foret_r'),{sel:'#sum-F .c-C'},{zone:id}); return true; }
+const canPlaceForest = id => { const z=Z(id); return !z.piece && z.forest<3; };
+function pay(c, n, why){ const e=S.expl[c], k=Math.min(n,e.money); e.money-=k; log(`${CAP(NAME(c))} paye ${k} $ (${why}).`); }
+function discardRandom(c, n){ const e=S.expl[c]; for(let i=0;i<n;i++){ const tot=e.atouts.length+e.contrats.length; if(!tot) break; if (Math.random()*tot<e.atouts.length) discardAtout(c, e.atouts[Math.floor(Math.random()*e.atouts.length)]); else discardContrat(c, e.contrats[Math.floor(Math.random()*e.contrats.length)]); } }
+function placeForestMeepleArenas(n, title, then){
+  let k=0; const step=()=>{
+    if (k>=n || forestAvail()<=0) return askDone(then);
+    const arenas={}; ARENAS.forEach(a=>arenas[a+'|F']=()=>{ S.arenas[a].F++; k++; log(`${title} : un Peuple rejoint l’Arène ${ARENA_LABEL[a]}.`); step(); });
+    ask({title,prompt:`Cliquez une Arène (partie verte) — ${k+1}/${n}`,arenas,buttons:[{lbl:'Terminer',fn:()=>askDone(then)}]});
+  }; step();
+}
+function lowerAlign(a, why){ if (S.align[a]<2){ S.align[a]++; log(`Alignement ${ARENA_LABEL[a]} descend (${why}).`, true); } else log(`Alignement ${ARENA_LABEL[a]} déjà en bas.`); }
+const DIRS=[[0,235],[197.5,117.5],[197.5,-117.5]];
+function lineThrough(id, d){ const z=ZB[id], [dx,dy]=DIRS[d], L=Math.hypot(dx,dy); return ZONES.filter(o=>Math.abs((o.x-z.x)*dy-(o.y-z.y)*dx)/L<25).map(o=>o.id); }
+function harvestKind(c, k){
+  const e=S.expl[c]; let tot=0;
+  const T2=S.turn&&cur()===c?tct():null; let strong=0, bonus=0;
+  prodZones(k).filter(id=>Z(id).piece.owner===c).forEach(id=>{ const v=harvestValue(id); if(k!=='soja'&&!v) return;
+    if (T2){ if(k==='coca'&&tokensAround(id)>=3) T2.flags.C01=true; if(k==='betail'&&v>=3) T2.flags.C03=true; if(k==='soja'&&!Z(id).piece.weak) strong++; }
+    if ((k==='coca'&&hasCt(c,'C01'))||(k==='soja'&&hasCt(c,'C02'))||(k==='betail'&&hasCt(c,'C03'))) bonus++;
+    if (ZB[id].kind==='oil'&&hasCt(c,'C07')) bonus+=1; if (ZB[id].kind==='mine'&&hasCt(c,'C08')) bonus+=2;
+    tot+=v; weaken(id); });
+  if (T2){ if(strong>=3) T2.flags.C02=true; if(!T2.kinds.includes(k)) T2.kinds.push(k); }
+  if (bonus){ tot+=bonus; log(`Contrats : +${bonus} $ sur la récolte.`); }
+  if (S.flags.erosion) { tot=Math.max(0,tot-3); }
+  e.money+=tot; log(`${CAP(NAME(c))} récolte ses ${PROD[k]} : +${tot} $${S.flags.erosion?' (érosion −3)':''}.`); return tot;
+}
+
+/* ---------- Protecteurs ---------- */
+const PR_EFFECT = {
+  P01(done){ const ids=prodZones('betail').filter(id=>!ZB[id].adj.some(a=>prodOf(a,'betail'))); ids.forEach(id=>weaken(id)); log(`Léopard : ${ids.length} Bétail isolé(s) affaibli(s).`); done(); },
+  P02(done){ let tot=0; EXPL.forEach(c=>{ const k=Math.min(3,S.expl[c].money); S.expl[c].money-=k; tot+=k; });
+    const ids=allZ().filter(isDense); if(!ids.length||!tot){ log('Capucin : pas de zone dense ou pas d’argent.'); return done(); }
+    pickZones('Capucin','Cliquez la zone dense où déposer l’argent',()=>ids,1,id=>{ Z(id).bounty=(Z(id).bounty||0)+tot; log(`Capucin : ${tot} $ déposés sur une zone dense. Le premier qui la déforeste entièrement les récupère.`); },done); },
+  P03(done){ pickZones('Tapir','Cliquez un Soja à affaiblir 2 fois',()=>prodZones('soja'),1,id=>{ weaken(id); weaken(id); if(!Z(id).piece&&canPlaceForest(id)) placeFromC(id); },done); },
+  P04(done){ gainForest(Math.max(0,...EXPL.map(c=>S.expl[c].donation)),'Ara'); done(); },
+  P05(done){ pickZones('Caïman','Cliquez un Bétail à affaiblir 2 fois',()=>prodZones('betail'),1,id=>{ weaken(id); weaken(id); },done); },
+  P06(done){ pickZones('Anaconda','Cliquez un Bétail à affaiblir',()=>prodZones('betail'),1,id=>{ const v=harvestValue(id); weaken(id); gainForest(v,'Anaconda'); },done); },
+  P07(done){ const cand=allZ().filter(id=>prodOf(id,'coca')||prodOf(id,'soja'));
+    if(!cand.length){ log('Pécari : aucune cible.'); return done(); }
+    const zones={}; cand.forEach(id=>zones[id]=()=>{ ask({title:'Pécari',prompt:'Choisissez la direction de la ligne.',buttons:['Verticale','Diagonale ↘','Diagonale ↗'].map((l,d)=>({lbl:l,fn:()=>{ const line=lineThrough(id,d); let n=0; line.forEach(z=>{ if(prodOf(z,'coca')||prodOf(z,'soja')){ weaken(z); n++; } }); log(`Pécari : ${n} production(s) affaiblie(s) sur la ligne.`); askDone(done); }}))}); });
+    ask({title:'Pécari',prompt:'Cliquez une Coca ou un Soja de la ligne visée.',zones}); },
+  P08(done){ pickZones('Toucan','Cliquez une zone pour y placer 1 Forêt du C',()=>S.forest.C?allZ().filter(canPlaceForest):[],3,id=>placeFromC(id),done); },
+  P09(done){ log('Boto : il pourra être placé sur n’importe quel emplacement de la Fresque.'); done(); },
+  P10(done){ chooseExpl('Dendrobate','Quel Exploitant perd un jeton d’action pour la manche ?',c=>{ if(!c) return done(); const e=S.expl[c];
+    const bs=e.tokens.map((t,i)=>({lbl:`Jeton ${t.v===1?'①':'②'}`,dis:!!t.used,fn:()=>{ t.used='bloque'; log(`Dendrobate : un jeton ${t.v} de ${NAME(c)} est supprimé pour la manche.`); askDone(done); }}));
+    if (!bs.some(b=>!b.dis)){ log('Dendrobate : aucun jeton libre.'); return done(); }
+    ask({title:'Dendrobate',prompt:'Choisissez le jeton à mettre de côté.',buttons:bs}); }); },
+  P11(done){ const from=prodZones(); if(!from.length){ log('Harpie : aucune production.'); return done(); }
+    const zones={}; from.forEach(id=>zones[id]=()=>{ const tz={}; allZ().filter(isEmpty).forEach(t=>tz[t]=()=>{ Z(t).piece=Z(id).piece; Z(id).piece=null; log('Harpie : une production est déplacée.'); askDone(done); }); ask({title:'Harpie',prompt:'Cliquez la zone vide d’arrivée.',zones:tz}); });
+    ask({title:'Harpie',prompt:'Cliquez la production à déplacer.',zones}); },
+  P12(done){ const ids=prodZones('soja').filter(id=>ZB[id].adj.some(a=>prodOf(a,'soja'))); ids.forEach(id=>weaken(id)); log(`Capybara : ${ids.length} Soja affaibli(s).`); done(); },
+  P13(done){ let first=null; const step=()=>{ const river={}; S.river.forEach((sl,i)=>{ if(sl) river[i]=()=>{ if(first===null){ first=i; step(); } else { [S.river[first],S.river[i]]=[S.river[i],S.river[first]]; first=null; step(); } }; });
+    ask({title:'Pirarucu',prompt:first===null?'Cliquez une carte de la Rivière, puis celle avec laquelle l’échanger.':'Cliquez la carte avec laquelle échanger.',river,buttons:[{lbl:'Terminé',fn:()=>askDone(done)}]}); }; step(); },
+  P14(done){ pickZones('Paresseux','Cliquez un Soja ou une Coca à affaiblir',()=>allZ().filter(id=>prodOf(id,'soja')||prodOf(id,'coca')),S.round,id=>weaken(id),done); },
+  P15(done){ let n=0; allZ().filter(isEmpty).forEach(id=>{ if(placeFromC(id)) n++; }); log(`Agouti : ${n} jeton(s) Forêt placés sur les zones vides.`); done(); },
+  P16(done){ if (allZ().filter(id=>Z(id).meeple&&isWooded(id)).length>=3) lowerAlign('judiciaire','Quilombolas'); else log('Quilombolas : moins de 3 Peuples sur des zones boisées.'); done(); },
+  P17(done){ const ids=S.river.filter(sl=>sl&&sl.k==='pr'&&CARD[sl.id].type==='Esprit').map(sl=>sl.id); log(`Chaman : ${ids.length} Esprit(s) activé(s).`);
+    const run=i=>{ if(i>=ids.length) return done(); log(`→ ${CARD[ids[i]].name}`); runProtector(ids[i],()=>run(i+1)); }; run(0); },
+  P18(done){ const river={}; S.river.forEach((sl,i)=>{ if(sl&&sl.k==='en') river[i]=()=>{ UI.ask=null; publish(i,true,done); }; });
+    if(!Object.keys(river).length){ log('Journaliste : aucune Enquête dans la Rivière.'); return done(); }
+    ask({title:'Journaliste',prompt:'Cliquez l’Enquête de la Rivière à publier.',river,buttons:[{lbl:'Annuler',fn:()=>askDone(done)}]}); },
+  P19(done){ const n=Math.min(3,forestAvail()); S.arenas.judiciaire.F+=n; log(`Juriste : ${n} Peuple(s) dans l’Arène judiciaire.`); done(); },
+  P20(done){ moveConscience(1,'Cacique'); done(); },
+  P21(done){ gainForest(2*S.arenas.politique.F,'Députée'); done(); },
+  P22(done){ pickZones('Cueilleurs','Cliquez une Coca à affaiblir',()=>prodZones('coca'),1,id=>weaken(id),()=>{
+    ask({title:'Cueilleurs',prompt:'Action supplémentaire gratuite de force 3 :',buttons:['reboiser','proteger','resister','militer'].map(k=>({lbl:FOREST_ACTIONS[k],fn:()=>{ UI.ask=null; UI.flow={act:k,total:3,X:3,done:0,owner:'F',hit:[],sel:null,free:true,after:done}; log('Cueilleurs : action gratuite de force 3.'); render(); }}))}); }); },
+  P23(done){ let n=0; allZ().filter(id=>Z(id).meeple&&canPlaceForest(id)).forEach(id=>{ if(placeFromC(id)) n++; }); log(`Planteurs : ${n} jeton(s) Forêt placés.`); done(); },
+  P24(done){ let k=0; const step=()=>{ if(k>=3) return askDone(done);
+      const zones={}; allZ().filter(id=>Z(id).meeple).forEach(id=>zones[id]=()=>{ const tz={}; allZ().filter(t=>isWooded(t)&&!Z(t).meeple).forEach(t=>tz[t]=()=>{ Z(id).meeple=false; Z(t).meeple=true; k++; step(); }); ask({title:'Piroguiers',prompt:'Cliquez la zone boisée d’arrivée.',zones:tz}); });
+      ask({title:'Piroguiers',prompt:`Cliquez un Peuple à déplacer (${k+1}/3)`,zones,buttons:[{lbl:'Terminer',fn:()=>askDone(done)}]}); }; step(); },
+  P25(done){ gainForest(S.river.filter(sl=>sl&&sl.k==='pr'&&CARD[sl.id].type==='Personne').length,'Ribeirinhos'); done(); },
+  P26(done){ markInfo(); const n=allZ().filter(isEmpty).length; let k=0; for(;k<n&&S.decks.enquetes.length;k++) S.forest.hand.push(S.decks.enquetes.shift()); log(`Cartographe : le Protecteur pioche ${k} Enquête(s).`); for(let i=S.forest.hand.length-3;i>0;i--) S.pending.unshift({type:'discardEnq'}); done(); },
+  P27(done){ if(forestAvail()<=0){ log('Guerrières : plus de Peuple disponible.'); return done(); }
+    pickZones('Guerrières','Cliquez une zone boisée adjacente à une production',()=>allZ().filter(id=>isWooded(id)&&!Z(id).meeple&&ZB[id].adj.some(isProd)),1,id=>{ Z(id).meeple=true;
+      const tz={}; ZB[id].adj.filter(isProd).forEach(t=>tz[t]=()=>{ weaken(t); askDone(done); }); setTimeout(()=>ask({title:'Guerrières',prompt:'Cliquez la production adjacente à affaiblir.',zones:tz}),0); },()=>{}); },
+  P28(done){ const river={}; S.river.forEach((sl,i)=>{ if(sl&&sl.k==='pr'&&CARD[sl.id].type==='Animal') river[i]=()=>{ S.discard.push(sl.id); S.river[i]=null; S.turn.riverChanged=true; log(`Chasseurs : ${CARD[sl.id].name} est défaussé.`); UI.ask=null; after(); }; });
+    const after=()=>{ let n=0; allZ().filter(id=>isDense(id)&&!Z(id).meeple).forEach(id=>{ if(forestAvail()>0){ Z(id).meeple=true; n++; } }); log(`Chasseurs : ${n} Peuple(s) placés sur les zones denses.`); done(); };
+    if(!Object.keys(river).length) return after(); ask({title:'Chasseurs',prompt:'Cliquez un Animal de la Rivière à défausser.',river}); },
+  P29(done){ S.fresque.max=2; if (S.fresque.active.length<2) newFresque(); log('Artiviste : 2 Fresques sont désormais disponibles.', true); done(); },
+  P30(done){ if (S.river.filter(sl=>sl&&sl.k==='pr'&&CARD[sl.id].type==='Personne').length>=3) lowerAlign('politique','Manifestants'); else log('Manifestants : moins de 3 Personnes dans la Rivière.'); done(); },
+  P31(done){ markInfo(); const id=S.decks.protecteurs.shift(); if(!id) return done(); S.discard.push(id); log(`Yurupari révèle ${CARD[id].name}.`, true); flash(CARD[id].img); runProtector(id,done); },
+  P32(done){ const zones={}; allZ().forEach(id=>zones[id]=()=>{ const tz={}; ZB[id].adj.forEach(t=>tz[t]=()=>{ const a=Z(id), b=Z(t); S.zones[id]=b; S.zones[t]=a; log('Motelo Mama : deux zones échangent leur contenu.'); askDone(done); }); ask({title:'Motelo Mama',prompt:'Cliquez la zone adjacente à échanger.',zones:tz}); });
+    ask({title:'Motelo Mama',prompt:'Cliquez la première zone.',zones}); },
+  P33(done){ chooseExpl('Urcututo','Consulter les Contrats de quel Exploitant ?',c=>{ if(!c) return done(); const e=S.expl[c];
+    popup({cls:'pobj',dur:4200,html:`<div class="ptitle">Contrats de ${esc(CAP(NAME(c)))}</div><div style="display:flex;gap:8px;justify-content:center;margin-top:8px">${e.contrats.map(id=>`<img src="${CARD[id].img}" style="width:150px;border-radius:8px">`).join('')||'<i>Aucun Contrat en main.</i>'}</div>`});
+    log(`Urcututo : le Protecteur consulte les Contrats de ${NAME(c)}.`); done(); }); },
+  P34(done){ markInfo(); const id=S.decks.evenements.shift(); if(id){ S.forest.events.push(id); S.flags.evRevealed=true; log(`Boitatá révèle l’Événement ${CARD[id].name}.`, true); } done(); },
+  P35(done){ const ids=allZ().filter(isDense); if(!ids.length){ log('Mapinguari : aucune zone dense.'); return done(); }
+    pickZones('Mapinguari','Cliquez la zone dense visée',()=>ids,1,id=>{ const t=ZB[id].adj.filter(isProd); t.forEach(x=>weaken(x)); log(`Mapinguari : ${t.length} production(s) affaiblie(s).`); },done); },
+  P36(done){ const river={}; S.river.forEach((sl,i)=>{ if(sl&&sl.k==='pr'&&sl.id!=='P36') river[i]=()=>{ UI.ask=null; log(`Chullachaqui copie ${CARD[sl.id].name}.`); runProtector(sl.id,done); }; });
+    if(!Object.keys(river).length) return done(); ask({title:'Chullachaqui',prompt:'Cliquez la carte Protecteur à copier.',river}); },
+  P37(done){ const n=EXPL.reduce((s,c)=>s+S.expl[c].cards.Animal.length,0); if(!n){ log('Anhangá : aucun Animal acheté.'); return done(); }
+    pickZones('Anhangá','Cliquez une production à affaiblir',()=>prodZones(),n,id=>weaken(id),done,{repeat:true}); },
+  P38(done){ EXPL.forEach(c=>discardRandom(c,1)); log('Curupira : chaque Exploitant défausse 1 carte au hasard.'); done(); },
+  P39(done){ ask({title:'Tunche',prompt:'Quelle action des Exploitants bloquer jusqu’à votre prochain tour ?',buttons:Object.entries(EXPL_ACTIONS).map(([k,l])=>({lbl:l,fn:()=>{ S.block=k; log(`Tunche : l’action ${l} est bloquée jusqu’au prochain tour du Protecteur.`, true); askDone(done); }}))}); },
+  P40(done){ chooseExpl('Yacuruna','Quel Exploitant ?',c=>{ if(!c) return done(); const picks=[];
+    const step=()=>{ if(picks.length>=2){ S.imposed[c]=picks.slice(); log(`Yacuruna : ${NAME(c)} devra faire ${picks.map(k=>EXPL_ACTIONS[k]).join(' puis ')} à son prochain tour.`, true); return askDone(done); }
+      ask({title:'Yacuruna',prompt:`Action imposée n°${picks.length+1} pour ${NAME(c)} :`,buttons:Object.entries(EXPL_ACTIONS).map(([k,l])=>({lbl:l,fn:()=>{ picks.push(k); step(); }}))}); }; step(); }); },
+  P41(done){ S.mayantu=true; log('Mayantu : aucun Peuple ne peut être retiré jusqu’au prochain tour du Protecteur.', true); done(); },
+  P42(done){ chooseExpl('Caipora','Quel Exploitant doit choisir ?',c=>{ if(!c) return done();
+    ask({title:'Caipora',prompt:`${CAP(NAME(c))} choisit :`,buttons:[{lbl:`Perdre tout son argent (${S.expl[c].money} $)`,fn:()=>{ S.expl[c].money=0; log(`Caipora : ${NAME(c)} perd tout son argent.`); askDone(done); }},
+      {lbl:'Tous ses jetons affaiblis',fn:()=>{ allZ().filter(id=>isProd(id)&&Z(id).piece.owner===c).forEach(id=>weaken(id)); log(`Caipora : toutes les productions de ${NAME(c)} sont affaiblies.`); askDone(done); }}]}); }); },
+  P43(done){ if(!S.reserve.or){ log('Mãe do Ouro : plus d’Or en réserve.'); return done(); }
+    pickZones('Mãe do Ouro','Cliquez une zone boisée sans ressource',()=>allZ().filter(id=>isWooded(id)&&!Z(id).res),1,id=>{ Z(id).res='or'; S.reserve.or--; log('Mãe do Ouro : 1 Or est placé sous une zone boisée.'); },done); },
+  P44(done){ const bases=allZ().filter(id=>Z(id).piece&&Z(id).piece.type==='base');
+    pickZones('Capelobo','Cliquez un emplacement de départ',()=>bases,1,id=>{ const t=ZB[id].adj.filter(isProd); t.forEach(x=>weaken(x)); log(`Capelobo : ${t.length} production(s) affaiblie(s).`); },done); },
+  P45(done){ S.river.forEach(sl=>{ if(sl&&sl.k==='pr') sl.hidden=true; }); log('Iara : les cartes de la Rivière sont retournées face cachée (non achetables).', true); done(); },
+};
+function runProtector(id, done){ if(!UI.effDone) UI.effDone=done; const f=PR_EFFECT[id]; if (!f){ log(`${CARD[id].name} : effet non programmé.`); return done(); } f(done); }
+
+/* ---------- Événements (force X) ---------- */
+const EV_EFFECT = {
+  Ev1(X,done){ EXPL.forEach(c=>{ for(let i=0;i<X&&S.expl[c].atouts.length;i++) discardAtout(c, S.expl[c].atouts[Math.floor(Math.random()*S.expl[c].atouts.length)]); }); log(`Glissement de terrain : chaque Exploitant défausse ${X} Atout(s).`); done(); },
+  Ev2(X,done){ pickZones('Incendie','Cliquez la production d’origine',()=>prodZones(),1,id=>{ weaken(id); const adj=ZB[id].adj.filter(isProd);
+      setTimeout(()=>pickZones('Incendie','Cliquez une production adjacente',()=>adj.filter(isProd),X,t=>weaken(t),done),0); },()=>{}); },
+  Ev3(X,done){ pickZones('Sécheresse','Cliquez une production à affaiblir 2 fois',()=>prodZones(),X,id=>{ weaken(id); weaken(id); },done); },
+  Ev4(X,done){ let k=0; const step=()=>{ if(k>=X) return askDone(done); const bs=[];
+      EXPL.forEach(c=>S.expl[c].tokens.forEach(t=>{ if(t.v===2) bs.push({lbl:`${CAP(NAME(c))} : ② ${t.used?'(posé)':''}`,fn:()=>{ t.v=1; k++; log(`Épidémie : un jeton ② de ${NAME(c)} devient ①.`); step(); }}); }));
+      if(!bs.length) return askDone(done); bs.push({lbl:'Terminer',fn:()=>askDone(done)}); ask({title:'Épidémie',prompt:`Retournez un jeton ② en ① (${k+1}/${X})`,buttons:bs}); }; step(); },
+  Ev5(X,done){ S.flags.erosion=true; log('Érosion des sols : chaque récolte de la manche est réduite de 3 $.', true); done(); },
+  Ev6(X,done){ let k=0; const step=()=>{ if(k>=X) return askDone(done); const zones={};
+      prodZones().forEach(a=>zones[a]=()=>{ const tz={}; prodZones().filter(b=>b!==a).forEach(b=>tz[b]=()=>{ const p=Z(a).piece; Z(a).piece=Z(b).piece; Z(b).piece=p; k++; log('Pluie torrentielle : deux productions échangent leur place.'); step(); }); ask({title:'Pluie torrentielle',prompt:'Cliquez la production avec laquelle échanger.',zones:tz}); });
+      ask({title:'Pluie torrentielle',prompt:`Cliquez une production à déplacer (${k+1}/${X})`,zones,buttons:[{lbl:'Terminer',fn:()=>askDone(done)}]}); }; step(); },
+  Ev7(X,done){ const ids=prodZones().filter(id=>!ZB[id].adj.some(a=>Z(a).forest>=X)); ids.forEach(id=>weaken(id)); log(`Pluie torrentielle : ${ids.length} production(s) affaiblie(s).`); done(); },
+  Ev8(X,done){ placeForestMeepleArenas(X,'Recul des habitats',done); },
+};
+
+/* ---------- Enquêtes : conditions et conséquences ---------- */
+const tokensAround = id => ZB[id].adj.filter(a=>{ const z=Z(a); return z.forest||z.res||z.piece||z.meeple; }).length;
+const occupiesKind = (kind,c) => allZ().filter(id=>ZB[id].kind===kind&&isProd(id)&&(!c||Z(id).piece.owner===c)).length;
+const EN = {
+  Enq01:{ ok:()=>S.flags.donation, run(done){ chooseExpl('Enquête','Quel Exploitant recule de 3 crans sur la Fondation ?',c=>{ if(c){ S.expl[c].donation=Math.max(0,S.expl[c].donation-3); log(`${CAP(NAME(c))} recule de 3 crans sur la Fondation.`); } done(); }); } },
+  Enq02:{ ok:()=>prodZones('coca').some(id=>tokensAround(id)>=3), run(done){ pickZones('Cartel','Cliquez la Coca entourée',()=>prodZones('coca').filter(id=>tokensAround(id)>=3),1,id=>{ const adj=ZB[id].adj.filter(isProd); weaken(id); adj.forEach(a=>weaken(a)); },done); } },
+  Enq03:{ ok:()=>prodZones('soja').length>=3, run(done){ prodZones('soja').filter(id=>!Z(id).piece.weak).forEach(id=>weaken(id)); done(); } },
+  Enq04:{ ok:()=>S.flags.evRevealed, run(done){ moveConscience(1,'Enquête climatique'); done(); } },
+  Enq05:{ ok:()=>prodZones('betail').some(id=>emptyRegionFrom(id)>=2), run(done){ pickZones('Déforestation','Cliquez le Bétail visé',()=>prodZones('betail').filter(id=>emptyRegionFrom(id)>=2),1,id=>{
+      const seen=new Set(), st=ZB[id].adj.filter(isEmpty); while(st.length){ const z=st.pop(); if(seen.has(z)) continue; seen.add(z); ZB[z].adj.filter(isEmpty).forEach(a=>st.push(a)); }
+      let n=0; seen.forEach(z=>{ if(placeFromC(z)) n++; }); log(`${n} jeton(s) Forêt replantés.`); },done); } },
+  Enq06:{ ok:()=>EXPL.some(c=>S.expl[c].storage.forest>0), run(done){ EXPL.forEach(c=>{ const n=S.expl[c].storage.forest; if(n) pay(c,3*n,'trafic de bois'); }); done(); } },
+  Enq07:{ ok:()=>EXPL.some(c=>ARENAS.some(a=>S.arenas[a][c]>=3)), run(done){
+      const opts=ARENAS.filter(a=>EXPL.some(c=>S.arenas[a][c]>=3));
+      ask({title:'Lobbys',prompt:'Dans quelle Arène retirer 3 meeples Exploitants ?',buttons:opts.map(a=>({lbl:ARENA_LABEL[a],fn:()=>{ let k=3; for(const c of EXPL){ const r=Math.min(k,S.arenas[a][c]); S.arenas[a][c]-=r; S.expl[c].meeplesHand+=r; k-=r; } log(`3 meeples retirés de l’Arène ${ARENA_LABEL[a]}.`); askDone(done); }}))}); } },
+  Enq08:{ ok:()=>occupiesKind('mine')>=2, run(done){ allZ().filter(id=>ZB[id].kind==='mine'&&isProd(id)).forEach(id=>weaken(id)); done(); } },
+  Enq09:{ ok:()=>S.flags.projetE, run(done){ EXPL.forEach(c=>{ const n=S.expl[c].projCount||0; if(n) pay(c,3*n,'normes'); }); done(); } },
+  Enq10:{ ok:()=>S.flags.contrat, run(done){ EXPL.forEach(c=>{ const e=S.expl[c]; if(e.contrats.length) discardContrat(c, e.contrats[Math.floor(Math.random()*e.contrats.length)]); }); log('Chaque Exploitant défausse 1 Contrat au hasard.'); done(); } },
+  Enq11:{ ok:()=>S.flags.bought.Animal, run(done){ placeForestMeepleArenas(3,'Trafic animal',done); } },
+  Enq12:{ ok:()=>S.flags.bought.Personne, run(done){ pickZones('Autochtones','Cliquez une zone boisée pour y placer un Peuple',()=>forestAvail()>0?allZ().filter(id=>isWooded(id)&&!Z(id).meeple):[],3,id=>{ Z(id).meeple=true; },done); } },
+  Enq13:{ ok:()=>S.flags.bought.luxe, run(done){ EXPL.forEach(c=>{ const n=S.expl[c].luxe.length; if(n) pay(c,5*n,'blanchiment'); }); done(); } },
+  Enq14:{ ok:()=>occupiesKind('oil')>=3, run(done){ EXPL.forEach(c=>{ const n=occupiesKind('oil',c); if(n) pay(c,2*n,'marée noire'); }); done(); } },
+  Enq15:{ ok:()=>S.flags.bought.Esprit, run(done){ if(!S.fresque.active.length) return done();
+    if (S.fresque.active.length===1){ completeFresque(0,'Appropriation culturelle'); return done(); }
+    ask({title:'Appropriation culturelle',prompt:'Quelle Fresque valider ?',buttons:S.fresque.active.map((f,fi)=>({lbl:'Fresque '+(fi+1)+' : '+CARD[f.id].pat.join(' · '),fn:()=>{ UI.ask=null; completeFresque(fi,'Appropriation culturelle'); done(); }}))}); } },
+};
+const pubSlots = () => Math.min(5, 1 + Math.max(...EXPL.map(c=>S.expl[c].vp)));
+function publish(i, anySlot, done){ if(!UI.effDone) UI.effDone=done;
+  const sl=S.river[i], c=CARD[sl.id], en=EN[sl.id];
+  if (!en.ok()){ toast(`Les faits de « ${c.name} » ne sont pas avérés.`); log(`Publication impossible : « ${c.name} » — condition non remplie.`); return done(); }
+  S.river[i]=null; S.turn.riverChanged=true; S.forest.published.push(sl.id);
+  log(`📰 Le Protecteur publie « ${c.name} ».`, true); flash(c.img);
+  en.run(()=>{ if (S.forest.published.length%2===0) moveConscience(1,'paire d’Enquêtes publiées'); done(); });
+}
+
+/* ---------- Objectifs (Projets) ---------- */
+/* Motifs exacts des Objectifs, en coordonnées axiales (q,r).
+   Le motif peut être tourné (6 rotations) et retourné (miroir), mais sa forme est conservée. */
+ZONES.forEach(z=>{ z.q=Math.round((z.x-987)/197.5); z.r=Math.round((z.y-865)/235 - z.q/2); });
+const ZQR = Object.fromEntries(ZONES.map(z=>[z.q+','+z.r, z.id]));
+const SYM = (()=>{ const out=[]; for (const refl of [false,true]) for (let k=0;k<6;k++) out.push(([q,r])=>{ let x=q, z=r, y=-x-z; if(refl){ [y,z]=[z,y]; } for(let i=0;i<k;i++){ [x,y,z]=[-z,-x,-y]; } return [x,z]; }); return out; })();
+function matchPattern(cells){ // cells : [[q,r,pred], ...] → liste d'ids ou null
+  for (const T of SYM){ const m=cells.map(([q,r,f])=>[...T([q,r]),f]);
+    for (const z of ZONES){ const ids=[]; let ok=true;
+      for (const [dq,dr,f] of m){ const id=ZQR[(z.q+dq)+','+(z.r+dr)]; if(!id||!f(id)){ ok=false; break; } ids.push(id); }
+      if (ok) return ids; } }
+  return null;
+}
+const pM = id => Z(id).meeple, pP = id => isProd(id), pE = id => isEmpty(id);
+const pK = k => id => prodOf(id,k), pBase = id => { const p=Z(id).piece; return !!(p&&p.type==='base'); };
+const SHAPE = {
+  line:  [[0,0],[1,-1],[2,-2]],                    // Surveillance / Piste : 3 en ligne droite
+  zig5:  [[0,0],[1,0],[-1,0],[1,-1],[-1,1]],         // Autodémarcation / Barrage
+};
+const OBJ = {
+  Obj01:{ F:()=>S.arenas.judiciaire.F>=2 && !!matchPattern(SHAPE.line.map(c=>[...c,pM])),
+          E:()=>matchPattern(SHAPE.line.map(c=>[...c,pP])),
+          actF:{lbl:'Détruire 1 production',run(done){ pickZones('Piste','Cliquez la production à détruire',()=>prodZones(),1,id=>{ const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; },done); }},
+          actE:{lbl:'Placer 1 production n’importe où',run(c,done){ const e=S.expl[c];
+            ask({title:'Piste d’atterrissage',prompt:'Quelle production ?',buttons:['betail','coca','soja'].map(q=>({lbl:PROD[q],dis:!e.prod[q],fn:()=>{ UI.ask=null; pickZones('Piste','Cliquez une zone vide',()=>allZ().filter(isEmpty),1,id=>{ e.prod[q]--; Z(id).piece={type:'prod',kind:q,owner:c,weak:false}; },done); }}))}); }} },
+  Obj02:{ F:()=>S.arenas.politique.F>=2 && !prodZones('betail').length,
+          E:()=>{ const m=matchPattern([[0,0,pK('betail')],[1,0,pE],[0,1,pE],[1,1,pK('betail')]]); return m?[m[0],m[3]]:null; }, // Abattoir : losange Bétail / vide / vide / Bétail
+          actF:{lbl:'Placer 2 Forêt du C',run(done){ pickZones('Coopérative','Cliquez une zone vide ou boisée',()=>S.forest.C?allZ().filter(canPlaceForest):[],2,id=>placeFromC(id),done); }},
+          actE:{lbl:'Récolter 2 fois vos Bétail',run(c,done){ harvestKind(c,'betail'); harvestKind(c,'betail'); done(); }} },
+  Obj03:{ F:()=>S.arenas.judiciaire.F>=2 && !prodZones('coca').length,
+          E:()=>matchPattern([[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP],[-1,1,pP]]), // Laboratoire : Coca + 4 productions autour
+          actF:{lbl:'Détruire 1 Coca',run(done){ pickZones('Narcotrafic','Cliquez la Coca à détruire',()=>prodZones('coca'),1,id=>{ const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; },done); }},
+          actE:{lbl:'Récolter 2 fois vos Coca',run(c,done){ harvestKind(c,'coca'); harvestKind(c,'coca'); done(); }} },
+  Obj04:{ F:()=>S.arenas.politique.F>=2 && !prodZones('soja').length,
+          E:()=>matchPattern([[0,0,pK('soja')],[1,-1,pK('soja')],[1,0,pK('soja')],[0,1,pBase]]), // Front pionnier : 3 Soja + camp de base
+          actF:{lbl:'Régénérer (1 par Peuple sur zone boisée)',run(done){ regenerate(allZ().filter(id=>Z(id).meeple&&isWooded(id)).length); done(); }},
+          actE:{lbl:'Récolter 2 fois vos Soja',run(c,done){ harvestKind(c,'soja'); harvestKind(c,'soja'); done(); }} },
+  Obj05:{ F:()=>S.arenas.judiciaire.F>=2 && !!matchPattern(SHAPE.zig5.map(c=>[...c,pM])),
+          E:()=>matchPattern(SHAPE.zig5.map(c=>[...c,pP])),
+          actF:{lbl:'1 Peuple sur 2 zones denses',run(done){ pickZones('Autodémarcation','Cliquez une zone dense',()=>forestAvail()>0?allZ().filter(id=>isDense(id)&&!Z(id).meeple):[],2,id=>{ Z(id).meeple=true; },done); }},
+          actE:{lbl:'+② à votre prochaine action',run(c,done){ S.expl[c].bonusNext=2; log(`${CAP(NAME(c))} : +2 à sa prochaine action.`); done(); }} },
+};
+function checkObjectives(){
+  if (!S.turn||S.over) return;
+  const seat=cur();
+  for (const id of S.objectifs.slice()){
+    const o=OBJ[id]; if(!o) continue;
+    if (seat==='F' && o.F()){ realize(id,'F'); }
+    if (seat!=='F'){ const pat=o.E(); if (pat){ const owners={}; pat.forEach(z=>{ const p=Z(z).piece; if(p&&p.owner) owners[p.owner]=(owners[p.owner]||0)+1; }); if(owners[seat]) realize(id,'E',owners); } }
+  }
+}
+function realize(id, side, owners){
+  const [perTok,cons]=POLITIQUE_GAIN[S.align.politique], card=CARD[id];
+  objPopup(id, side, side==='F'?{F:cons}:Object.fromEntries(Object.keys(owners).map(c=>[c,perTok*owners[c]])));
+  S.objectifs=S.objectifs.filter(x=>x!==id);
+  if (side==='F'){ log(`★ Le Protecteur réalise « ${card.foret} ».`, true); moveConscience(cons,'Objectif'); }
+  else { log(`★ Les Exploitants réalisent « ${card.expl} ».`, true); S.flags.projetE=true;
+    const ks=Object.keys(owners); ks.forEach(c=>{ if(ks.length>=2) S.expl[c].projCollab=true; else S.expl[c].projSolo=true; });
+    for (const c in owners){ const e=S.expl[c]; e.money+=perTok*owners[c]; e.projCount=(e.projCount||0)+1; if(e.participation) e.participation--; log(`${CAP(NAME(c))} gagne ${perTok*owners[c]} $ (${owners[c]} jeton(s) de participation).`); if (e.projCount%2===0) gainVP(c,1,'paire de Projets'); } }
+  if (S.projects.length<4) S.projects.push({id,side,owners:side==='E'?Object.keys(owners):[]}); else log('Les 4 emplacements de Projet sont pleins : la carte est défaussée.');
+  const nx=S.decks.objectifs.shift(); markInfo(); if(nx){ S.objectifs.push(nx); log(`Nouvel Objectif : ${CARD[nx].foret} / ${CARD[nx].expl}.`); }
+}
+
+/* =========================================================
+   CARTES ATOUT (Exploitants) — achetées depuis la main via « Acheter »
+   ========================================================= */
+const ATOUTS = [
+  ['Bulldozer',2],['Influenceur',3],['Chargeur de bois',1],['Silo',3],['Drone semeur',2],['Camion à bétail',1],['Hélicoptère',2],['Clôture électrifiée',1],
+  ['Hormones de croissance',2],['Graines brevetées',2],['Cuve de macération',2],['Engrais fertilisant',2],['Évangéliste',3],['Braconniers',3],['Mercenaires',2],['Vétérinaire',1],
+  ['Banquier',1],['Narcotrafiquant',2],['Incendiaire',2],['Avion d’épandage',2],['Gestionnaire de fortune',1],['Orpailleur',1],['Prospecteur',1],['Gouverneur',3],
+  ['Titre de propriété',2],['Lobbyiste',2],['Moissonneuse batteuse',1],['Pelle mécanique',3],['Pompe hydraulique',2],['Téléphone satellite',1],
+].map(([name,cost],i)=>({ id:'E'+String(i+1).padStart(2,'0'), name, cost, img:`img/cards/at${String(i+1).padStart(2,'0')}.webp` }));
+ATOUTS.forEach(c=>CARD[c.id]=c);
+BACK.at='img/cards/back_at.webp';
+const MAX_HAND_AT = 3;
+
+function drawAtouts(c, n){
+  const e=S.expl[c]; let k=0;
+  for (;k<n;k++){ if(!S.decks.atouts.length){ S.decks.atouts=shuffle(S.discardAt||[]); S.discardAt=[]; } const id=S.decks.atouts.shift(); if(!id) break; e.atouts.push(id); }
+  if (k) log(`${CAP(NAME(c))} pioche ${k} Atout(s).`);
+  if (e.atouts.length>MAX_HAND_AT && !S.pending.some(p=>p.type==='discardAt'&&p.c===c)) S.pending.push({type:'discardAt',c});
+  markInfo();
+}
+function discardAtout(c, id){ const e=S.expl[c]; e.atouts=e.atouts.filter(x=>x!==id); (S.discardAt=S.discardAt||[]).push(id); }
+
+/* Déforestation d'un jeton (action Déforester et cartes) */
+function deforestOne(c, id, quiet){
+  const e=S.expl[c], z=Z(id); if (!z.forest) return;
+  z.forest--;
+  if (S.turn && S.turn.autoHarvest){ e.money++; S.forest.C++; log(`${CAP(NAME(c))} déforeste et récolte aussitôt (+1 $, Chargeur de bois).`); fly(TOK('foret_r'),{zone:id},{sel:'#sum-F .c-C'}); }
+  else if (e.storage.forest<(hasCt(c,'C13')?4:2)){ e.storage.forest++; if(!quiet) log(`${CAP(NAME(c))} déforeste (bois en stockage).`); fly(TOK('foret_r'),{zone:id},{sel:`#sum-${c} .c-bois`}); }
+  else { S.forest.C++; if(!quiet) log(`${CAP(NAME(c))} déforeste — stockage plein, le jeton va en C du Protecteur.`); fly(TOK('foret_r'),{zone:id},{sel:'#sum-F .c-C'}); }
+  if (!z.forest && S.turn && cur()===c) tct().emptied++;
+  if (!z.forest && z.bounty){ e.money+=z.bounty; log(`${CAP(NAME(c))} récupère ${z.bounty} $ déposés par le Capucin.`, true); z.bounty=0; }
+  if (!z.forest && z.res){ e.storage[z.res]++; log(`${CAP(NAME(c))} prend 1 ${z.res==='or'?'Or':'Pétrole'} !`, true); fly(TOK(z.res==='or'?'or_r':'petrole_r'),{zone:id},{sel:`#sum-${c} .c-${z.res}`},250); z.res=null; }
+}
+function chaseMeeple(id){ Z(id).meeple=false; if (S.turn&&cur()!=='F') tct().meeples++; fly(TOK('foret_meeple_r'),{zone:id},{sel:'#sum-F h3'}); S.pending.push({type:'forestArena'}); }
+function reinforce(id){ const p=Z(id).piece; if(!p||!p.weak) return false; p.weak=false; ANIM.push({type:'flip',zone:id,from:TOK(`${p.owner}_${p.kind}_v`),to:TOK(`${p.owner}_${p.kind}_r`)}); return true; }
+function placeProd(c,k,id){ const e=S.expl[c]; if(!e.prod[k]) return false; e.prod[k]--; Z(id).piece={type:'prod',kind:k,owner:c,weak:false}; fly(TOK(`${c}_${k}_r`),{sel:`#sum-${c} h3`},{zone:id,hide:true}); return true; }
+const myProd = (c,k) => prodZones(k).filter(id=>Z(id).piece.owner===c);
+const myOccupied = c => allZ().filter(id=>Z(id).piece&&Z(id).piece.owner===c);
+function occupies(c, kind){ return allZ().filter(id=>ZB[id].kind===kind&&Z(id).piece&&Z(id).piece.owner===c).length; }
+function harvestCustom(c, ids, mult, noWeaken, label){
+  const e=S.expl[c]; let tot=0;
+  ids.forEach(id=>{ const p=Z(id).piece; if(!p) return; const v=harvestValue(id); if(p.kind!=='soja'&&!v) return; tot+=v; if(!noWeaken) weaken(id); });
+  tot*=mult; if (S.flags.erosion) tot=Math.max(0,tot-3);
+  e.money+=tot; log(`${CAP(NAME(c))} ${label} : +${tot} $.`); return tot;
+}
+
+const AT_EFFECT = {
+  E01(c,done){ // Bulldozer
+    pickZones('Bulldozer','Cliquez une zone adjacente (sans Peuple) à raser',()=>explAdj(c).filter(id=>isWooded(id)&&!Z(id).meeple),1,id=>{ const n=Z(id).forest; for(let i=0;i<n;i++) deforestOne(c,id,true); log(`Bulldozer : ${n} jeton(s) Forêt retirés.`); },done); },
+  E02(c,done){ ask({title:'Influenceur',prompt:'Quel alignement monter d’un niveau ?',buttons:ARENAS.map(a=>({lbl:ARENA_LABEL[a],dis:S.align[a]===0,fn:()=>{ S.align[a]--; log(`Influenceur : l’alignement ${ARENA_LABEL[a]} monte.`, true); askDone(done); }}))}); },
+  E03(c,done){ S.turn.autoHarvest=true; log('Chargeur de bois : tout bois retiré ce tour est récolté automatiquement.'); done(); },
+  E04(c,done){ ['soja','betail','coca'].forEach(k=>{ if(myProd(c,k).length) harvestKind(c,k); }); done(); },
+  E05(c,done){ pickZones('Drone semeur','Cliquez une zone vide pour y placer un Soja',()=>S.expl[c].prod.soja?allZ().filter(isEmpty):[],2,id=>{ placeProd(c,'soja',id); },done); },
+  E06(c,done){ pickZones('Camion à bétail','Cliquez une zone vide pour y placer un Bétail',()=>S.expl[c].prod.betail?allZ().filter(isEmpty):[],1,id=>{ placeProd(c,'betail',id); },done); },
+  E07(c,done){ const bases=allZ().filter(id=>Z(id).piece&&Z(id).piece.type==='base'&&Z(id).piece.owner===c);
+    pickZones('Hélicoptère','Cliquez le camp de base à déplacer',()=>bases,1,from=>{ const tz={}; allZ().filter(isEmpty).forEach(t=>tz[t]=()=>{ Z(t).piece=Z(from).piece; Z(from).piece=null; log('Hélicoptère : le camp de base est déplacé.'); askDone(done); });
+      setTimeout(()=>ask({title:'Hélicoptère',prompt:'Cliquez la zone vide d’arrivée.',zones:tz}),0); },()=>{}); },
+  E08(c,done){ const adj=new Set(explAdj(c)); const list=allZ().filter(id=>Z(id).meeple&&adj.has(id));
+    if(!list.length){ log('Clôture électrifiée : aucun Peuple adjacent.'); return done(); }
+    let i=0; const step=()=>{ if(i>=list.length) return askDone(done); const from=list[i]; const tz={};
+      allZ().filter(t=>isWooded(t)&&!Z(t).meeple&&!adj.has(t)).forEach(t=>tz[t]=()=>{ Z(from).meeple=false; Z(t).meeple=true; i++; step(); });
+      ask({title:'Clôture électrifiée',prompt:`Où repousser ce Peuple ? (${i+1}/${list.length}) — zone boisée non adjacente à vous`,zones:tz,buttons:[{lbl:'Laisser sur place',fn:()=>{ i++; step(); }}]}); }; step(); },
+  E09(c,done){ harvestCustom(c,myProd(c,'betail'),1,true,'récolte ses Bétail sans les affaiblir (Hormones)'); done(); },
+  E10(c,done){ const mine=myProd(c,'soja'); const adv=prodZones('soja').filter(id=>Z(id).piece.owner!==c&&ZB[id].adj.some(a=>mine.includes(a)));
+    harvestCustom(c,[...mine,...adv],1,false,`récolte ses Soja et ${adv.length} Soja adverse(s) (Graines brevetées)`); done(); },
+  E11(c,done){ harvestCustom(c,myProd(c,'coca'),2,false,'récolte ses Coca en doublant (Cuve de macération)'); done(); },
+  E12(c,done){ pickZones('Engrais fertilisant','Cliquez une zone vide adjacente pour y placer un Soja',()=>S.expl[c].prod.soja?explAdj(c).filter(isEmpty):[],3,id=>{ placeProd(c,'soja',id); },done); },
+  E13(c,done){ let k=0; const step=()=>{ if(k>=2) return askDone(done); const river={};
+      S.river.forEach((sl,i)=>{ if(sl&&sl.k==='pr'&&!sl.hidden&&CARD[sl.id].type==='Personne') river[i]=()=>{ gainRiverCard(c,i); k++; step(); }; });
+      ask({title:'Évangéliste',prompt:`Cliquez une Personne de la Rivière (${k+1}/2)`,river,buttons:[{lbl:'Terminer',fn:()=>askDone(done)}]}); }; step(); },
+  E14(c,done){ markInfo(); const e=S.expl[c]; let kept=[];
+    for(let i=0;i<3;i++){ const id=S.decks.protecteurs.shift(); if(!id) break; if(CARD[id].type==='Animal'){ e.cards.Animal.push(id); kept.push(CARD[id].name); } else S.discard.push(id); }
+    log(`Braconniers : ${kept.length?'garde '+kept.join(', '):'aucun Animal pioché'}.`); done(); },
+  E15(c,done){ if(S.mayantu){ log('Mercenaires : Mayantu protège les Peuples.'); return done(); }
+    pickZones('Mercenaires','Cliquez un Peuple sur une zone boisée à retirer',()=>allZ().filter(id=>Z(id).meeple&&isWooded(id)),3,id=>chaseMeeple(id),done); },
+  E16(c,done){ let n=0; myProd(c,'betail').forEach(id=>{ if(reinforce(id)) n++; }); log(`Vétérinaire : ${n} Bétail renforcé(s).`); done(); },
+  E17(c,done){ const n=ARENAS.reduce((s,a)=>s+S.arenas[a][c],0); S.expl[c].money+=n; log(`Banquier : +${n} $.`); done(); },
+  E18(c,done){ pickZones('Narcotrafiquant','Cliquez une zone vide pour y placer votre Coca',()=>S.expl[c].prod.coca?allZ().filter(isEmpty):[],1,id=>{ placeProd(c,'coca',id); },done); },
+  E19(c,done){ pickZones('Incendiaire','Cliquez une zone sans Peuple pour retirer 1 Forêt',()=>allZ().filter(id=>isWooded(id)&&!Z(id).meeple),3,id=>deforestOne(c,id),done,{repeat:true}); },
+  E20(c,done){ const done2=[]; myProd(c,'soja').forEach(id=>{ if(reinforce(id)) done2.push(id); });
+    const tg=new Set(); done2.forEach(id=>ZB[id].adj.forEach(a=>{ if(Z(a).meeple) tg.add(a); }));
+    if (S.mayantu) tg.clear(); tg.forEach(id=>chaseMeeple(id));
+    log(`Avion d’épandage : ${done2.length} Soja renforcé(s), ${tg.size} Peuple(s) chassé(s).`); done(); },
+  E21(c,done){ const e=S.expl[c], from=e.donation; e.donation=Math.min(9,e.donation+3); stepTrack('don',c,from,e.donation); log(`Gestionnaire de fortune : Fondation ${from} → ${e.donation}.`);
+    for (const s of [3,6,9]) if (from<s&&e.donation>=s&&e.meeplesDon.includes(s)){ e.meeplesDon=e.meeplesDon.filter(x=>x!==s); e.meeplesHand++; log(`${CAP(NAME(c))} récupère un meeple (palier ${s}).`); regenerate(3); }
+    done(); },
+  E22(c,done){ const n=occupies(c,'mine'); S.expl[c].money+=3*n; log(`Orpailleur : +${3*n} $ (${n} gisement(s) minier(s)).`); done(); },
+  E23(c,done){ const used=[]; const cand=()=>allZ().filter(id=>isDense(id)&&!Z(id).res&&!used.includes(id));
+    const put=(kind,next)=>{ if(!S.reserve[kind]) return next(); const zones={}; cand().forEach(id=>zones[id]=()=>{ Z(id).res=kind; S.reserve[kind]--; used.push(id); log(`Prospecteur : 1 ${kind==='or'?'Or':'Pétrole'} placé sous une zone dense.`); next(); });
+      ask({title:'Prospecteur',prompt:`Cliquez une zone dense sans ressource pour y glisser 1 ${kind==='or'?'Or':'Pétrole'}.`,zones}); };
+    put('or',()=>put('petrole',()=>askDone(done))); },
+  E24(c,done){ drawContrats(c,3); done(); },
+  E25(c,done){ const e=S.expl[c];
+    pickZones('Titre de propriété','Cliquez une production adverse adjacente',()=>explAdj(c).filter(id=>isProd(id)&&Z(id).piece.owner!==c),1,id=>{ weaken(id); weaken(id);
+      if (!Z(id).piece) setTimeout(()=>ask({title:'Titre de propriété',prompt:'Quelle production placer sur la zone libérée ?',buttons:['betail','coca','soja'].map(k=>({lbl:PROD[k],dis:!e.prod[k],fn:()=>{ placeProd(c,k,id); askDone(done); }})).concat([{lbl:'Rien',fn:()=>askDone(done)}])}),0);
+      else setTimeout(done,0); },()=>{}); },
+  E26(c,done){ const e=S.expl[c]; const step=()=>{ if(!e.meeplesHand) return askDone(done); const arenas={};
+      ARENAS.forEach(a=>arenas[a+'|ex']=()=>{ e.meeplesHand--; S.arenas[a][c]++; step(); });
+      ask({title:'Lobbyiste',prompt:`Cliquez une Arène pour chaque meeple (${e.meeplesHand} restant(s)).`,arenas}); }; step(); },
+  E27(c,done){ harvestKind(c,'soja'); harvestKind(c,'soja'); done(); },
+  E28(c,done){ if(occupies(c,'mine')>=1&&S.reserve.or){ S.reserve.or--; S.expl[c].storage.or++; fly(TOK('or_r'),{sel:'#evdeck'},{sel:`#sum-${c} .c-or`}); log('Pelle mécanique : +1 Or.'); } else log('Pelle mécanique : aucun gisement minier occupé.'); done(); },
+  E29(c,done){ if(occupies(c,'oil')>=2&&S.reserve.petrole){ S.reserve.petrole--; S.expl[c].storage.petrole++; fly(TOK('petrole_r'),{sel:'#evdeck'},{sel:`#sum-${c} .c-petrole`}); log('Pompe hydraulique : +1 Pétrole.'); } else log('Pompe hydraulique : moins de 2 gisements pétroliers occupés.'); done(); },
+  E30(c,done){ drawAtouts(c,3); done(); },
+};
+function gainRiverCard(c, i){ // achat/prise d'une carte Protecteur de la Rivière, avec ses bonus
+  const e=S.expl[c], sl=S.river[i], card=CARD[sl.id];
+  e.cards[card.type].push(card.id); S.river[i]=null; S.turn.riverChanged=true; S.flags.bought[card.type]=true;
+  log(`${CAP(NAME(c))} prend ${card.name} (${card.type}).`);
+  if (card.type==='Esprit'&&e.cards.Esprit.length%3===0) gainVP(c,1,'3 Esprits');
+  if (card.type==='Personne'&&e.cards.Personne.length%2===0) upgradeToken(c);
+}
+function atCost(c,id){ return Math.max(0,CARD[id].cost-(hasCt(c,'C19')?1:0)); }
+function playAtout(c, id, done){
+  const e=S.expl[c], card=CARD[id];
+  const cost=atCost(c,id); if (e.money<cost){ toast(`Il faut ${cost} $.`); return done(); } e.money-=cost; discardAtout(c,id); if (S.turn&&cur()===c) tct().atouts++; log(`${CAP(NAME(c))} joue l’Atout « ${card.name} » (${cost} $).`, true); flash(card.img);
+  UI.effDone=done; AT_EFFECT[id](c, done);
+}
+
+/* =========================================================
+   CARTES CONTRAT
+   ========================================================= */
+const CONTRATS = [
+  ['Livraison de coca','recolter'],['Export de soja','recolter'],['Livraison de viande','recolter'],['Acheminement de bois','recolter'],['Projet en partenariat','exploiter'],
+  ['Appel aux dons','influencer'],['Recherche de pétrole','recolter'],['Prospection minière','recolter'],['Sécurisation de la forêt','acheter'],['Sauvegarde du patrimoine','acheter'],
+  ['Conseils stratégiques','influencer'],['Sauvegarde du patrimoine','acheter'],['Aménagement du territoire','deforester'],['Aménagement du territoire','deforester'],['Aménagement du territoire','influencer'],
+  ['Promotion des marques','influencer'],['Diversification','exploiter'],['Projet confidentiel','deforester'],['Extraction valorisée','acheter'],['Régulation des espèces','influencer'],
+].map(([name,act],i)=>({ id:'C'+String(i+1).padStart(2,'0'), name, act, img:`img/cards/ct${String(i+1).padStart(2,'0')}.webp` }));
+CONTRATS.forEach(c=>CARD[c.id]=c);
+BACK.ct='img/cards/back_ct.webp';
+const MAX_HAND_CT = 3;
+const CT_COND = {
+  C01:'Récoltez 1 Coca entourée de 3 jetons ou plus', C02:'Récoltez 3 Soja renforcés', C03:'Récoltez 1 Bétail relié à au moins 3 zones vides',
+  C04:'Faites 2 récoltes de bois durant le même tour', C05:'Réalisez un Projet en collaboration avec un autre Exploitant', C06:'Atteignez le niveau 6 de la Fondation',
+  C07:'Occupez 3 Gisements pétroliers', C08:'Occupez 2 Gisements miniers', C09:'Retirez 3 Peuples de la Forêt durant le même tour', C10:'Ayez 3 Esprits dans votre collection',
+  C11:'Ayez 4 meeples dans les Arènes', C12:'Ayez 2 [icône loupe] dans votre collection (non automatisé)', C13:'Videz 3 zones boisées durant le même tour', C14:'Ayez 3 Personnes dans votre collection',
+  C15:'Achetez 3 Atouts durant le même tour', C16:'Possédez 1 Bien de luxe', C17:'Récoltez 3 types de ressources différents durant le même tour', C18:'Réalisez un Projet seul',
+  C19:'Déclenchez un Événement', C20:'Ayez 3 Animaux dans votre collection',
+};
+const hasCt = (c,id) => (S.expl[c].ctDone||[]).some(x=>x===id);
+const tct = () => { const t=S.turn; if(!t.ct) t.ct={flags:{},wood:0,meeples:0,emptied:0,atouts:0,kinds:[]}; return t.ct; };
+
+function drawContrats(c, n){
+  const e=S.expl[c]; let k=0;
+  for (;k<n;k++){ if(!S.decks.contrats.length){ S.decks.contrats=shuffle(S.discardCt||[]); S.discardCt=[]; } const id=S.decks.contrats.shift(); if(!id) break; e.contrats.push(id); }
+  if (k) log(`${CAP(NAME(c))} pioche ${k} Contrat(s).`);
+  if (e.contrats.length>MAX_HAND_CT && !S.pending.some(p=>p.type==='discardAt'&&p.c===c&&p.kind==='ct')) S.pending.push({type:'discardAt',c,kind:'ct'});
+  markInfo();
+}
+function discardContrat(c,id){ const e=S.expl[c]; e.contrats=e.contrats.filter(x=>x!==id); (S.discardCt=S.discardCt||[]).push(id); }
+
+function ctOk(c,id){
+  const e=S.expl[c], t=S.turn&&S.turn.ct||{flags:{},wood:0,meeples:0,emptied:0,atouts:0,kinds:[]};
+  switch(id){
+    case 'C01': case 'C02': case 'C03': return !!t.flags[id];
+    case 'C04': return t.wood>=2;
+    case 'C05': return !!e.projCollab;
+    case 'C06': return e.donation>=6;
+    case 'C07': return occupies(c,'oil')>=3;
+    case 'C08': return occupies(c,'mine')>=2;
+    case 'C09': return t.meeples>=3;
+    case 'C10': return e.cards.Esprit.length>=3;
+    case 'C11': return ARENAS.reduce((n,a)=>n+S.arenas[a][c],0)>=4;
+    case 'C12': return false;
+    case 'C13': return t.emptied>=3;
+    case 'C14': return e.cards.Personne.length>=3;
+    case 'C15': return t.atouts>=3;
+    case 'C16': return e.luxe.length>=1;
+    case 'C17': return t.kinds.length>=3;
+    case 'C18': return !!e.projSolo;
+    case 'C19': return !!t.flags.C19;
+    case 'C20': return e.cards.Animal.length>=3;
+  }
+  return false;
+}
+function checkContracts(){
+  if (!S||S.over||!S.turn||UI.flow||UI.ask||UI.extra||S.pending.length) return;
+  const c=cur(); if (c==='F') return;
+  const e=S.expl[c];
+  for (const id of e.contrats.slice()) if (ctOk(c,id)){
+    e.contrats=e.contrats.filter(x=>x!==id); (e.ctDone=e.ctDone||[]).push(id); S.flags.contrat=true; markInfo();
+    log(`📜 ${CAP(NAME(c))} réussit le Contrat « ${CARD[id].name} » : il améliore son action ${EXPL_ACTIONS[CARD[id].act]}.`, true);
+    popup({cls:'pobj',dur:2600,html:`<div class="ptitle">📜 Contrat réussi</div><img class="pcard" src="${CARD[id].img}" style="width:220px"><div class="pname" style="color:${COLOR[c]}">${CAP(NAME(c))}</div><div class="psub">obtient le titre « ${esc(CARD[id].name)} » — action ${EXPL_ACTIONS[CARD[id].act]} améliorée</div>`});
+    if (e.ctDone.length%3===0) gainVP(c,1,'3 Contrats réussis');
+  }
+}
+/* Cartes glissées SOUS le plateau, sous l'action : seule la partie blanche du bas dépasse */
+const CT_W=19, CT_H=CT_W*448/295, CT_VIS=CT_H*0.385, BOARD_H=100*944/1417;
+function ctStackMax(e){ const m={}; (e.ctDone||[]).forEach(id=>{ const a=CARD[id].act; m[a]=(m[a]||0)+1; }); return Math.max(0,...Object.values(m)); }
+function ctTucked(e, padTop){
+  let h=''; const idx={};
+  (e.ctDone||[]).forEach(id=>{ const a=CARD[id].act, k=idx[a]=(idx[a]||0), col=Object.keys(EXPL_ACTIONS).indexOf(a); idx[a]++;
+    const top=padTop+BOARD_H-(CT_H-CT_VIS)+k*CT_VIS;
+    h+=`<div class="card ctuck" data-zoom="${CARD[id].img}" title="${esc(CARD[id].name)}" style="left:${EA[col]}%;top:${top}cqw;z-index:${10-k}"><img src="${CARD[id].img}"></div>`; });
+  return h;
+}
+
+/* =========================================================
+   FRESQUES
+   ========================================================= */
+const FR_PAT = { F01:'AAA',F02:'PPP',F03:'AAP',F04:'PPA',F05:'AAE',F06:'PPE',F07:'AEP',F08:'EEE',F09:'EEP',F10:'EEA' };
+const FR_T = { A:'Animal', P:'Personne', E:'Esprit' }, FR_ICO = { Animal:'i_animal', Personne:'i_personne', Esprit:'i_esprit' };
+const FRESQUES = Object.keys(FR_PAT).map((id,i)=>({ id, name:'Fresque '+(i+1), pat:FR_PAT[id].split('').map(x=>FR_T[x]), img:`img/cards/fr${String(i+1).padStart(2,'0')}.webp` }));
+FRESQUES.forEach(f=>CARD[f.id]=f); BACK.fr='img/cards/back_fr.webp';
+const FR_X=[20.8,53.2,83.5];
+function newFresque(){ const id=S.fresque.deck.shift(); if(!id) return false; S.fresque.active.push({id,slots:[null,null,null]}); markInfo(); log(`Nouvelle Fresque : ${CARD[id].pat.join(' · ')}.`); return true; }
+function frRemaining(){ return S.fresque.active.map(f=>CARD[f.id].pat.filter((t,i)=>!f.slots[i])); }
+function completeFresque(fi, why){
+  const f=S.fresque.active[fi]; S.fresque.active.splice(fi,1);
+  f.slots.forEach(x=>{ if(x) S.discard.push(x); }); S.fresque.done.push(f.id);
+  log(`🎨 Le Protecteur complète une Fresque${why?' ('+why+')':''} !`, true); regenerate(3);
+  popup({cls:'pobj',dur:2300,html:`<div class="ptitle">🎨 Fresque complétée</div><img class="pcard" src="${CARD[f.id].img}" style="width:340px"><div class="psub">Le Protecteur régénère 3 jetons Forêt${S.fresque.done.length%2===0?' — et la Conscience écologique avance !':''}</div>`});
+  if (S.fresque.done.length%2===0) moveConscience(1,'paire de Fresques');
+  while (S.fresque.active.length<S.fresque.max && newFresque());
+}
+function placeInFresque(id, done){
+  const type=CARD[id].type, wild=id==='P09', opts=[], seen=new Set();
+  S.fresque.active.forEach((f,fi)=>f.slots.forEach((x,si)=>{ const t=CARD[f.id].pat[si]; if(!x&&(wild||t===type)){ const k=fi+'|'+t; if(!seen.has(k)){ seen.add(k); opts.push({fi,si,t}); } } }));
+  const put=o=>{ const f=S.fresque.active[o.fi]; f.slots[o.si]=id; log(`${CARD[id].name} est placé sur la Fresque (${o.t}).`);
+    ANIM.push({type:'fly',img:CARD[id].img,from:{sel:'.river'},to:{sel:`#frp-${o.fi}-${o.si}`},size:46});
+    if (f.slots.every(Boolean)) completeFresque(o.fi); done(); };
+  if (!opts.length){ S.discard.push(id); log(`${CARD[id].name} ne correspond à aucun motif de la Fresque : défaussé.`); return done(); }
+  // choix automatique : la Fresque la plus proche d'être complétée
+  opts.sort((x,y)=>S.fresque.active[y.fi].slots.filter(Boolean).length-S.fresque.active[x.fi].slots.filter(Boolean).length);
+  put(opts[0]);
+}
+function renderFresques(){
+  const F=S.fresque, el=$('#frbox'); if(!el) return;
+  el.innerHTML = F.active.map((f,fi)=>`<div class="frc"><div class="card" data-zoom="${CARD[f.id].img}"><img src="${CARD[f.id].img}"></div>${f.slots.map((x,si)=>`<div class="frs" id="frp-${fi}-${si}" style="left:${FR_X[si]}%">${x?`<img src="${CARD[x].img}" data-zoom="${CARD[x].img}">`:''}</div>`).join('')}</div>`).join('')
+    + `<div class="hl" style="margin-top:6px">Fresques complétées : ${F.done.length} · pioche : ${F.deck.length}${F.max>1?' · 2 Fresques en cours (Artiviste)':''}</div>`
+    + (F.done.length?`<div class="owned">${F.done.map(id=>cardHTML(CARD[id].img,'',CARD[id].name,true,'frd')).join('')}</div>`:'');
+}
+
+/* =========================================================
+   IA — simulation + évaluation, poids adaptatifs
+   ========================================================= */
+let SIM=false, FAST=false, AISPEED=1700, AIBUSY=false, AITIMER=null;
+const _setTimeout=window.setTimeout.bind(window);
+window.setTimeout=(f,t,...r)=>SIM?0:(FAST?(f(...r),0):_setTimeout(f,t,...r));
+const isAI = seat => !!(S && S.ai && seat && S.ai[seat]);
+const EMPTYT = () => ({zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]});
+function refreshT(){ UI.T = (S.pending.length||S.over) ? EMPTYT() : flowTargets(); }
+
+/* ---------- Poids (appris d'une partie à l'autre) ---------- */
+const W0 = { // poids appris par ~1600 parties d'auto-entraînement
+  E:{ vp:4.312, money:0.144, res:1.424, prod:1.509, harvest:0.198, cards:0.49, ctDone:2.752, ctHand:0.358, atouts:0.368, donation:0.217, arena:0.862, frontier:0.162, forestTok:-0.067, conscience:-3.194, rivalVp:-5.383, align:0.455 },
+  F:{ conscience:25.471, wooded:2.624, forestTok:0.675, dense:1.909, meeples:0.686, arena:1.576, tokens:0.828, published:4.749, fresque:4.518, hand:0.67, explVp:-10.982, explProd:-1.973, explMoney:-0.234, align:2.569 },
+};
+function aiStore(){ try{ return JSON.parse(localStorage.getItem('amazonia_ai_v2')||'null'); }catch(e){ return null; } }
+function aiBrain(){
+  let b=aiStore();
+  if (!b) b={ games:0, roles:{ E:{champ:{...W0.E}, chall:mutate(W0.E), games:0, wins:0}, F:{champ:{...W0.F}, chall:mutate(W0.F), games:0, wins:0} } };
+  for (const r of ['E','F']) for (const k in W0[r]){ if(b.roles[r].champ[k]===undefined) b.roles[r].champ[k]=W0[r][k]; if(b.roles[r].chall[k]===undefined) b.roles[r].chall[k]=b.roles[r].champ[k]; }
+  return b;
+}
+function aiSaveBrain(b){ try{ localStorage.setItem('amazonia_ai_v2', JSON.stringify(b)); }catch(e){} }
+function gauss(){ return Math.sqrt(-2*Math.log(Math.random()||1e-9))*Math.cos(2*Math.PI*Math.random()); }
+function mutate(w){ const o={}; for (const k in w) o[k]=+(w[k]*(1+0.18*gauss())).toFixed(3); return o; }
+let BRAIN=null;
+const weights = seat => (BRAIN||(BRAIN=aiBrain())).roles[seat==='F'?'F':'E'].chall;
+function aiLearn(){
+  const b=BRAIN||aiBrain(), win=S.over.winner; b.games++;
+  for (const r of ['F','E']){
+    const seats = r==='F' ? ['F'] : EXPL; const aiSeats=seats.filter(isAI); if(!aiSeats.length) continue;
+    const R=b.roles[r]; R.games++;
+    const won = r==='F' ? win==='F' : aiSeats.includes(win);
+    if (won){ R.wins++; R.champ={...R.chall}; log(`🤖 IA ${r==='F'?'Protecteur':'Exploitants'} : stratégie gagnante retenue.`); }
+    R.chall=mutate(R.champ);
+  }
+  aiSaveBrain(b); BRAIN=b;
+}
+
+/* ---------- Évaluation d'un état pour un siège ---------- */
+function evalSeat(seat){
+  const w=weights(seat), f={};
+  const prods=allZ().filter(isProd), forestTok=allZ().reduce((n,id)=>n+Z(id).forest,0);
+  if (seat==='F'){
+    f.conscience=S.conscience + (S.over&&S.over.winner==='F'?50:0) - (S.over&&S.over.winner!=='F'?50:0);
+    f.wooded=woodedCount(); f.forestTok=forestTok; f.dense=allZ().filter(isDense).length;
+    f.meeples=allZ().filter(id=>Z(id).meeple).length; f.arena=ARENAS.reduce((n,a)=>n+S.arenas[a].F-EXPL.reduce((m,c)=>m+S.arenas[a][c],0)*0.5,0);
+    const remF=S.order.slice(S.turnIdx+1).filter(x=>x==='F').length; f.tokens=Math.min(S.forest.A, remF*2.5)+S.forest.C*0.3; f.published=S.forest.published.length;
+    f.fresque=S.fresque.done.length*3+S.fresque.active.reduce((n,x)=>n+x.slots.filter(Boolean).length,0);
+    f.hand=S.forest.hand.length; f.explVp=Math.max(...EXPL.map(c=>S.expl[c].vp)); f.explProd=prods.reduce((n,id)=>n+(Z(id).piece.weak?0.5:1),0);
+    f.explMoney=EXPL.reduce((n,c)=>n+S.expl[c].money,0); f.align=ARENAS.reduce((n,a)=>n+S.align[a],0);
+  } else {
+    const e=S.expl[seat], mine=prods.filter(id=>Z(id).piece.owner===seat);
+    f.vp=e.vp + (S.over? (S.over.winner===seat?20:-20):0); f.money=e.money; f.res=e.storage.or*5+e.storage.petrole*3+e.storage.forest;
+    f.prod=mine.reduce((n,id)=>n+(Z(id).piece.weak?0.5:1),0); f.harvest=mine.reduce((n,id)=>n+harvestValue(id)*(Z(id).piece.weak?0.6:1),0);
+    f.cards=e.cards.Animal.length*2+e.cards.Personne.length*1.2+e.cards.Esprit.length*1.3+e.luxe.length;
+    f.ctDone=(e.ctDone||[]).length; f.ctHand=e.contrats.filter(id=>ctOk(seat,id)).length*3+e.contrats.length*0.2; f.atouts=e.atouts.length;
+    f.donation=e.donation; f.arena=ARENAS.reduce((n,a)=>n+S.arenas[a][seat]-S.arenas[a].F*0.4,0);
+    f.frontier=explAdj(seat).filter(id=>isEmpty(id)||isWooded(id)).length; f.forestTok=forestTok; f.conscience=S.conscience;
+    f.rivalVp=Math.max(0,...EXPL.filter(c=>c!==seat).map(c=>S.expl[c].vp)); f.align=ARENAS.reduce((n,a)=>n+(2-S.align[a]),0);
+  }
+  let sc=0; for (const k in f) sc+=(w[k]||0)*f[k]; return sc;
+}
+
+/* ---------- Simulation ---------- */
+function simRun(fn){ // exécute fn sur une copie, renvoie [score, rétablit]
+  const sS=JSON.stringify(S), sUI={...UI, flow:UI.flow?{...UI.flow,hit:[...(UI.flow.hit||[])]}:null}, sAN=ANIM.length, sVP={...DISPVP}, sDN={...DISPDON}, sM=MANUAL, sU=UNDO.length;
+  const wasSim=SIM; SIM=true; let sc=-1e9;
+  try { fn(); sc=evalSeat(AISEAT); } catch(err){ sc=-1e9; }
+  S=JSON.parse(sS); UI=sUI; ANIM.length=sAN; DISPVP=sVP; DISPDON=sDN; MANUAL=sM; UNDO.length=sU; SIM=wasSim; refreshT();
+  return sc;
+}
+let AISEAT=null;
+function candList(){ // possibilités du point d'action en cours (hors UI.ask)
+  const T=UI.T, f=UI.flow, L=[];
+  if (f && f.act==='exploiter' && f.owner!=='F'){
+    const e=S.expl[f.owner], keep=f.prodKind;
+    for (const k of ['betail','coca','soja']) if (e.prod[k]){ f.prodKind=k; refreshT(); Object.keys(UI.T.zones).filter(id=>isEmpty(id)).forEach(id=>L.push({t:'zones',k:id,pk:k})); }
+    f.prodKind=keep; refreshT();
+    Object.keys(UI.T.zones).filter(id=>!isEmpty(id)).forEach(id=>L.push({t:'zones',k:id}));
+  } else Object.keys(T.zones).forEach(id=>L.push({t:'zones',k:id}));
+  Object.keys(T.arenas).forEach(k=>L.push({t:'arenas',k}));
+  Object.keys(T.river).forEach(k=>L.push({t:'river',k}));
+  Object.keys(T.luxe).forEach(k=>L.push({t:'luxe',k}));
+  Object.keys(T.hand||{}).forEach(k=>L.push({t:'hand',k}));
+  T.buttons.forEach((b,i)=>{ if(b.fn&&!b.dis&&!b.img&&!/^Annuler/.test(b.lbl)) L.push({t:'buttons',k:i}); });
+  if (f) L.push({t:'end'});
+  return L;
+}
+function applyCand(c){
+  if (c.t==='end') return endFlow();
+  if (c.pk&&UI.flow){ UI.flow.prodKind=c.pk; refreshT(); }
+  const T=UI.T, fn = c.t==='buttons' ? T.buttons[c.k]&&T.buttons[c.k].fn : T[c.t][c.k];
+  if (fn) fn(); else if (UI.flow) endFlow();
+}
+function heurAsk(){ // choix pour les effets de cartes (questions guidées)
+  const T=UI.ask, seat=AISEAT, L=[];
+  const zv=id=>{ const p=Z(id).piece, z=Z(id); let v=0.2;
+    if (p&&p.type==='prod'){ const ow=p.owner; v = seat==='F' ? 1+S.expl[ow].vp+harvestValue(id)*0.3 : (ow===seat?-1:1+S.expl[ow].vp); }
+    if (seat==='F') v+= (z.forest?0.3:0)+(z.meeple?0.2:0); return v+Math.random()*0.2; };
+  Object.keys(T.zones).forEach(k=>L.push({t:'zones',k,v:zv(k)}));
+  Object.keys(T.arenas).forEach(k=>{ const a=k.split('|')[0], d=S.arenas[a].F-EXPL.reduce((m,c)=>m+S.arenas[a][c],0); L.push({t:'arenas',k,v:(seat==='F'?-d:d)+Math.random()*0.3}); });
+  Object.keys(T.river).forEach(k=>L.push({t:'river',k,v:1+Math.random()}));
+  Object.keys(T.hand||{}).forEach(k=>L.push({t:'hand',k,v:1}));
+  T.buttons.forEach((b,i)=>{ if(b.fn&&!b.dis) L.push({t:'buttons',k:i,v:/Terminer|Annuler|Rien|Laisser|Aucune/.test(b.lbl)?-5:0.5+Math.random()}); });
+  if (!L.length) return false;
+  L.sort((a,b)=>b.v-a.v); const c=L[0], fn=c.t==='buttons'?T.buttons[c.k].fn:T[c.t][c.k]; fn(); return true;
+}
+function greedyStep(){ // choisit et joue le meilleur point d'action
+  if (UI.ask) return heurAsk();
+  refreshT(); const L=candList(); if(!L.length) return false;
+  let best=null, bs=-1e18;
+  for (const c of L){ const sc=simRun(()=>applyCand(c))+Math.random()*0.4; if (sc>bs){ bs=sc; best=c; } }
+  applyCand(best); return true;
+}
+function rollout(){ for (let i=0;i<12 && (UI.flow||UI.ask) && !S.pending.length && !S.over;i++){ if(!greedyStep()) break; } return evalSeat(AISEAT); }
+
+/* ---------- Choix du coup de début d'action ---------- */
+function topCands(seat){
+  const L=[];
+  if (seat==='F'){
+    const F=S.forest; if (S.turn.actions>=2) return L;
+    for (let X=1;X<=Math.min(3,F.A);X++){
+      for (const k of Object.keys(FOREST_ACTIONS)){
+        if (k==='mobiliser' && !S.river.some((r,i)=>r&&TRACK.riverCost[i][0]===X&&(r.k==='pr'||i<pubSlots()))) continue;
+        L.push({lbl:`${FOREST_ACTIONS[k]} ×${X}`, run:()=>{ UI.fx=null; startForestAction(k,X); }});
+      }
+      F.events.forEach(id=>L.push({lbl:CARD[id].name, run:()=>startForestAction(null,X,id)}));
+      S.projects.filter(p=>p.side==='F').forEach(p=>L.push({lbl:'Projet', run:()=>{ UI.fx=X; doPact(p.id); }}));
+    }
+  } else {
+    const e=S.expl[seat], imp=S.imposed[seat];
+    const free=e.tokens.map((t,i)=>[t,i]).filter(([t])=>!t.used), vals=[...new Set(free.map(([t])=>t.v))];
+    if (S.turn.actions<2) for (const v of vals){ const i=free.find(([t])=>t.v===v)[1];
+      for (const k of Object.keys(EXPL_ACTIONS)){ if (S.block===k || (imp&&imp[0]!==k)) continue;
+        L.push({lbl:`${EXPL_ACTIONS[k]} (${v})`, run:()=>{ UI.tok=i; startExplAction(k,v); }}); }
+      if (!imp) S.projects.filter(p=>p.side==='E').forEach(p=>L.push({lbl:'Projet', run:()=>{ UI.tok=i; doPact(p.id); }}));
+    }
+    if (!S.turn.usedRes) for (const kind of ['petrole','or']) if (e.storage[kind]){
+      L.push({lbl:`${kind} → $`, run:()=>useResource(kind,'cash')});
+      for (const k of Object.keys(EXPL_ACTIONS)) if (S.block!==k) L.push({lbl:`${kind} → ${EXPL_ACTIONS[k]}`, run:()=>startExplAction(k,kind==='or'?2:1,kind)});
+    }
+    if (L.length && (S.turn.actions>=2||!free.length)) L.push({lbl:'Fin du tour', end:true});
+  }
+  return L;
+}
+function bestTop(seat){
+  const L=topCands(seat); if(!L.length) return null;
+  let best=null, bs=-1e18;
+  for (const c of L){ const sc = c.end ? evalSeat(seat)+0.2 : simRun(()=>{ c.run(); rollout(); }); const v=sc+Math.random()*0.5; if (v>bs){ bs=v; best=c; } }
+  return best;
+}
+
+/* ---------- Décisions hors tour (Rivière, défausses…) ---------- */
+function aiWho(){
+  if (!S||S.over) return null;
+  const pd=S.pending[0];
+  if (pd) return pd.type==='discardAt' ? pd.c : 'F';
+  if (!S.turn) return S.order[S.order.length-1];
+  return cur();
+}
+function aiPending(pd){
+  if (pd.type==='refill'){
+    const hasEn=S.river.some(r=>r&&r.k==='en'), en=S.forest.hand.find(id=>EN[id].ok());
+    snapshot(); S.pending.shift();
+    if (!hasEn && en && pd.slot<pubSlots()) fillSlot(pd.slot,'en',en); else fillSlot(pd.slot,'pr');
+    resolvePending(); return;
+  }
+  if (pd.type==='forestArena'){
+    const a=ARENAS.slice().sort((x,y)=>(S.arenas[x].F-EXPL.reduce((m,c)=>m+S.arenas[x][c],0))-(S.arenas[y].F-EXPL.reduce((m,c)=>m+S.arenas[y][c],0)))[0];
+    S.arenas[a].F++; S.pending.shift(); log(`Le Peuple chassé rejoint l’Arène ${ARENA_LABEL[a]}.`); resolvePending(); return;
+  }
+  if (pd.type==='discardEnq'){
+    const need=S.forest.hand.length-3, L=S.forest.hand.slice().sort((a,b)=>(EN[a].ok()?1:0)-(EN[b].ok()?1:0)).slice(0,need);
+    S.forest.hand=S.forest.hand.filter(x=>!L.includes(x)); S.decks.enquetes.push(...L); S.pending=S.pending.filter(p=>p.type!=='discardEnq'); log(`Le Protecteur défausse ${L.length} Enquête(s).`); resolvePending(); return;
+  }
+  if (pd.type==='discardAt'){
+    const e=S.expl[pd.c];
+    if (pd.kind==='ct'){ const need=e.contrats.length-MAX_HAND_CT; e.contrats.slice().sort(()=>Math.random()-.5).slice(0,need).forEach(id=>discardContrat(pd.c,id)); }
+    else { const need=e.atouts.length-MAX_HAND_AT; e.atouts.slice().sort((a,b)=>CARD[b].cost-CARD[a].cost).slice(0,need).forEach(id=>discardAtout(pd.c,id)); }
+    log(`${CAP(NAME(pd.c))} défausse des cartes (main limitée).`); S.pending.shift(); resolvePending(); return;
+  }
+}
+
+/* ---------- Partie rapide (auto-entraînement) ---------- */
+function fastGame(nb, wF, wE, maxRounds=12){
+  FAST=true; const keep=BRAIN; BRAIN={games:0,roles:{F:{chall:wF},E:{chall:wE}}};
+  try{
+    newGame(nb); S.ai=Object.fromEntries(S.seats.map(x=>[x,true])); S.noLearn=true; render();
+    let guard=0;
+    while(!S.over && S.round<=maxRounds && guard++<4000){
+      const who=aiWho(); AISEAT=who;
+      if (S.turn && !S.pending.length && !UI.flow && !UI.ask && turnDone()){ endTurn(); continue; }
+      const pd=S.pending[0];
+      if (pd) aiPending(pd);
+      else if (!S.turn) endRound();
+      else if (UI.flow||UI.ask){ if(!greedyStep()) endFlow(); }
+      else { const c=bestTop(who); if(!c||c.end) endTurn(); else c.run(); }
+      render();
+    }
+    const maxVp=Math.max(...EXPL.map(c=>S.expl[c].vp)), w=S.over?S.over.winner:null;
+    return { winner:w, rounds:S.round, conscience:S.conscience, maxVp, mF:(w==='F'?10:w?-10:0)+S.conscience-2*maxVp };
+  } finally { FAST=false; BRAIN=keep; }
+}
+/* ---------- Pilote ---------- */
+function aiSchedule(){
+  if (SIM||AIBUSY||AITIMER||!S||S.over||!STARTED) return;
+  const who=aiWho(); if (!isAI(who)) return;
+  AITIMER=_setTimeout(()=>{ AITIMER=null; aiStep(); }, AISPEED);
+}
+function aiStep(){
+  if (SIM||!S||S.over) return;
+  const who=aiWho(); if (!isAI(who)) return;
+  if (POPON || UI.autoEnd){ return aiSchedule(); }
+  AIBUSY=true; AISEAT=who;
+  try {
+    const pd=S.pending[0];
+    if (pd) aiPending(pd);
+    else if (!S.turn) endRound();
+    else if (UI.flow||UI.ask){ if(!greedyStep()) endFlow(); }
+    else if (UI.extra) { UI.extra=null; }
+    else { const c=bestTop(who); if (!c){ AIBUSY=false; if (S.turn && !turnDone()) endTurn(); return; } if (c.end) endTurn(); else { log(`🤖 ${CAP(NAME(who))} choisit : ${c.lbl}.`); c.run(); } }
+  } catch(err){ console.error('IA', err); if (UI.flow) endFlow(); }
+  AIBUSY=false; render();
+}
+
+/* =========================================================
+   ANIMATIONS (non sauvegardées)
+   ========================================================= */
+let ANIM=[];
+function fly(img, from, to, delay=0){ ANIM.push({type:'fly',img,from,to,delay}); }
+function anchorRect(a){
+  if (a.zone){ const b=$('#board').getBoundingClientRect(), z=ZB[a.zone]; const x=b.left+b.width*z.x/BW, y=b.top+b.height*z.y/BH; return {x,y}; }
+  const el=document.querySelector(a.sel)||(a.alt&&document.querySelector(a.alt)); if (!el) return null; const r=el.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2,el};
+}
+let DISPVP={}, DISPDON={}, PREVM=null;
+/* ---------- Pop-ups animées (file d'attente) ---------- */
+let POPQ=[], POPON=false;
+function popup(o){ if(SIM||FAST) return; POPQ.push(o); if(!POPON){ POPON=true; setTimeout(nextPop,60); } }
+function nextPop(){ const o=POPQ.shift(); const el=$('#pop'); if(!o){ POPON=false; return; } POPON=true;
+  const r=$('#board').getBoundingClientRect(); el.style.left=(Math.max(0,r.left)+Math.min(r.width,innerWidth)/2)+'px'; el.style.top=Math.min(innerHeight/2, Math.max(r.top,0)+Math.min(r.height,innerHeight)/2)+'px';
+  el.innerHTML=`<div class="pbox ${o.cls||''}">${o.html}</div>`; el.classList.add('on');
+  setTimeout(()=>{ el.classList.remove('on'); if(o.after) o.after(); setTimeout(nextPop,380); }, o.dur||2400); }
+function objPopup(id, side, gains){
+  const half=halfImg(id,side), name=side==='F'?CARD[id].foret:CARD[id].expl;
+  popup({cls:'pobj',dur:2300,html:`<div class="ptitle">★ Objectif réalisé ★</div><img class="pcard" src="${CARD[id].img}"><div class="pname">${esc(name)}</div><div class="psub">${side==='F'?'par le Protecteur':'par les Exploitants'}</div>`});
+  const rows=Object.entries(gains).map(([c,v],i)=>`<div class="prow" style="animation-delay:${.35+i*.45}s">${c==='F'?`<img src="img/ico/protecteur.svg" class="plogo"><span>Protecteur</span><b class="pg">Conscience +${v}</b>`:`${factory(c)}<span>${CAP(NAME(c))}</span><b class="pg"><span class="coin"><img src="${TOK('argent_r')}"><b>+${v}</b></span></b>`}</div>`).join('');
+  popup({cls:'pgain',dur:1600+Object.keys(gains).length*450,html:`<div class="ptitle">Gains</div>${rows}<div class="prow" style="animation-delay:${.35+Object.keys(gains).length*.45}s"><img src="${half}" class="phalf"><span>Nouvelle action débloquée</span></div>`});
+}
+function vpPopup(c, n, why, from, to){
+  const sp=Array.from({length:14},(_,i)=>`<i style="--a:${i*360/14}deg;--d:${(i%3)*.08}s"></i>`).join('');
+  popup({cls:'pvp',dur:2600,html:`<div class="vpstar">${sp}<img src="${TOK(c+'_vp_r')}"></div><div class="ptitle">+${n} point de Prestige !</div><div class="pname" style="color:${COLOR[c]}">${CAP(NAME(c))}</div><div class="psub">${esc(why)}</div>`,
+    after:()=>{ ANIM.push({type:'fly',img:TOK(c+'_vp_r'),from:{sel:'#pop'},to:{sel:`#sum-${c} .vpsm`}}); runAnims(); setTimeout(()=>runSteps('vp',c,from,to,()=>render()),950); }});
+}
+function doPact(id){ const seat=cur(); snapshot();
+      if (seat==='F'){ const X=UI.fx; UI.fx=null; S.forest.A-=X; S.forest.B+=X; S.turn.actions++; log(`Le Protecteur utilise le Projet « ${CARD[id].foret} ».`, true); UI.effDone=finishEffect; return OBJ[id].actF.run(finishEffect); }
+      const e=S.expl[seat]; e.tokens[UI.tok].used='projet'; UI.tok=null; S.turn.actions++; log(`${CAP(NAME(seat))} utilise le Projet « ${CARD[id].expl} ».`, true); UI.effDone=finishEffect; return OBJ[id].actE.run(seat, finishEffect); }
+function stepTrack(kind,c,from,to){ if(from===to) return; (kind==='vp'?DISPVP:DISPDON)[c]=from; ANIM.push({type:'steps',kind,c,from,to}); }
+function runSteps(kind,c,from,to,done){
+  const el=document.querySelector(`[data-trk="${kind}-${c}"]`), L=kind==='vp'?TRACK.prestige:TRACK.donation, D=kind==='vp'?DISPVP:DISPDON;
+  if(!el){ delete D[c]; if(done) done(); return; }
+  el.style.transition='left .28s ease-in-out, top .28s ease-in-out, transform .28s'; el.style.zIndex=20;
+  let v=from; const dir=to>from?1:-1;
+  const tick=()=>{ if(v===to){ delete D[c]; el.style.transform='translate(-50%,-50%)'; if(done) done(); return; }
+    v+=dir; D[c]=v; const p=L[Math.min(L.length-1,v)]; el.style.left=p.x+'%'; el.style.top=p.y+'%'; el.style.transform='translate(-50%,-62%) scale(1.25)';
+    setTimeout(()=>{ el.style.transform='translate(-50%,-50%) scale(1)'; },170); setTimeout(tick,340); };
+  setTimeout(tick,150);
+}
+function runAnims(){
+  const list=ANIM; ANIM=[];
+  list.forEach((a,i)=>{
+    if (a.type==='steps'){ return runSteps(a.kind,a.c,a.from,a.to); }
+    if (a.type==='tokup'){ const els=[...document.querySelectorAll(`[data-tok="${a.c}-${a.i}"]`)];
+      els.forEach(el=>{ const im=el.querySelector('img')||el; im.src=TOK(`${a.c}_action_r`); el.classList.add('tokup'); setTimeout(()=>{ im.src=TOK(`${a.c}_action_v`); },700); setTimeout(()=>el.classList.remove('tokup'),1500); }); return; }
+    if (a.type==='flip'){
+      const el=document.querySelector(`.t[data-zt="${a.zone}"]`); if(!el) return;
+      const im=el.querySelector('img'); im.src=a.from; el.classList.add('flip');
+      setTimeout(()=>{ im.src=a.to; },330); setTimeout(()=>el.classList.remove('flip'),720);
+      return;
+    }
+    const f=anchorRect(a.from), t=anchorRect(a.to); if(!f||!t) return;
+    const hid = a.to.hideSel ? document.querySelector(a.to.hideSel) : (a.to.hide ? document.querySelector(`.t[data-zt="${a.to.zone}"]`) : null); if (hid) hid.style.opacity=0;
+    const bw=$('#board').getBoundingClientRect().width, size=a.size||Math.max(26,bw*0.045);
+    const im=document.createElement('img'); im.src=a.img; im.className='flyer';
+    im.style.cssText=`width:${size}px;left:${f.x-size/2}px;top:${f.y-size/2}px`;
+    document.body.appendChild(im);
+    setTimeout(()=>{ im.style.left=(t.x-size/2)+'px'; im.style.top=(t.y-size/2)+'px'; im.style.transform='scale(.7)'; }, 40+(a.delay||0)+i*120);
+    setTimeout(()=>{ im.remove(); if(hid) hid.style.opacity=1; if(t.el){ t.el.classList.remove('bump'); void t.el.offsetWidth; t.el.classList.add('bump'); } }, 900+(a.delay||0)+i*120);
+  });
+}
+
+/* =========================================================
+   RENDU
+   ========================================================= */
+function stackHTML(z){
+  const st=Z(z.id), c=P(z.x,z.y), layers=[];
+  if (st.piece && st.piece.type==='base') layers.push({src:TOK(`${st.piece.owner}_base_r`),w:4.8});
+  if (st.piece && st.piece.type==='prod') layers.push({src:TOK(`${st.piece.owner}_${st.piece.kind}_${st.piece.weak?'v':'r'}`),w:4.8,zt:z.id});
+  if (st.res) layers.push({src:TOK(st.res==='or'?'or_r':'petrole_r'),w:4.6});
+  for (let i=0;i<st.forest;i++) layers.push({src:TOK('foret_r'),w:4.6});
+  let h='', y=0;
+  layers.forEach((l,i)=>{ h+=`<div class="t" ${l.zt?`data-zt="${l.zt}"`:''} style="left:${c.x}%;top:${c.y}%;width:${l.w}cqw;margin-top:${-y}cqw;z-index:${i+1}"><img src="${l.src}"></div>`; y+=1.15; });
+  if (st.meeple) h+=`<div class="t" data-mz="${z.id}" style="left:${c.x}%;top:${c.y}%;width:3.4cqw;margin-top:${-y+0.35}cqw;z-index:9"><img src="${TOK('foret_meeple_r')}"></div>`;
+  return h;
+}
+function tok(src,pos,size,extra='',cls='',attr=''){ return `<div class="t ${cls}" ${attr} style="left:${pos.x}%;top:${pos.y}%;width:${size}cqw;${extra}"><img src="${src}"></div>`; }
+
+function renderBoard(){
+  let h='';
+  const T=UI.T, sel=UI.flow&&UI.flow.sel;
+  for (const z of ZONES){ h+=stackHTML(z); const c=P(z.x,z.y); h+=`<div class="hexhit ${T.zones[z.id]?'tgt':''} ${sel===z.id?'selz':''}" style="left:${c.x}%;top:${c.y}%" data-zone="${z.id}"></div>`; }
+  h+=tok(TOK('conscience_r'),TRACK.conscience[S.conscience],3.6,'z-index:3');
+  for (const a of ARENAS) h+=tok("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23111' stroke='%23fff' stroke-width='.6' d='M9.166.33a2.25 2.25 0 00-2.332 0l-5.25 3.182A2.25 2.25 0 00.5 5.436v5.128a2.25 2.25 0 001.084 1.924l5.25 3.182a2.25 2.25 0 002.332 0l5.25-3.182a2.25 2.25 0 001.084-1.924V5.436a2.25 2.25 0 00-1.084-1.924L9.166.33z'/%3E%3C/svg%3E",TRACK.align[a][S.align[a]],3.2,'','glow');
+  EXPL.forEach((c,i)=>{ const e=S.expl[c], d=(i-(EXPL.length-1)/2)*(EXPL.length>2?1.15:2);
+    h+=tok(TOK(`${c}_vp_r`),TRACK.prestige[Math.min(6,DISPVP[c]??e.vp)],2.8,`margin-left:${d*1.4}cqw`,'',`data-trk="vp-${c}"`);
+    h+=tok(TOK(`${c}_fond_r`),TRACK.donation[DISPDON[c]??e.donation],2.8,`margin-left:${d*1.5}cqw`,'',`data-trk="don-${c}"`);
+    for (const s of e.meeplesDon) h+=tok(TOK(`${c}_meeple_r`),TRACK.donationSlots[s],2.5,`margin-left:${d*1.3}cqw`);
+  });
+  // Arènes
+  const fa = S.pending[0]&&S.pending[0].type==='forestArena';
+  for (const a of ARENAS){
+    for (const side of ['ex','F']){
+      const [x0,y0,x1,y1]=TRACK.arenaBox[a][side];
+      let imgs='';
+      if (side==='F') for(let i=0;i<S.arenas[a].F;i++) imgs+=`<img src="${TOK('foret_meeple_r')}">`;
+      else for (const c of EXPL) for(let i=0;i<S.arenas[a][c];i++) imgs+=`<img src="${TOK(c+'_meeple_r')}">`;
+      const isT = fa ? side==='F' : !!T.arenas[a+'|'+side];
+      h+=`<div class="arena ${isT?'tgt':''}" data-arena="${a}" data-side="${side}" style="left:${x0/BW*100}%;top:${y0/BH*100}%;width:${(x1-x0)/BW*100}%;height:${(y1-y0)/BH*100}%"></div>`;
+      h+=`<div class="arena" style="pointer-events:none;left:${x0/BW*100}%;top:${y0/BH*100}%;width:${(x1-x0)/BW*100}%;height:${(y1-y0)/BH*100}%">${imgs}</div>`;
+    }
+  }
+  $('#board').innerHTML=h;
+}
+function cardHTML(img,w,title,zoom=true,cls=''){ return `<div class="card ${cls}" style="${w?`width:${w}`:''}" ${zoom?`data-zoom="${img}"`:''} title="${esc(title||'')}"><img src="${img}" alt="" loading="lazy"></div>`; }
+
+function renderRiver(){
+  let h=''; const T=UI.T;
+  S.river.forEach((sl,i)=>{
+    const x=TRACK.river[i]; const [f,m]=TRACK.riverCost[i];
+    if (sl){
+      const ok=!!T.river[i], vis=(sl.k==='pr'&&!sl.hidden)||VIEW==='F';
+      const img=vis?CARD[sl.id].img:(sl.k==='pr'?BACK.pr:BACK.en);
+      h+=`<div class="slot ${ok?'tgt':''}" data-river="${i}" style="left:${x}%">${cardHTML(img,'11.2cqw',sl.k==='pr'?`${CARD[sl.id].name} (${CARD[sl.id].type})`:'Enquête face cachée',!ok)}</div>`;
+    }
+    h+=`<div class="lbl" style="left:${x}%">${i<pubSlots()?'📰 ':''}Rivière ${i+1} · ${f} Forêt / ${m} $</div>`;
+  });
+  S.luxe.forEach((id,i)=>{ const ok=!!T.luxe[i]; h+=`<div class="slot ${ok?'tgt':''}" data-luxe="${i}" style="left:${TRACK.luxe-8.8+i*8.8}%;top:2.6cqw">${cardHTML(CARD[id].img,'8.4cqw',CARD[id].name,!ok)}</div>`; });
+  h+=`<div class="lbl" style="left:${TRACK.luxe}%">Biens de luxe · ${10+S.conscience} $ (10 + X)</div>`;
+  $('#river').innerHTML=h;
+}
+
+const FCOL={orange:'#f39200',bleu:'#36a9e1',blanc:'#f2f2f2'};
+function factory(c){ return `<svg viewBox="0 0 512 512" width="40" height="40"><path fill="${FCOL[c]||COLOR[c]}" stroke="#000" stroke-width="10" d="M477.336,118.683l-150.39,106.525V118.683L170.01,229.844L156.936,27.133H26.147L0,484.867h512L477.336,118.683z M194.65,369.543h-61.77v-61.779h61.77V369.543z M370.108,369.543H308.32v-61.779h61.788V369.543z"/></svg>`; }
+function goal(ico,n,max,tip,emo){ return `<span class="goal" data-tipx="${esc(tip)}"><b>${n}/${max}</b>${ico?`<img src="img/ico/${ico}.png">`:`<span class="emo">${emo}</span>`}</span>`; }
+function renderSum(){
+  const F=S.forest, c0=cur(), tk=(L)=>`<span class="tk"><img src="${TOK('foret_r')}"><b>${L}</b></span>`;
+  let h=`<div class="sum F ${c0==='F'?'active':''}" id="sum-F"><div class="shd"><img src="img/ico/protecteur.svg"><h3>Protecteur</h3></div><div class="lines">
+    <div class="cycle">
+      <svg viewBox="0 0 210 118" class="cyarr"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#fff"/></marker></defs>
+        <path d="M92,36 Q112,16 128,16" marker-end="url(#ah)"/><path d="M160,44 L160,64" marker-end="url(#ah)"/><path d="M134,96 Q108,100 96,82" marker-end="url(#ah)"/></svg>
+      <div class="cyn cyA c-A" title="Jetons disponibles cette manche (A)">${tk('A')}<b>${F.A}</b><i class="cyl">cette manche</i></div>
+      <div class="cyn cyB c-B" title="Jetons utilisés (B)">${tk('B')}<b>${F.B+sumv(F.onAct)}</b><i class="cyl">utilisés</i></div>
+      <div class="cyn cyC c-C" title="Jetons de la prochaine manche (C)">${tk('C')}<b>${F.C}</b><i class="cyl">prochaine manche</i></div>
+    </div>
+    <div class="goals" title="Façons de faire monter la Conscience écologique">${goal('i_objectif',0,1,'Objectif réalisé → +Conscience')}${goal('i_enquete',F.published.length%2,2,'2 Enquêtes publiées → +1 Conscience')}${goal('i_fresque',S.fresque.done.length%2,2,'2 Fresques complétées → +1 Conscience')}</div>
+    <div class="frrem" data-tipx="Cartes encore nécessaires pour compléter la Fresque en cours (Mobiliser une carte de ce type)"><img src="img/ico/i_fresque.png" class="frlogo">${frRemaining().map((r,i)=>(i?'<span class="frsep">|</span>':'')+r.map(t=>`<img src="img/ico/${FR_ICO[t]}.png">`).join('')).join('')}</div>
+    <div class="ln">${S.firstPlayer==='F'?`<img class="fp" src="${TOK('premier_r')}">`:''}</div></div></div>`;
+  for (const c of EXPL){ const e=S.expl[c];
+    h+=`<div class="sum ${c} ${c0===c?'active':''}" id="sum-${c}"><div class="shd">${factory(c)}<h3>Exploitant ${EXPL.indexOf(c)+1}</h3></div><div class="lines">
+      <div class="ln"><div class="chip big c-money" title="Argent"><img src="${TOK('argent_r')}">${e.money} $</div></div>
+      <div class="ln"><div class="chip c-bois" title="Bois en stockage (max 2)" style="opacity:${e.storage.forest?1:.45}"><img src="${TOK('foret_r')}">${e.storage.forest}</div>
+        <div class="chip c-petrole" title="Pétrole" style="opacity:${e.storage.petrole?1:.45}"><img src="${TOK('petrole_r')}">${e.storage.petrole}</div>
+        <div class="chip c-or" title="Or" style="opacity:${e.storage.or?1:.45}"><img src="${TOK('or_r')}">${e.storage.or}</div></div>
+      <div class="goals" title="Façons de gagner un point de Prestige">${goal('i_objectif',(e.projCount||0)%2,2,'2 Projets réalisés → 1 PV')}${goal('i_esprit',e.cards.Esprit.length%3,3,'3 Esprits → 1 PV')}${goal('i_contrat',(e.ctDone||[]).length%3,3,'3 Contrats réussis → 1 PV')}${goal('i_luxe',0,1,'1 Bien de luxe → 1 PV')}</div></div>
+      <div class="vpcol"><div class="vpsm" title="Points de Prestige (4 pour gagner)"><img src="${TOK(c+'_vp_r')}">${e.vp}</div>${S.firstPlayer===c?`<img class="fp" src="${TOK('premier_r')}">`:''}</div></div>`; }
+  $('#sumbar').innerHTML=h;
+  $('#roundLbl').textContent = S.over ? 'Partie terminée' : `Manche ${S.round} · tour ${Math.min(S.turnIdx+1,S.order.length)}/${S.order.length}`;
+  let st='';
+  if (!S.over){
+    const pd=S.pending[0];
+    if (pd) st = pd.type==='refill'?'Le Protecteur complète la Rivière':pd.type==='discardAt'?`${CAP(NAME(pd.c))} défausse des Atouts`:pd.type==='discardEnq'?'Le Protecteur défausse une Enquête':'Le Protecteur place un Peuple chassé dans une Arène';
+    else if (!S.turn) st='Fin de manche à résoudre';
+    else { const seat=cur(), na=Math.min(2,S.turn.actions+(UI.flow?0:1));
+      st=`<b style="color:${COLOR[seat]}">Tour ${seat==='F'?'du Protecteur':'de l’'+NAME(seat)}</b> : action ${UI.flow?S.turn.actions:na}/2`;
+      if (UI.ask) st+=` — ${esc(UI.T.title||'effet de carte')} : ${UI.T.prompt||''}`;
+      else if (UI.flow){ const f=UI.flow, lab=(f.owner==='F'?FOREST_ACTIONS:EXPL_ACTIONS)[f.act]; st+=` — ${lab} en cours (${f.done+1}/${f.total})`; }
+      const last=S.log.length?S.log[S.log.length-1].t:''; if (last) st+=` <span class="lastl">· ${esc(last)}</span>`; }
+  }
+  $('#liveLbl').innerHTML=st;
+}
+
+const ACT_TIP={
+  deforester:'Déforester : par point d’action, retirez 1 jeton Forêt d’une zone adjacente à vos jetons (stocké, max 2) — ou chassez 1 Peuple de la Forêt. Vider une zone vous donne son Or / Pétrole.',
+  exploiter:'Exploiter : par point d’action, placez 1 production (Bétail, Coca, Soja) sur une zone vide adjacente — ou affaiblissez 1 production adverse adjacente.',
+  recolter:'Récolter : vendez votre bois stocké (1 $ chacun) ou récoltez tous vos jetons d’un type (Soja 1 $, Bétail selon les zones vides reliées, Coca selon les voisins occupés). Les jetons récoltés s’affaiblissent.',
+  acheter:'Acheter : une carte Protecteur de la Rivière (coût en $), un Bien de luxe (10 + Conscience, +1 PV), un Atout de votre main, ou un don à la Fondation Amazonie.',
+  influencer:'Influencer : placez 1 meeple dans une Arène (ou déplacez-en un si tous sont posés) — ou piochez 1 Atout / 1 Contrat.',
+  reboiser:'Reboiser : placez X jetons Forêt (pris en A) sur des zones vides ou boisées (max 3 par zone).',
+  proteger:'Protéger : X fois, placez 1 Peuple de la Forêt sur une zone dense (3 Forêt) ou déplacez-en un vers une zone boisée adjacente.',
+  resister:'Résister : affaiblissez X productions différentes adjacentes à un Peuple de la Forêt.',
+  mobiliser:'Mobiliser : jouez la carte Protecteur de la Rivière de coût X (effet immédiat), ou publiez une Enquête posée sur un emplacement 📰 de coût X.',
+  militer:'Militer : X fois, placez 1 Peuple dans une Arène — ou piochez 1 Enquête (max 3 en main).',
+};
+function abtn(ico,lbl,attrs,dis=false){ const k=ico.replace(/^[a-z]+_/,''); return `<span class="abw" data-tipx="${esc(ACT_TIP[k]||lbl)}">${abtn0(ico,lbl,attrs,dis)}</span>`; }
+function abtn0(ico,lbl,attrs,dis=false){ const col=COLOR[ico.startsWith('foret')?'F':ico.split('_')[0]]||'#333'; return `<button class="btn abtn" style="--pc:${col}" ${attrs} ${dis?'disabled':''}><img src="img/ico/${ico}.webp" alt=""><span>${lbl}</span></button>`; }
+const halfImg=(id,side)=>`img/cards/obb${side==='F'?'F':'E'}${id.slice(3)}.webp`;
+function pbtn(id,seat,attrs,dis){ const col=COLOR[seat==='F'?'F':seat]; return `<button class="btn abtn pbtn" style="--pc:${col}" ${attrs} ${dis?'disabled':''} title="${esc(seat==='F'?OBJ[id].actF.lbl:OBJ[id].actE.lbl)}"><img src="${halfImg(id,seat==='F'?'F':'E')}"><span>Projet</span></button>`; }
+function btn(lbl,attrs,cls='',dis=false,title=''){ return `<button class="btn ${cls}" ${attrs} ${dis?'disabled':''} title="${esc(title)}">${lbl}</button>`; }
+
+function who(seat, sub){ const m=(seat!=='F'&&S.expl[seat])?`<span class="whom"><img src="${TOK('argent_r')}">${S.expl[seat].money} $</span>`:(seat==='F'?`<span class="whom wf"><span class="tk"><img src="${TOK('foret_r')}"><b>A</b></span>${S.forest.A}</span>`:''); return `<div class="whoc"><span class="who" style="color:${COLOR[seat]}">${isAI(seat)?'🤖 ':''}${seat==='F'?'Protecteur':NAME(seat)}</span>${m}${sub?`<span class="whos">${sub}</span>`:''}</div>`; }
+function tbtns(T){ return T.buttons.map((o,i)=>o.harv?`<button class="btn harv" data-a="tb" data-i="${i}" title="${esc(o.lbl)}"><span class="toks">${o.harv.imgs.map(src=>`<img src="${src}">`).join('')}</span><span class="arrow">→</span><span class="coin"><img src="${TOK('argent_r')}"><b>+${o.harv.gain}</b></span></button>`
+  :o.img?`<button class="btn tokbtn ${o.sel?'sel':''}" data-a="tb" data-i="${i}" data-k="${o.img.split('_')[1]}" ${o.dis||!o.fn?'disabled':''} title="${esc(o.tip||'')}"><img src="${o.img}">${esc(o.lbl)}</button>`
+  :btn(esc(o.lbl),`data-a="tb" data-i="${i}"`,o.sel?'sel':'',o.dis||!o.fn,o.why||'')).join(''); }
+const backBtn = () => btn('↶','data-a="back"','backb',!UNDO.length||isAI(aiWho()),'Annuler la dernière action (pas au-delà d’une pioche)');
+function renderBar(){
+  const b=$('#abar'); let h=''; b.classList.remove('bigbar');
+  if (S.over){ b.innerHTML=`<div class="row">${who(S.over.winner,'🏆 Victoire')}<span class="prompt">${esc(S.over.why)}</span><span class="spacer"></span>${btn('Nouvelle partie','data-a="new"','pri')}</div>`; return; }
+  const pd=S.pending[0];
+  if (pd){
+    if (pd.type==='forestArena') h=`<div class="row">${who('F')}<span class="prompt">Un Peuple a été chassé : cliquez une Arène (partie verte) pour l’y placer.</span></div>`;
+    if (pd.type==='refill'){
+      const hasEn=S.river.some(r=>r&&r.k==='en');
+      b.classList.add('bigbar'); h=`<div class="row">${who('F','Rivière '+(pd.slot+1))}<span class="prompt">Compléter la Rivière :</span>
+        <button class="btn fillc" data-a="fill-pr" title="Compléter avec une carte Protecteur"><img src="${BACK.pr}"><span>Compléter avec une carte Protecteur</span></button>
+        ${S.forest.hand.map(id=>`<button class="btn fillc" data-a="fill-en" data-id="${id}" ${hasEn?'disabled':''} title="${hasEn?'La Rivière contient déjà une Enquête (max 1)':'Compléter avec cette Enquête (face cachée)'}">${VIEW==='F'?`<div class="card" data-zoom="${CARD[id].img}"><img src="${CARD[id].img}"></div>`:`<img src="${BACK.en}">`}<span>Compléter avec cette Enquête</span></button>`).join('')}</div>`;
+    }
+    if (pd.type==='discardAt'){ const e=S.expl[pd.c], isCt=pd.kind==='ct', need=isCt?e.contrats.length-MAX_HAND_CT:e.atouts.length-MAX_HAND_AT, sel=(UI.discSel||[]).length;
+      h=`<div class="row">${who(pd.c)}<span class="prompt">Main limitée à 3 ${isCt?'Contrats':'Atouts'} : cliquez dans votre main les ${need} carte(s) à défausser (${sel}/${need}).</span><span class="spacer"></span>${sel===need?btn('Valider ?','data-a="disc-ok"','pri'):''}</div>`; }
+    if (pd.type==='discardEnq'){ const need=S.forest.hand.length-3, L=UI.discSel||[];
+      h=`<div class="row">${who('F')}<span class="prompt">Plus de 3 Enquêtes : cliquez ${need>1?`les ${need} Enquêtes`:'l’Enquête'} à défausser, ici ou dans la colonne de droite (${L.length}/${need}).</span>${S.forest.hand.map(id=>`<button class="btn fillc ${L.includes(id)?'dsel':''}" data-disc="${id}"><img src="${VIEW==='F'?CARD[id].img:BACK.en}"><span>${L.includes(id)?'✕ Défaussée':'Défausser'}</span></button>`).join('')}<span class="spacer"></span>${L.length===need?btn('Valider ?','data-a="disc-ok"','pri'):''}</div>`; }
+    b.innerHTML=h; return;
+  }
+  if (!S.turn){ b.innerHTML=`<div class="row"><span class="who">Fin de la phase Actions</span><span class="spacer"></span>${btn('Résoudre la fin de manche','data-a="endround"','pri')}</div>`; return; }
+  const seat=cur();
+  if (UI.ask){ const T=UI.T;
+    b.innerHTML=`<div class="row">${who(seat,'✦ '+esc(T.title||'Effet'))}<span class="prompt">${T.prompt}</span>${tbtns(T)}<span class="spacer"></span>${backBtn()}</div>`; return; }
+  if (UI.flow){ const f=UI.flow, T=UI.T, lab=(f.owner==='F'?FOREST_ACTIONS:EXPL_ACTIONS)[f.act];
+    b.innerHTML=`<div class="row">${who(seat,`${lab} · ${f.done+1}/${f.total}`)}<span class="prompt fp2">${T.prompt}${T.hint?` <span class="hint">${T.hint}</span>`:''}${!hasTargets(T)?' <span class="hint">Aucune cible possible.</span>':''}</span><div class="tbg">${tbtns(T)}</div><span class="spacer"></span>${btn('Terminer l’action','data-a="endflow"','warn')}${backBtn()}</div>`; return; }
+  if (seat==='F'){
+    const F=S.forest, done=S.turn.actions>=2;
+    h=`<div class="row">${who('F',`Actions ${S.turn.actions}/2`)}
+      <div class="fxrow">${[1,2,3].map(n=>`<button class="fxpile ${UI.fx===n?'sel':''}" data-a="fx" data-n="${n}" ${F.A<n?'disabled':''} title="Force ${n} : ${n} jeton(s) pris en A">${Array.from({length:n},(_,i)=>`<img src="${TOK('foret_r')}" style="bottom:${5+i*8}px">`).join('')}</button>`).join('')}</div>
+      ${Object.entries(FOREST_ACTIONS).map(([k,l])=>abtn('foret_'+k,l,`data-a="fact" data-k="${k}"`,done||!UI.fx||F.A<UI.fx||(k==='mobiliser'&&!S.river.some((r,i)=>r&&TRACK.riverCost[i][0]===UI.fx&&(r.k==='pr'||i<pubSlots()))))).join('')}
+      ${S.projects.filter(p=>p.side==='F').map(p=>pbtn(p.id,'F',`data-a="pact" data-id="${p.id}"`,done||!UI.fx||F.A<UI.fx)).join('')}
+      ${F.events.map(id=>btn('⚠ '+esc(CARD[id].name),`data-a="fev" data-id="${id}"`,'warn',done||!UI.fx||F.A<UI.fx)).join('')}
+      <span class="spacer"></span>${backBtn()}${btn('Fin du tour','data-a="endturn"','pri')}</div>`;
+    b.innerHTML=h; return;
+  }
+  const e=S.expl[seat], left=e.tokens.filter(t=>!t.used).length, canAct=S.turn.actions<2&&left>0, imp=S.imposed[seat];
+  const canEnd=(S.turn.actions>=2||!left)&&!S.turn.usedRes&&(e.storage.petrole||e.storage.or);
+  const notes=[S.block?`⛔ ${EXPL_ACTIONS[S.block]} bloqué`:'', imp?`🌀 imposé : ${imp.map(k=>EXPL_ACTIONS[k]).join(' → ')}`:'', e.bonusNext?`+${e.bonusNext} prochaine action`:''].filter(Boolean).join(' · ');
+  if (UI.extra){ const v=UI.extra==='or'?2:1;
+    b.innerHTML=`<div class="row">${who(seat,`Action bonus (${v}) · 1 ${UI.extra==='or'?'Or':'Pétrole'}`)}${Object.entries(EXPL_ACTIONS).map(([k,l])=>abtn(seat+'_'+k,l,`data-a="xact" data-k="${k}"`)).join('')}<span class="spacer"></span>${btn('Annuler','data-a="xcancel"')}</div>`; return; }
+  const canRes=!S.turn.usedRes;
+  const rtoks=[...Array(e.storage.petrole).fill('petrole'),...Array(e.storage.or).fill('or')];
+  const sel=UI.resSel&&e.storage[UI.resSel]?UI.resSel:null;
+  const res = rtoks.length ? `<div class="restok"><div class="tokpick rp">${rtoks.map(k=>`<button data-a="rsel" data-k="${k}" class="${sel===k?'sel':''}" ${canRes?'':'disabled'} title="${k==='or'?'Or : 5 $ ou action ②':'Pétrole : 3 $ ou action ①'}${canRes?'':' (déjà utilisé ce tour)'}"><img src="${TOK(k==='or'?'or_r':'petrole_r')}"></button>`).join('')}</div>
+    ${sel?`<div class="resopt"><button class="btn ropt" data-a="res" data-k="${sel}" data-mode="cash" title="Convertir en argent"><span class="coin"><img src="${TOK('argent_r')}"><b>${sel==='or'?5:3}</b></span><span>Argent</span></button><button class="btn ropt" data-a="res" data-k="${sel}" data-mode="action" title="Action supplémentaire"><img src="${TOK(`${seat}_action_${sel==='or'?'v':'r'}`)}"><span>Action</span></button></div>`:''}</div>` : '';
+  h=`<div class="row">${who(seat,`Actions ${S.turn.actions}/2${notes?' · '+notes:''}`)}
+    <div class="tokpick">${e.tokens.map((t,i)=>`<button data-a="${t.used==='bloque'?'blk':'tok'}" data-i="${i}" data-tok="${seat}-${i}" class="${UI.tok===i?'sel':''} ${t.used==='bloque'?'blk':''}" ${(t.used&&t.used!=='bloque')||(!canAct&&t.used!=='bloque')?'disabled':''} ${t.used==='bloque'?`data-tipx="Jeton supprimé pour cette manche par le Dendrobate (carte du Protecteur)."`:`title="Jeton ${t.v}"`}><img src="${TOK(`${seat}_action_${t.v===1?'r':'v'}`)}"></button>`).join('')}</div>
+    ${res}
+    ${Object.entries(EXPL_ACTIONS).map(([k,l])=>abtn(seat+'_'+k,l,`data-a="eact" data-k="${k}"`,UI.tok===null||!canAct||S.block===k||(imp&&imp[0]!==k))).join('')}
+    ${S.projects.filter(p=>p.side==='E').map(p=>pbtn(p.id,seat,`data-a="pact" data-id="${p.id}"`,UI.tok===null||!canAct||!!imp)).join('')}
+    <span class="spacer"></span>${backBtn()}${canEnd?btn('Fin du tour','data-a="endturn"','pri'):''}</div>`;
+  b.innerHTML=h;
+}
+function renderHand(){
+  const el=$('#handPanel'), pd=S.pending[0], disc=pd&&pd.type==='discardAt', seat=disc?pd.c:(pd&&pd.type==='discardEnq'?'F':cur());
+  if (!seat||S.over){ el.style.display='none'; return; }
+  el.style.display=''; el.style.borderTop=`4px solid ${COLOR[seat]}`;
+  let h=`<h2 style="color:${COLOR[seat]}">${seat==='F'?'Enquêtes en main':'Main de '+NAME(seat)}</h2><div class="hand side-hand">`;
+  if (seat==='F'){
+    const dE=pd&&pd.type==='discardEnq';
+    h+=S.forest.hand.map(id=>dE?`<div class="hslot ${(UI.discSel||[]).includes(id)?'dsel':''}" data-disc="${id}">${cardHTML(CARD[id].img,'',CARD[id].name,false)}</div>`:cardHTML(CARD[id].img,'',CARD[id].name)).join('')||'<span class="note">Aucune Enquête.</span>';
+    h+=`</div><div class="hl"><img src="img/ico/i_enquete.png" style="height:18px;vertical-align:middle"> ${S.forest.hand.length}/3 Enquête(s)</div>`;
+  } else { const e=S.expl[seat];
+    const dK=disc?(pd.kind==='ct'?'ct':'at'):null;
+    h+=e.atouts.map(id=>dK==='at'?`<div class="hslot ${(UI.discSel||[]).includes(id)?'dsel':''}" data-disc="${id}">${cardHTML(CARD[id].img,'',CARD[id].name,false)}</div>`
+      :`<div class="hslot ${UI.T.hand&&UI.T.hand[id]?'tgt':''}" data-hand="${id}">${cardHTML(CARD[id].img,'',`${CARD[id].name} — ${CARD[id].cost} $`,!(UI.T.hand&&UI.T.hand[id]))}</div>`).join('');
+    h+=e.contrats.map(id=>`<div class="hslot ${dK==='ct'&&(UI.discSel||[]).includes(id)?'dsel':''} ${ctOk(seat,id)?'ctok':''}" ${dK==='ct'?`data-disc="${id}"`:''} data-tipx="${esc('Condition : '+CT_COND[id]+' — améliore l’action '+EXPL_ACTIONS[CARD[id].act])}">${cardHTML(CARD[id].img,'',CARD[id].name,dK!=='ct')}</div>`).join('');
+    if (!e.atouts.length&&!e.contrats.length) h+='<span class="note">Main vide.</span>';
+    h+=`</div><div class="hl"><img src="img/ico/i_atout.png" style="height:18px;vertical-align:middle"> ${e.atouts.length} Atout(s) · <img src="img/ico/i_contrat.png" style="height:18px;vertical-align:middle"> ${e.contrats.length} Contrat(s) · réussis : ${(e.ctDone||[]).length}</div>`;
+  }
+  el.innerHTML=h;
+}
+function renderSide(){ renderHand(); renderFresques();
+  $('#objs').innerHTML = S.objectifs.map(id=>{ const o=CARD[id]; return cardHTML(o.img,'',`${o.foret} (Forêt) / ${o.expl} (Exploitants)`); }).join('') + (S.projects.length?`<div style="width:100%;font-family:'Bebas Neue';font-size:18px;margin-top:6px;color:#cfe6c6">Projets réalisés (${S.projects.length}/4)</div>`+`<div class="projs">${S.projects.map(p=>`<div class="proj"><div class="card" data-zoom="${halfImg(p.id,p.side)}" title="${esc(p.side==='F'?'Action Protecteur : '+OBJ[p.id].actF.lbl:'Action Exploitants : '+OBJ[p.id].actE.lbl)}"><img src="${halfImg(p.id,p.side)}"></div><div class="pown">${p.side==='F'?`<img src="img/ico/protecteur.svg">`:(p.owners||[]).map(c=>factory(c)).join('')}</div></div>`).join('')}</div>`:'')
+  + `<div class="note">Les Objectifs sont vérifiés automatiquement après chaque action.</div>`;
+  const toks=S.eventToks||[];
+  const slots=Array.from({length:EVENT_SLOTS},(_,k)=>toks[k]?`<img src="${TOK(toks[k]==='or'?'or_r':'petrole_r')}">`:'<span class="evs"></span>').join('');
+  $('#evbox').innerHTML=`<div class="evrow"><div class="evdeck" id="evdeck">${S.decks.evenements.length?`<img src="${BACK.ev}">`:'<div class="card ph">vide</div>'}<b>${S.decks.evenements.length}</b></div>
+    <div><div class="evslots">${slots}</div><div class="note">${toks.length}/${EVENT_SLOTS} jetons Or/Pétrole : au ${EVENT_SLOTS}e, l’Événement est révélé et devient une action du Protecteur.</div></div></div>
+    ${S.forest.events.length?`<div class="hl" style="margin-top:8px">Disponibles pour le Protecteur :</div><div class="owned">${S.forest.events.map(id=>cardHTML(CARD[id].img,'',CARD[id].name,true,'lx')).join('')}</div>`:''}
+    ${S.flags.erosion?'<div class="hint">Érosion des sols active : récoltes −3 $ cette manche.</div>':''}`;
+  $('#log').innerHTML = S.log.slice(-60).reverse().map(l=>`<li class="${l.h?'h':''}">${esc(l.t)}</li>`).join('');
+}
+
+const FA = [183,535,887,1240,1592].map(x=>x/1792*100); // cercles d'action, plateau Forêt
+const EA = [142,425,708,991,1275].map(x=>x/1417*100);  // cercles d'action, plateau Exploitant
+const TUCK = { Animal:1.8, Personne:29.8, Esprit:57.3 }; // début des emplacements du haut (% de largeur)
+function tuckPad(e){ const n=Math.max(1,...['Animal','Personne','Esprit'].map(t=>e.cards[t].length)); return 4.6+(n-1)*2.6; } // en % de la largeur
+function tucked(e){ // cartes glissées sous l'emplacement du haut : seul le haut (avec le badge) dépasse
+  let h=''; const pad=tuckPad(e);
+  for (const ty of ['Animal','Personne','Esprit']) e.cards[ty].forEach((id,i)=>{
+    h+=`<div class="card tuck" data-zoom="${CARD[id].img}" title="${esc(CARD[id].name)}" style="left:${TUCK[ty]}%;top:${(pad-4.6-i*2.6)}cqw;z-index:${20-i}"><img src="${CARD[id].img}"></div>`; });
+  return h;
+}
+function renderPlayers(){
+  let h='';
+  const F=S.forest, seeF=VIEW==='F';
+  const fz=(n)=>Array.from({length:n},()=>`<img src="${TOK('foret_r')}">`).join('');
+  h+=`<div class="pl F"><header><img src="${TOK('foret_r')}" style="width:30px"><h2>Le Protecteur</h2></header>
+    <div class="pboard"><div class="img" style="aspect-ratio:2882/3310;background-image:url(img/boards/foret.webp)">
+      <div class="zoneF" style="left:3%;top:5%;width:92%;height:16%">${fz(F.C)}</div>
+      <div class="zoneF" style="left:6%;top:62%;width:63%;height:17%">${fz(F.A)}</div>
+      <div class="zoneF" style="left:6%;top:83%;width:90%;height:16%">${fz(F.B)}</div>
+      ${Object.keys(FOREST_ACTIONS).map((k,i)=>Array.from({length:F.onAct[k]},(_,j)=>`<img class="fpile" src="${TOK('foret_r')}" style="left:${FA[i]}%;top:31.8%;margin-top:${-j*1.4}cqw;z-index:${j+1}">`).join('')).join('')}
+    </div></div>
+    <div class="tray"><div class="grp"><img src="${TOK('foret_meeple_r')}">${9-forestMeeplesOnBoard()-forestMeeplesInArenas()}<span class="l">Peuples dispo</span></div>
+      <div class="grp">${F.events.length} <span class="l">Événement(s) disponible(s)</span></div></div>
+    ${F.published.length?`<div class="hl" style="margin-top:8px">Enquêtes publiées : ${F.published.length}</div><div class="owned">${F.published.map(id=>cardHTML(CARD[id].img,'',CARD[id].name)).join('')}</div>`:''}
+    <div class="hand">${F.events.map(id=>cardHTML(CARD[id].img,'',CARD[id].name,true)).join('')}</div>
+    <div class="hand">${F.hand.map(id=>seeF?cardHTML(CARD[id].img,'',CARD[id].name):`<div class="card" style="cursor:default"><img src="${BACK.en}"></div>`).join('')}
+      <div class="hl">Main : ${F.hand.length} Enquête(s) ${seeF?'':'— vue « Forêt » pour les voir'}</div></div></div>`;
+  for (const c of EXPL){ const e=S.expl[c];
+    const pile=(srcs,x,y)=>srcs.map((src,i)=>`<img class="pile" src="${src}" style="left:${x}%;top:${y}%;margin-top:${-i*1.4}cqw;z-index:${i+1}">`).join('');
+    const acts=Object.keys(EXPL_ACTIONS).map((k,i)=>pile(e.tokens.filter(t=>t.used===k).map(t=>TOK(`${c}_action_${t.v===1?'r':'v'}`)),EA[i],49.8)).join('');
+    const sto=(n,src,x,y)=>pile(Array.from({length:n},()=>src),x,y);
+    h+=`<div class="pl ${c}"><header><img src="${TOK(c+'_base_r')}" style="width:30px"><h2>${NAME(c)} <span style="font-size:15px;color:var(--mut)">(${NAMES[c]})</span></h2></header>
+      <div class="pboard" style="padding-top:${tuckPad(e)}%;padding-bottom:${ctStackMax(e)?ctStackMax(e)*CT_VIS+1:0}cqw">${tucked(e)}${ctTucked(e,tuckPad(e))}<div class="img" style="z-index:30;aspect-ratio:1417/944;background-image:url(img/boards/expl_${c}.webp)">
+        ${sto(e.storage.forest,TOK('foret_r'),18,23.8)}${sto(e.storage.petrole,TOK('petrole_r'),48.2,23.8)}${sto(e.storage.or,TOK('or_r'),77,23.8)}${acts}
+      </div></div>
+      <div class="tray">
+        <div class="grp"><img src="${TOK('argent_r')}">${e.money} $</div>
+        <div class="grp">${e.tokens.filter(t=>!t.used).map(t=>`<img src="${TOK(`${c}_action_${t.v===1?'r':'v'}`)}">`).join('')||'<span class="l">aucun jeton libre</span>'}</div>
+        <div class="grp"><img src="${TOK(c+'_betail_r')}">${e.prod.betail}</div><div class="grp"><img src="${TOK(c+'_coca_r')}">${e.prod.coca}</div><div class="grp"><img src="${TOK(c+'_soja_r')}">${e.prod.soja}</div>
+        <div class="grp"><img src="${TOK(c+'_meeple_r')}">${e.meeplesHand}<span class="l">influence</span></div>
+        <div class="grp"><img src="${TOK(c+'_meeple_r')}" style="opacity:.7">${e.participation}<span class="l">participation</span></div>
+        <div class="grp"><span class="l">🐾 ${e.cards.Animal.length} · 👤 ${e.cards.Personne.length} · ✦ ${e.cards.Esprit.length}</span></div>
+      </div>
+      <div class="owned">${e.luxe.map(id=>cardHTML(CARD[id].img,'',CARD[id].name,true,'lx')).join('')}</div>
+      <div class="hand">${e.atouts.map(id=>VIEW===c?cardHTML(CARD[id].img,'',CARD[id].name):`<div class="card" style="cursor:default"><img src="${BACK.at}"></div>`).join('')}${e.contrats.map(id=>VIEW===c?cardHTML(CARD[id].img,'',CARD[id].name):`<div class="card" style="cursor:default"><img src="${BACK.ct}"></div>`).join('')}</div></div>`;
+  }
+  $('#players').innerHTML=h;
+}
+function renderView(){ $('#viewSeg').innerHTML=S.seats.map(k=>[k,k==='F'?'Protecteur':NAME(k).replace('Exploitant ','Exploitant ')]).map(([k,l])=>`<button class="${VIEW===k?'on':''}" data-view="${k}"><span class="dot" style="background:${COLOR[k]}"></span>${l}</button>`).join(''); $('#manLbl').textContent=MANUAL?'on':'off'; $('#bUndo').disabled=!UNDO.length; }
+function turnDone(){
+  if (S.over||!S.turn||UI.flow||UI.ask||UI.extra||S.pending.length) return false;
+  const seat=cur();
+  if (seat==='F') return S.turn.actions>=2 && !MANUAL;
+  const e=S.expl[seat], left=e.tokens.filter(t=>!t.used).length;
+  if (S.turn.actions<2&&left>0) return false;
+  return !( !S.turn.usedRes&&(e.storage.petrole||e.storage.or) );
+}
+function autoEndForest(){
+  if (UI.autoEnd||!turnDone()) return;
+  const seat=cur(), stamp=JSON.stringify(S.turn);
+  UI.autoEnd=true; setTimeout(()=>{ UI.autoEnd=false; if (cur()===seat&&JSON.stringify(S.turn)===stamp&&turnDone()){ toast(`${CAP(NAME(seat))} a terminé son tour : joueur suivant.`); endTurn(); } else render(); },1200);
+}
+function autoRefill(){ // seule possibilité = piocher un Protecteur → on le fait tout de suite
+  let n=0;
+  while (S.pending.length && S.pending[0].type==='refill' && (S.river.some(r=>r&&r.k==='en') || !S.forest.hand.length)){
+    const p=S.pending.shift(); fillSlot(p.slot,'pr'); n++; }
+  if (n){ toast(`Rivière complétée automatiquement (${n} carte${n>1?'s':''} Protecteur).`); resolvePending(); }
+}
+function meepleDiff(){
+  const cur={zones:allZ().filter(id=>Z(id).meeple), ar:Object.fromEntries(ARENAS.map(a=>[a,S.arenas[a].F]))};
+  if (PREVM){ const added=cur.zones.filter(z=>!PREVM.zones.includes(z)), removed=PREVM.zones.filter(z=>!cur.zones.includes(z));
+    added.forEach((z,i)=>{ const from=removed[i]?{zone:removed[i]}:{sel:'#sum-F .shd img'}; ANIM.push({type:'fly',img:TOK('foret_meeple_r'),from,to:{zone:z,hideSel:`.t[data-mz="${z}"]`}}); });
+    ARENAS.forEach(a=>{ for(let k=PREVM.ar[a];k<cur.ar[a];k++) ANIM.push({type:'fly',img:TOK('foret_meeple_r'),from:{sel:'#sum-F .shd img'},to:{sel:`.arena[data-arena="${a}"][data-side="F"]`}}); }); }
+  PREVM=cur;
+}
+function render(){ if (SIM) return;
+  if (FAST){ if (!S) return; for (const c of EXPL) if (S.expl[c].money<0) S.expl[c].money=0; if (!S.over) autoRefill(); refreshT(); checkContracts(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean)){ S.learned=true; if(!S.noLearn) aiLearn(); } return; } if (S) for (const c of EXPL) if (S.expl[c].money<0){ console.warn('argent négatif corrigé',c,S.expl[c].money); S.expl[c].money=0; } if (S && !S.over) autoRefill(); if (S) meepleDiff(); UI.T = (S.pending.length||S.over) ? {zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]} : flowTargets(); renderView(); renderSum(); renderBar(); renderBoard(); renderRiver(); renderSide(); requestAnimationFrame(runAnims); checkContracts(); takeCheckpoint(); autoEndForest(); save(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean)){ S.learned=true; aiLearn(); } aiSchedule(); renderPlayers(); }
+
+/* =========================================================
+   OUTILS MANUELS (effets de cartes non automatisés)
+   ========================================================= */
+function manualZone(id){
+  const z=Z(id), zz=ZB[id];
+  const p=z.piece;
+  openModal(`<h2>${KIND_LABEL[zz.kind]} ${id}</h2><p>Forêt : ${z.forest} · ${z.res?(z.res==='or'?'Or':'Pétrole'):'pas de ressource'} · ${p?(p.type==='base'?'Camp '+NAME(p.owner):PROD[p.kind]+' '+NAME(p.owner)+(p.weak?' (affaibli)':'')):'aucune pièce'} · ${z.meeple?'Peuple présent':'pas de Peuple'}</p>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+      ${btn('+1 Forêt (depuis C)','data-mz="f+"','',z.forest>=3||!!p)}${btn('+1 Forêt (depuis A)','data-mz="fA+"','',z.forest>=3||!!p)}${btn('−1 Forêt (→ C)','data-mz="f-"','',!z.forest)}
+      ${btn('Affaiblir / retirer la production','data-mz="weak"','',!(p&&p.type==='prod'))}
+      ${btn(z.meeple?'Retirer le Peuple':'Placer un Peuple','data-mz="mp"')}
+      ${btn('Ajouter Or (réserve)','data-mz="or"','',!!z.res||!S.reserve.or)}${btn('Retirer la ressource','data-mz="res-"','',!z.res)}
+    </div><p class="note">Utile pour appliquer à la main les effets des cartes Protecteur et Événement.</p>
+    <div style="margin-top:10px;display:flex;gap:8px">${btn('Fermer','data-close="1"','pri')}</div>`, id);
+}
+function manualApply(id,k){
+  snapshot(); const z=Z(id), F=S.forest;
+  if (k==='f+'){ if(F.C){F.C--;z.forest++;} else toast('C est vide.'); }
+  if (k==='fA+'){ if(F.A){F.A--;z.forest++;} else toast('A est vide.'); }
+  if (k==='f-'){ z.forest--; F.C++; }
+  if (k==='weak') weaken(id);
+  if (k==='mp') z.meeple=!z.meeple;
+  if (k==='or'){ z.res='or'; S.reserve.or--; }
+  if (k==='res-'){ S.reserve[z.res]++; z.res=null; }
+  log(`Ajustement manuel sur ${id}.`); render(); manualZone(id);
+}
+function openModal(html,ctx){ $('#modalBox').innerHTML=html; $('#modal').classList.add('on'); $('#modal').dataset.ctx=ctx||''; }
+function closeModal(){ $('#modal').classList.remove('on'); }
+let GAL={list:[],i:0};
+function openGallery(el){
+  const box=el.closest('.river,.side-hand,.objs,.owned,.pboard,.hand,#evpanel,.pl,.panel')||document;
+  const list=[...new Set([...box.querySelectorAll('[data-zoom]')].map(x=>x.dataset.zoom))];
+  GAL={list,i:Math.max(0,list.indexOf(el.dataset.zoom))}; galShow(); $('#zoom').classList.add('on'); hovHide();
+}
+function galShow(){ $('#zoomImg').src=GAL.list[GAL.i]; $('#zPrev').disabled=GAL.i<=0; $('#zNext').disabled=GAL.i>=GAL.list.length-1; $('#zCount').textContent=GAL.list.length>1?`${GAL.i+1} / ${GAL.list.length}`:''; }
+function galStep(d){ const n=GAL.i+d; if(n<0||n>=GAL.list.length) return; GAL.i=n; galShow(); }
+function flash(src){ if(SIM||FAST) return; const d=$('#flash'); d.innerHTML=`<img src="${src}">`; d.classList.add('on'); clearTimeout(d._h); d._h=setTimeout(()=>d.classList.remove('on'),3800); }
+function showCard(src){ GAL={list:[src],i:0}; galShow(); $('#zoom').classList.add('on'); }
+
+/* =========================================================
+   ÉVÉNEMENTS
+   ========================================================= */
+document.addEventListener('click', ev=>{
+  const t=ev.target;
+  if (!t.closest('#menu')) $('#menu').classList.remove('open');
+  if (t.closest('#bMenu')) { $('#menu').classList.toggle('open'); return; }
+  const m=t.closest('.dd [data-m]'); if (m){ $('#menu').classList.remove('open'); const k=m.dataset.m;
+    if (k==='new'){ UNDO=[]; newGame(S.nb); render(); toast('Nouvelle partie prête.'); }
+    if (k==='home'){ showStart(); }
+    if (k==='aispeed'){ AISPEED = AISPEED===1700?800:AISPEED===800?2800:1700; $('#aiSpd').textContent={1700:'normale',800:'rapide',2800:'lente'}[AISPEED]; }
+    if (k==='undo') undo();
+    if (k==='manual'){ MANUAL=!MANUAL; render(); toast(MANUAL?'Outils manuels : cliquez sur une zone du plateau.':'Outils manuels désactivés.'); }
+    if (k==='endround'){ S.turn=null; UI={tok:null,flow:null}; render(); }
+    if (k==='export'){ navigator.clipboard.writeText(JSON.stringify(S)).then(()=>toast('État copié dans le presse-papiers.'),()=>toast('Copie refusée par le navigateur.')); }
+    return; }
+  if (t.closest('#bUndo')) return undo();
+  const cf=t.closest('[data-cfg]'); if (cf){ CFG.nb=+cf.dataset.cfg; renderCfg(); return; }
+  const ss=t.closest('[data-seat]'); if (ss){ CFG.ai[ss.dataset.seat]=ss.dataset.v==='ai'; renderCfg(); return; }
+  const st=t.closest('[data-start]'); if (st){ const v=st.dataset.start;
+    if (v==='resume'){ if (!loadSave()) return toast('Aucune partie sauvegardée.'); }
+    else { UNDO=[]; TURNSNAP=null; newGame(CFG.nb); S.ai=Object.fromEntries(S.seats.map(x=>[x,!!CFG.ai[x]])); VIEW=isAI(cur())?(S.seats.find(x=>!isAI(x))||cur()):cur(); }
+    STARTED=true; $('#startm').classList.add('off'); render(); return; }
+  const v=t.closest('[data-view]'); if (v){ VIEW=v.dataset.view; render(); return; }
+  if (t.closest('[data-close]')) return closeModal();
+  const mz=t.closest('[data-mz]'); if (mz) return manualApply($('#modal').dataset.ctx, mz.dataset.mz);
+  if (t.closest('#zPrev')) return galStep(-1);
+  if (t.closest('#zNext')) return galStep(1);
+  if (t.closest('#zoom')) { $('#zoom').classList.remove('on'); return; }
+  if (t.closest('#modal') && !t.closest('.box')) return closeModal();
+  if (S && STARTED && isAI(aiWho()) && t.closest('#abar,#board,#river,#handPanel,#players') && !t.closest('[data-zoom]')) return toast('C’est au tour d’une IA…');
+
+  const a=t.closest('[data-a]');
+  if (a && !a.disabled){ const k=a.dataset.a;
+    if (k==='new'){ UNDO=[]; newGame(S.nb); return render(); }
+    if (k==='tok'){ UI.tok=+a.dataset.i; return render(); }
+    if (k==='eact') return startExplAction(a.dataset.k, S.expl[cur()].tokens[UI.tok].v);
+    if (k==='rsel'){ UI.resSel = UI.resSel===a.dataset.k?null:a.dataset.k; return render(); }
+    if (k==='res'){ UI.resSel=null; return useResource(a.dataset.k, a.dataset.mode); }
+    if (k==='xact'){ const kind=UI.extra; UI.extra=null; return startExplAction(a.dataset.k, kind==='or'?2:1, kind); }
+    if (k==='xcancel'){ UI.extra=null; return render(); }
+    if (k==='pact') return doPact(a.dataset.id);
+    if (k==='fx'){ UI.fx=+a.dataset.n; return render(); }
+    if (k==='fact'){ const X=UI.fx; UI.fx=null; return startForestAction(a.dataset.k, X); }
+    if (k==='fev'){ const X=UI.fx; UI.fx=null; return startForestAction(null, X, a.dataset.id); }
+    if (k==='tb'){ const o=UI.T.buttons[+a.dataset.i]; if (o&&o.fn){ o.fn(); } return; }
+    if (k==='endflow') return endFlow();
+    if (k==='endturn') return endTurn();
+    if (k==='back') return backToCheckpoint();
+    if (k==='endround') return endRound();
+    if (k==='fill-pr'||k==='fill-en'){ snapshot(); const p=S.pending.shift(); fillSlot(p.slot, k==='fill-pr'?'pr':'en', a.dataset.id); resolvePending(); return render(); }
+    if (k==='disc-ok'){ const pd=S.pending[0];
+      if (pd.type==='discardEnq'){ snapshot(); const L=UI.discSel||[]; S.forest.hand=S.forest.hand.filter(x=>!L.includes(x)); S.decks.enquetes.push(...L); log(`Le Protecteur défausse ${L.length} Enquête(s).`); UI.discSel=[]; S.pending=S.pending.filter(p=>p.type!=='discardEnq'); resolvePending(); return render(); }
+      const isCt=pd.kind==='ct'; (UI.discSel||[]).forEach(id=>isCt?discardContrat(pd.c,id):discardAtout(pd.c,id)); log(`${CAP(NAME(pd.c))} défausse ${UI.discSel.length} ${isCt?'Contrat':'Atout'}(s).`); UI.discSel=[]; S.pending.shift(); resolvePending(); return render(); }
+    if (k==='disc-en'){ snapshot(); S.forest.hand=S.forest.hand.filter(x=>x!==a.dataset.id); S.decks.enquetes.push(a.dataset.id); S.pending.shift(); log('Le Protecteur défausse une Enquête.'); resolvePending(); return render(); }
+    return;
+  }
+  // Plateau
+  const ar=t.closest('[data-arena]');
+  if (ar){
+    const pd=S.pending[0];
+    if (pd&&pd.type==='forestArena'){ if(ar.dataset.side!=='F') return; snapshot(); S.arenas[ar.dataset.arena].F++; S.pending.shift(); log(`Le Peuple chassé rejoint l’Arène ${ARENA_LABEL[ar.dataset.arena]}.`); resolvePending(); return render(); }
+    const fn=UI.T.arenas[ar.dataset.arena+'|'+ar.dataset.side]; if (fn) return fn();
+  }
+  const zh=t.closest('[data-zone]');
+  if (zh){
+    const id=zh.dataset.zone;
+    if (UI.T.zones[id]) return UI.T.zones[id]();
+    if (MANUAL) return manualZone(id);
+  }
+  const rv=t.closest('[data-river]'); if (rv && UI.T.river[+rv.dataset.river]) return UI.T.river[+rv.dataset.river]();
+  const ds=t.closest('[data-disc]'); if (ds){ const pd=S.pending[0], need=pd.type==='discardEnq'?S.forest.hand.length-3:(pd.kind==='ct'?S.expl[pd.c].contrats.length-MAX_HAND_CT:S.expl[pd.c].atouts.length-MAX_HAND_AT), L=UI.discSel=UI.discSel||[], id=ds.dataset.disc;
+    if (L.includes(id)) L.splice(L.indexOf(id),1); else if (L.length<need) L.push(id); return render(); }
+  const hd=t.closest('[data-hand]'); if (hd && UI.T.hand && UI.T.hand[hd.dataset.hand]) return UI.T.hand[hd.dataset.hand]();
+  const lx=t.closest('[data-luxe]'); if (lx && UI.T.luxe[+lx.dataset.luxe]) return UI.T.luxe[+lx.dataset.luxe]();
+  const z=t.closest('[data-zoom]'); if (z){ openGallery(z); }
+});
+document.addEventListener('keydown', e=>{ if($('#zoom').classList.contains('on')){ if(e.key==='ArrowLeft') galStep(-1); if(e.key==='ArrowRight') galStep(1); } if(e.key==='Escape'){ $('#zoom').classList.remove('on'); closeModal(); } if((e.ctrlKey||e.metaKey)&&e.key==='z'){ e.preventDefault(); undo(); } });
+const HOV={t:null,el:null,x:0,y:0};
+function hovHide(){ clearTimeout(HOV.t); HOV.el=null; $('#hov').classList.remove('on'); }
+function hovPlace(){ const h=$('#hov'), r=h.getBoundingClientRect(), W=innerWidth, H=innerHeight;
+  let x=HOV.x+24, y=HOV.y-r.height/2; if (x+r.width>W-10) x=HOV.x-24-r.width; y=Math.max(10,Math.min(H-r.height-10,y)); h.style.left=x+'px'; h.style.top=y+'px'; }
+document.addEventListener('mouseover', ev=>{
+  const c=ev.target.closest('.card'); if (c===HOV.el) return; hovHide();
+  if (!c||c.classList.contains('ph')||c.closest('.hov')) return;
+  const img=c.querySelector('img'); if (!img) return;
+  const src=c.dataset.zoom||img.getAttribute('src'); HOV.el=c;
+  HOV.t=setTimeout(()=>{ const h=$('#hov'), im=h.querySelector('img'); im.onload=()=>{ hovPlace(); h.classList.add('on'); }; im.src=src; if (im.complete){ hovPlace(); h.classList.add('on'); } },800);
+});
+document.addEventListener('mousedown', hovHide);
+const tip=$('#tip'); const TIPX={el:null,t:null,ok:false,x:0,y:0};
+document.addEventListener('mousemove', ev=>{ HOV.x=ev.clientX; HOV.y=ev.clientY; if ($('#hov').classList.contains('on')) hovPlace();
+  const zEl=ev.target.closest('[data-zone]'); let txt=''; const tx=ev.target.closest('[data-tipx]');
+  if (tx!==TIPX.el){ TIPX.el=tx; TIPX.ok=false; clearTimeout(TIPX.t); if (tx) TIPX.t=setTimeout(()=>{ TIPX.ok=true; tip.style.display='block'; tip.textContent=tx.dataset.tipx; tip.style.left=(TIPX.x+14)+'px'; tip.style.top=(TIPX.y+14)+'px'; },500); }
+  TIPX.x=ev.clientX; TIPX.y=ev.clientY;
+  if (tx){ if (TIPX.ok){ tip.style.left=(ev.clientX+14)+'px'; tip.style.top=(ev.clientY+14)+'px'; } else tip.style.display='none'; return; }
+  if (!txt && zEl && S){ const z=ZB[zEl.dataset.zone], st=Z(z.id), parts=[KIND_LABEL[z.kind]];
+    if (st.forest) parts.push(`${st.forest} Forêt${st.forest>=3?' (dense)':''}`); if (st.res) parts.push(st.res==='or'?'Or':'Pétrole');
+    if (st.piece) parts.push(st.piece.type==='base'?`Camp ${NAME(st.piece.owner)}`:`${PROD[st.piece.kind]} ${NAME(st.piece.owner)}${st.piece.weak?' (affaibli)':''}${st.piece.type==='prod'?` · récolte ${harvestValue(z.id)} $`:''}`);
+    if (st.meeple) parts.push('Peuple de la Forêt'); txt=parts.join(' · '); }
+  if (txt){ tip.style.display='block'; tip.textContent=txt; tip.style.left=(ev.clientX+14)+'px'; tip.style.top=(ev.clientY+14)+'px'; } else tip.style.display='none';
+});
+
+let STARTED=false;
+function save(){ if(!STARTED||SIM||FAST) return; try{ localStorage.setItem('amazonia_save', JSON.stringify({S, snap:TURNSNAP, at:Date.now()})); }catch(e){} }
+function readSave(){ try{ return JSON.parse(localStorage.getItem('amazonia_save')||'null'); }catch(e){ return null; } }
+function loadSave(){ const d=readSave(); if(!d||!d.S) return false; S=d.S; if(!S.fresque){ S.fresque={deck:shuffle(FRESQUES.map(f=>f.id)),active:[],done:[],max:1}; newFresque(); } if(!Array.isArray(S.expl[Object.keys(S.expl)[0]].contrats)) for(const c in S.expl){ S.expl[c].contrats=[]; S.expl[c].ctDone=[]; } S.nb=S.nb||3; applyLayout(S.nb); EXPL=S.seats.filter(x=>x!=='F'); TURNSNAP=d.snap||JSON.stringify(S); UI={tok:null,flow:null}; VIEW=cur()||EXPL[0]; return true; }
+let CFG={nb:3, ai:{F:false,orange:true,bleu:true,blanc:true}};
+function renderCfg(){ const seats=CFG.nb===4?['F','orange','bleu','blanc']:['F','orange','bleu'], el=$('#seatcfg'); el.style.display='';
+  el.innerHTML=`<div class="sub">Qui joue chaque rôle ? (${CFG.nb} joueurs)</div>`+seats.map((x,i)=>`<div class="seatrow"><span class="dot" style="background:${COLOR[x]}"></span><span class="sp">${x==='F'?'Protecteur':'Exploitant '+i}</span><div class="seg"><button class="${!CFG.ai[x]?'on':''}" data-seat="${x}" data-v="h">👤 Humain</button><button class="${CFG.ai[x]?'on':''}" data-seat="${x}" data-v="ai">🤖 IA</button></div></div>`).join('')
+    +`<button class="btn pri big" data-start="go">Lancer la partie</button>`; }
+function showStart(){ const b=aiBrain(); $('#aiStats').textContent=b.games?`🤖 L’IA a appris de ${b.games} partie(s) · Protecteur IA : ${b.roles.F.wins}/${b.roles.F.games} victoires · Exploitants IA : ${b.roles.E.wins}/${b.roles.E.games}`:'🤖 L’IA apprend de chaque partie jouée contre elle.'; $('#seatcfg').style.display='none'; const d=readSave(); $('#bResume').disabled=!d; $('#resumeInfo').textContent=d?`${d.S.nb||3} joueurs · manche ${d.S.round} · ${new Date(d.at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}`:'aucune partie en cours'; $('#startm').classList.remove('off'); }
+newGame(3); render(); showStart();
+</script>
+</body>
+</html>
