@@ -339,14 +339,25 @@ main{min-width:0}
 
 /* ---------- Menus : style « carnet d'expédition » ---------- */
 .startm{background:#0b1610!important;overflow:auto}
-.startm::after{content:'';position:fixed;inset:-20px;background:url(img/boards/central.webp) center/cover no-repeat;filter:blur(6px) brightness(.35) saturate(1.2);z-index:-1}
+.startm::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 45% 70% at 50% 50%,#0a140dbb,#0a140d55 70%,transparent),linear-gradient(0deg,#0a140d99,transparent 45%),url(img/menu/village.webp) center 40%/cover no-repeat;z-index:-1;animation:mpan 40s ease-in-out infinite alternate}
+@keyframes mpan{from{transform:scale(1.04)}to{transform:scale(1.12) translateX(-1.5%)}}
+#lobby::after{filter:blur(4px) brightness(.6)}
+.msep,.startm .sub,#aiStats{text-shadow:0 1px 3px #000,0 0 10px #000c;color:#f4ecd6!important}
+.msep::before,.msep::after{background:#f4ecd699!important}
 .startm{isolation:isolate}
-.startm::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,transparent 30%,#050b07cc 100%);pointer-events:none}
+.startm::before{content:'';position:fixed;inset:0;background:linear-gradient(90deg,#0a140dcc 0%,#0a140d88 45%,#0a140d22 75%,transparent),linear-gradient(0deg,#0a140daa,transparent 40%);pointer-events:none;z-index:-1}
+#startm .sbox{display:flex;align-items:center;gap:42px;text-align:left;padding:30px}
+#startm .sbox .mcol{display:flex;flex-direction:column;align-items:center;text-align:center}
+#startm .sbtns{align-items:stretch;min-width:420px}
+.mart{flex:none;width:300px;aspect-ratio:2/3;border-radius:18px;border:6px solid #f3e6c8;outline:3px solid #6b4423;box-shadow:0 18px 50px #000c;background:url(img/menu/toucan.webp) center/cover;transform:rotate(-3deg);position:relative;animation:mfloat 6s ease-in-out infinite}
+.mart::after{content:'Protecteur de la forêt';position:absolute;left:50%;bottom:-18px;transform:translateX(-50%) rotate(2deg);background:#3f8f3a;color:#fff;font-family:'Bree Serif',serif;font-size:16px;padding:5px 14px;border-radius:10px;border:2px solid #24561f;white-space:nowrap;box-shadow:0 4px 10px #0008}
+@keyframes mfloat{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(-2deg) translateY(-8px)}}
+@media(max-width:900px){#startm{padding:0 14px;box-sizing:border-box}#startm .sbtns{min-width:0}#startm .sbox{padding:18px;box-sizing:border-box;width:100%}#startm .sbox .mcol{width:100%}.mtitle{font-size:60px!important}}
 .sbox,.lbox{position:relative}
-.mtitle{font-family:'Alfa Slab One',serif!important;font-size:92px!important;letter-spacing:.02em!important;color:#f4e6c4!important;text-shadow:0 4px 0 #5a3a1e,0 10px 30px #000a;line-height:1;margin:0}
+.mtitle{font-family:'Alfa Slab One',serif!important;font-size:92px!important;letter-spacing:.02em!important;color:#ffd36b!important;text-shadow:0 4px 0 #5a3a1e,0 6px 0 #3a2413,0 12px 30px #000c;line-height:1;margin:0}
 .mtitle.sm{font-size:52px!important;text-align:center;margin-bottom:14px}
 .mtitle.sm span{font-family:'Bree Serif',serif;font-size:30px;color:#a9d18e;text-shadow:none;vertical-align:middle}
-.msub{font-family:'Bree Serif',serif;color:#cfe0b8;font-size:20px;margin:8px 0 0;letter-spacing:.03em}
+.msub{font-family:'Bree Serif',serif;color:#f4ecd6;text-shadow:0 2px 6px #000c;font-size:20px;margin:8px 0 0;letter-spacing:.03em}
 .sbtns{min-width:420px!important;gap:10px!important}
 .msep{font-family:'Bree Serif',serif;color:#cfe0b8;font-size:15px;margin:10px 0 0;display:flex;align-items:center;gap:10px}
 .msep::before,.msep::after{content:'';flex:1;height:1px;background:#cfe0b855}
@@ -428,7 +439,7 @@ main{min-width:0}
   </aside>
 </div>
 
-<div class="startm" id="startm"><div class="sbox">
+<div class="startm" id="startm"><div class="sbox"><div class="mcol">
   <h1 class="mtitle">Amazonia</h1><p class="msub">Protéger la forêt · ou l’exploiter</p>
   <div class="sbtns">
     <button class="btn big mm green" data-online="1"><span class="mi">🌍</span><span class="mt">Jouer en ligne<small>Tables, invitations et discussion avec d’autres joueurs</small></span></button>
@@ -436,7 +447,7 @@ main{min-width:0}
     <button class="btn big mm" data-cfg="3"><span class="mi"><img src="img/ico/protecteur.svg"></span><span class="mt">Partie à 3 joueurs<small>1 Protecteur · 2 Exploitants</small></span></button>
     <button class="btn big mm" data-cfg="4"><span class="mi"><img src="img/ico/protecteur.svg"></span><span class="mt">Partie à 4 joueurs<small>1 Protecteur · 3 Exploitants</small></span></button>
     <button class="btn big mm ghost" id="bResume" data-start="resume"><span class="mi">↻</span><span class="mt">Reprendre la partie<small id="resumeInfo"></small></span></button>
-  </div><div class="seatcfg" id="seatcfg" style="display:none"></div><p class="sub" id="aiStats" style="margin-top:18px"></p></div></div>
+  </div><div class="seatcfg" id="seatcfg" style="display:none"></div><p class="sub" id="aiStats" style="margin-top:18px"></p></div></div></div>
 <div class="startm off" id="lobby"><div class="lbox"><h1 class="mtitle sm">Amazonia <span>en ligne</span></h1><div id="lobbyIn"></div></div></div>
 <div class="zoom" id="zoom"><button class="zarr" id="zPrev">‹</button><img id="zoomImg" alt=""><button class="zarr" id="zNext">›</button><div class="zcount" id="zCount"></div></div>
 <div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
