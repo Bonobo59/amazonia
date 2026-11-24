@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Amazonia">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Bree+Serif&family=Bebas+Neue&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0f1a14;--panel:#16251d;--panel2:#1d3126;--line:#2c4636;--txt:#e8efe9;--mut:#9fb3a6;--green:#3aa43c;--orange:#f39200;--blue:#36a9e1;--gold:#e0b93a}
 *{box-sizing:border-box}
@@ -336,6 +336,54 @@ main{min-width:0}
 .modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-width:560px;width:92vw}
 .modal .box h2{font-size:26px;margin-bottom:10px}
 .modal .box p{color:#cfdcd3;font-size:14px}
+
+/* ---------- Menus : style « carnet d'expédition » ---------- */
+.startm{background:#0b1610!important;overflow:auto}
+.startm::after{content:'';position:fixed;inset:-20px;background:url(img/boards/central.webp) center/cover no-repeat;filter:blur(6px) brightness(.35) saturate(1.2);z-index:-1}
+.startm{isolation:isolate}
+.startm::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,transparent 30%,#050b07cc 100%);pointer-events:none}
+.sbox,.lbox{position:relative}
+.mtitle{font-family:'Alfa Slab One',serif!important;font-size:92px!important;letter-spacing:.02em!important;color:#f4e6c4!important;text-shadow:0 4px 0 #5a3a1e,0 10px 30px #000a;line-height:1;margin:0}
+.mtitle.sm{font-size:52px!important;text-align:center;margin-bottom:14px}
+.mtitle.sm span{font-family:'Bree Serif',serif;font-size:30px;color:#a9d18e;text-shadow:none;vertical-align:middle}
+.msub{font-family:'Bree Serif',serif;color:#cfe0b8;font-size:20px;margin:8px 0 0;letter-spacing:.03em}
+.sbtns{min-width:420px!important;gap:10px!important}
+.msep{font-family:'Bree Serif',serif;color:#cfe0b8;font-size:15px;margin:10px 0 0;display:flex;align-items:center;gap:10px}
+.msep::before,.msep::after{content:'';flex:1;height:1px;background:#cfe0b855}
+.btn.mm{flex-direction:row!important;align-items:center;gap:14px;text-align:left;background:#f3e6c8;color:#4a2f1d;border:3px solid #6b4423;border-radius:16px;padding:10px 16px;box-shadow:0 4px 0 #6b4423,0 10px 24px #0008;transition:transform .12s,box-shadow .12s}
+.btn.mm:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 0 #6b4423,0 14px 28px #0009;border-color:#6b4423}
+.btn.mm:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #6b4423}
+.btn.mm .mt{display:flex;flex-direction:column;font-family:'Bree Serif',serif;font-size:22px;font-weight:400}
+.btn.mm small{font-family:Nunito,sans-serif;font-size:13px;font-weight:700;opacity:.75;color:#6b4423}
+.btn.mm .mi{width:48px;height:48px;border-radius:50%;background:#e2cfa3;border:2px solid #6b4423;display:flex;align-items:center;justify-content:center;font-size:26px;flex:none}
+.btn.mm .mi img{width:34px}
+.btn.mm.green{background:#3f8f3a;color:#fff;border-color:#24561f;box-shadow:0 4px 0 #24561f,0 10px 24px #0008}
+.btn.mm.green small{color:#e6f5dc}
+.btn.mm.green .mi{background:#2f6e2b;border-color:#1b4117}
+.btn.mm.ghost{background:#f3e6c8cc}
+.btn.mm:disabled{opacity:.5}
+.seatcfg .sub,.startm .sub{color:#cfe0b8}
+.startm .seatrow{background:#f3e6c8;color:#4a2f1d;border:2px solid #6b4423;box-shadow:0 3px 0 #6b4423}
+.startm .seatrow .seg{border-color:#6b4423;background:#e2cfa3}
+.startm .seatrow .seg button{color:#6b4423}
+.startm .seatrow .seg button.on{background:#6b4423;color:#f3e6c8}
+.startm .seatrow .nm{color:#6b4423}
+.startm .seatrow .sp{font-family:'Bree Serif',serif;font-size:18px;font-weight:400}
+.startm .btn.pri.big{background:#3f8f3a;border:3px solid #24561f;box-shadow:0 4px 0 #24561f;font-family:'Bree Serif',serif;font-weight:400;font-size:22px;border-radius:16px}
+.lbox{background:#f3e6c8;border:3px solid #6b4423;border-radius:20px;box-shadow:0 20px 60px #000c;color:#4a2f1d}
+.lbox .mtitle.sm{color:#4a2f1d!important;text-shadow:0 3px 0 #d9c59a!important}
+.lbox .mtitle.sm span{color:#3f8f3a}
+.lcol h2{font-family:'Bree Serif',serif!important;color:#6b4423!important;font-size:24px!important;letter-spacing:0!important;border-bottom:2px dashed #c9b083;padding-bottom:4px}
+.lbox .sub{color:#7a5a3a}
+.lbox .lin{background:#fffaf0;border:2px solid #c9b083;color:#4a2f1d}
+.lbox .lchat{background:#fffaf0;border:2px solid #c9b083;color:#4a2f1d}
+.lbox .seatrow{background:#fffaf0;border:2px solid #c9b083;box-shadow:none;color:#4a2f1d}
+.lbox .seatrow .nm{color:#7a5a3a}
+.lbox .btn{background:#e2cfa3;color:#4a2f1d;border:2px solid #6b4423}
+.lbox .btn:hover:not(:disabled){background:#efdcae;border-color:#6b4423}
+.lbox .btn.pri{background:#3f8f3a;color:#fff;border-color:#24561f}
+.lbox .linv{background:#fff1c2;border:2px solid #d4a017;color:#4a2f1d}
+.lbox .lerr{color:#a52a1a}
 </style>
 </head>
 <body>
@@ -381,15 +429,15 @@ main{min-width:0}
 </div>
 
 <div class="startm" id="startm"><div class="sbox">
-  <h1>AMAZONIA</h1><p class="sub">Module de jeu · même écran</p>
+  <h1 class="mtitle">Amazonia</h1><p class="msub">Protéger la forêt · ou l’exploiter</p>
   <div class="sbtns">
-    <button class="btn pri big" data-online="1" style="background:#1e6fb0;border-color:#1e6fb0">🌐 Jouer en ligne<small>Lobby : tables, invitations, chat</small></button>
-    <div class="sub" style="margin-top:8px">🤖 Contre l’IA ou à plusieurs sur cet écran :</div>
-    <button class="btn pri big" data-cfg="3">Nouvelle partie · 3 joueurs<small>1 Protecteur + 2 Exploitants</small></button>
-    <button class="btn pri big" data-cfg="4">Nouvelle partie · 4 joueurs<small>1 Protecteur + 3 Exploitants</small></button>
-    <button class="btn big" id="bResume" data-start="resume">Reprendre la partie<small id="resumeInfo"></small></button>
+    <button class="btn big mm green" data-online="1"><span class="mi">🌍</span><span class="mt">Jouer en ligne<small>Tables, invitations et discussion avec d’autres joueurs</small></span></button>
+    <div class="msep">Contre l’IA ou autour de cet écran</div>
+    <button class="btn big mm" data-cfg="3"><span class="mi"><img src="img/ico/protecteur.svg"></span><span class="mt">Partie à 3 joueurs<small>1 Protecteur · 2 Exploitants</small></span></button>
+    <button class="btn big mm" data-cfg="4"><span class="mi"><img src="img/ico/protecteur.svg"></span><span class="mt">Partie à 4 joueurs<small>1 Protecteur · 3 Exploitants</small></span></button>
+    <button class="btn big mm ghost" id="bResume" data-start="resume"><span class="mi">↻</span><span class="mt">Reprendre la partie<small id="resumeInfo"></small></span></button>
   </div><div class="seatcfg" id="seatcfg" style="display:none"></div><p class="sub" id="aiStats" style="margin-top:18px"></p></div></div>
-<div class="startm off" id="lobby"><div class="lbox"><h1 style="font-size:54px;color:#bfe3b0">AMAZONIA · EN LIGNE</h1><div id="lobbyIn"></div></div></div>
+<div class="startm off" id="lobby"><div class="lbox"><h1 class="mtitle sm">Amazonia <span>en ligne</span></h1><div id="lobbyIn"></div></div></div>
 <div class="zoom" id="zoom"><button class="zarr" id="zPrev">‹</button><img id="zoomImg" alt=""><button class="zarr" id="zNext">›</button><div class="zcount" id="zCount"></div></div>
 <div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
 <div class="toast" id="toast"></div>
