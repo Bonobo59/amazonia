@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amazonia — module de jeu</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1a14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Amazonia">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0f1a14;--panel:#16251d;--panel2:#1d3126;--line:#2c4636;--txt:#e8efe9;--mut:#9fb3a6;--green:#3aa43c;--orange:#f39200;--blue:#36a9e1;--gold:#e0b93a}
@@ -298,6 +304,18 @@ main{min-width:0}
 .seatrow{display:flex;align-items:center;gap:12px;background:#132119;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:800;font-size:17px}
 .seatrow .sp{flex:1;text-align:left}
 .seatrow .seg button{padding:8px 14px;font-size:14px}
+.lbox{width:min(1100px,94vw);max-height:92vh;overflow:auto;padding:20px}
+.lgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:20px}
+@media(max-width:800px){.lgrid{grid-template-columns:1fr}}
+.lcol{display:flex;flex-direction:column;gap:8px;text-align:left}
+.lcol h2{font-size:24px;color:#cfe6c6}
+.lrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lin{background:#0e1812;border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:8px 10px;font:inherit}
+.lchat{background:#0e1812;border:1px solid var(--line);border-radius:10px;padding:8px;height:220px;overflow:auto;font-size:14px;display:flex;flex-direction:column;gap:3px}
+.linv{background:#24402f;border:1px solid #ffd54a;border-radius:10px;padding:8px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seatrow .nm{color:var(--mut);font-weight:700;font-size:14px}
+.lerr{color:#ffb4a8;font-weight:700}
+.pn{font-size:11px;color:var(--mut);font-weight:700;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zoom{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:300;cursor:zoom-out}
 .zoom.on{display:flex}
 .zarr{background:#ffffff1a;border:1px solid #ffffff44;color:#fff;font-size:54px;line-height:1;width:64px;height:96px;border-radius:14px;margin:0 22px;cursor:pointer}
@@ -365,10 +383,13 @@ main{min-width:0}
 <div class="startm" id="startm"><div class="sbox">
   <h1>AMAZONIA</h1><p class="sub">Module de jeu · même écran</p>
   <div class="sbtns">
+    <button class="btn pri big" data-online="1" style="background:#1e6fb0;border-color:#1e6fb0">🌐 Jouer en ligne<small>Lobby : tables, invitations, chat</small></button>
+    <div class="sub" style="margin-top:8px">🤖 Contre l’IA ou à plusieurs sur cet écran :</div>
     <button class="btn pri big" data-cfg="3">Nouvelle partie · 3 joueurs<small>1 Protecteur + 2 Exploitants</small></button>
     <button class="btn pri big" data-cfg="4">Nouvelle partie · 4 joueurs<small>1 Protecteur + 3 Exploitants</small></button>
     <button class="btn big" id="bResume" data-start="resume">Reprendre la partie<small id="resumeInfo"></small></button>
   </div><div class="seatcfg" id="seatcfg" style="display:none"></div><p class="sub" id="aiStats" style="margin-top:18px"></p></div></div>
+<div class="startm off" id="lobby"><div class="lbox"><h1 style="font-size:54px;color:#bfe3b0">AMAZONIA · EN LIGNE</h1><div id="lobbyIn"></div></div></div>
 <div class="zoom" id="zoom"><button class="zarr" id="zPrev">‹</button><img id="zoomImg" alt=""><button class="zarr" id="zNext">›</button><div class="zcount" id="zCount"></div></div>
 <div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
 <div class="toast" id="toast"></div>
@@ -377,6 +398,9 @@ main{min-width:0}
 <div class="pop" id="pop"></div>
 <div class="hov" id="hov"><img alt=""></div>
 
+<script src="firebase-app-compat.js"></script>
+<script src="firebase-auth-compat.js"></script>
+<script src="firebase-database-compat.js"></script>
 <script>
 /* =========================================================
    DONNÉES
@@ -533,7 +557,7 @@ function beginTurn(){
   S.turn = { seat, actions:0, usedRes:false, riverChanged:false };
   if (seat==='F'){ if (S.block) log('Tunche : fin du blocage.'); S.block=null; S.mayantu=false; }
   UI = { tok:null, flow:null, needSnap:true };
-  VIEW = isAI(seat) ? (S.seats.find(x=>!isAI(x))||seat) : seat;
+  VIEW = (S.online&&NET.game&&mySeats().length) ? mySeats()[0] : isAI(seat) ? (S.seats.find(x=>!isAI(x))||seat) : seat;
 }
 function endTurn(){
   snapshot();
@@ -1517,6 +1541,187 @@ function aiStep(){
 }
 
 /* =========================================================
+   EN LIGNE — lobby + synchronisation (Firebase Realtime Database)
+   ========================================================= */
+const FBCONF={apiKey:"AIzaSyB2MKyQkvOwhnKE0fBkyk6aPWtK4kTN5aY",authDomain:"zheroes-f291e.firebaseapp.com",databaseURL:"https://zheroes-f291e-default-rtdb.europe-west1.firebasedatabase.app",projectId:"zheroes-f291e",storageBucket:"zheroes-f291e.firebasestorage.app",messagingSenderId:"1060538999398",appId:"1:1060538999398:web:75d5c7566621cfde57c3a7"};
+const R='am';
+function fbDB(){
+  if (typeof firebase==='undefined') throw new Error('sdk');
+  if (!firebase.apps.length) firebase.initializeApp(FBCONF);
+  const db=firebase.database(), ready=firebase.auth().signInAnonymously().then(c=>c.user.uid);
+  return { ready,
+    set:(p,v)=>db.ref(p).set(v), update:(p,o)=>db.ref(p).update(o), remove:p=>db.ref(p).remove(), push:(p,v)=>db.ref(p).push(v),
+    on(p,cb,lim){ let q=db.ref(p); if(lim) q=q.orderByKey().limitToLast(lim); const h=s=>cb(s.val()); q.on('value',h,()=>{}); return ()=>q.off('value',h); },
+    onDisc(p){ try{ db.ref(p).onDisconnect().remove(); }catch(e){} },
+    claim(p,uid){ return db.ref(p).transaction(v=>v?undefined:uid).then(r=>r.committed); } };
+}
+function fakeDB(){ // tests hors ligne : base partagée entre onglets (localStorage)
+  const K='amfake', uid='u'+Math.random().toString(36).slice(2,9), subs=[], discs=[];
+  const read=()=>{ try{ return JSON.parse(localStorage.getItem(K))||{}; }catch(e){ return {}; } };
+  const get=(o,p)=>p.split('/').reduce((x,k)=>x==null?x:x[k],o);
+  const put=(o,p,v)=>{ const ks=p.split('/'); let x=o; for(let i=0;i<ks.length-1;i++){ if(x[ks[i]]==null||typeof x[ks[i]]!=='object') x[ks[i]]={}; x=x[ks[i]]; } const l=ks[ks.length-1]; if(v==null) delete x[l]; else x[l]=JSON.parse(JSON.stringify(v)); };
+  const notify=()=>{ const tr=read(); subs.forEach(s=>{ let v=get(tr,s.p); if(v&&s.lim){ const o={}; Object.keys(v).sort().slice(-s.lim).forEach(k=>o[k]=v[k]); v=o; } const js=JSON.stringify(v==null?null:v); if(js!==s.last){ s.last=js; _setTimeout(()=>s.cb(JSON.parse(js)),0); } }); };
+  const write=tr=>{ localStorage.setItem(K,JSON.stringify(tr)); notify(); };
+  addEventListener('storage',e=>{ if(e.key===K) notify(); });
+  addEventListener('beforeunload',()=>{ const tr=read(); discs.forEach(p=>put(tr,p,null)); localStorage.setItem(K,JSON.stringify(tr)); });
+  let n=0;
+  return { ready:Promise.resolve(uid),
+    set:(p,v)=>{ const tr=read(); put(tr,p,v); write(tr); return Promise.resolve(); },
+    update:(p,o)=>{ const tr=read(); for(const k in o) put(tr,p+'/'+k,o[k]); write(tr); return Promise.resolve(); },
+    remove:p=>{ const tr=read(); put(tr,p,null); write(tr); return Promise.resolve(); },
+    push:(p,v)=>{ const tr=read(); put(tr,p+'/'+(Date.now().toString(36)+(n++).toString(36).padStart(3,'0')+uid.slice(1,4)),v); write(tr); return Promise.resolve(); },
+    on(p,cb,lim){ const s={p,cb,lim,last:undefined}; subs.push(s); notify(); return ()=>{ const i=subs.indexOf(s); if(i>=0) subs.splice(i,1); }; },
+    onDisc(p){ discs.push(p); },
+    claim(p,u){ const tr=read(); if(get(tr,p)) return Promise.resolve(false); put(tr,p,u); write(tr); return Promise.resolve(true); } };
+}
+const NET={ on:false, db:null, uid:null, tid:null, table:null, tables:{}, players:{}, chat:{}, invites:{}, game:false, v:0, lastJs:'', unsub:[], gunsub:null, err:'' };
+const myName = () => { try{ return localStorage.getItem('am_name')||''; }catch(e){ return ''; } };
+const mySeats = () => (S&&S.online) ? Object.keys(S.online.seats).filter(k=>S.online.seats[k]===NET.uid) : [];
+const iAmHost = () => !!(S&&S.online&&S.online.host===NET.uid);
+function ctrlUid(){ const who=aiWho(); if(!who||!S.online) return null; const o=S.online.seats[who]; return o==='ai'?S.online.host:o; }
+const amCtrl = () => !NET.game || ctrlUid()===NET.uid;
+function netStart(){
+  if (NET.on) return showLobby();
+  try { NET.db = /fbfake/.test(location.hash) ? fakeDB() : fbDB(); }
+  catch(e){ toast('Connexion impossible au lobby.'); return; }
+  NET.on=true; NET.err=''; showLobby();
+  NET.db.ready.then(uid=>{ NET.uid=uid;
+    netPresence('lobby');
+    NET.unsub.push(NET.db.on(`${R}/players`,v=>{ NET.players=v||{}; lobbyRender(); }));
+    NET.unsub.push(NET.db.on(`${R}/tables`,v=>{ NET.tables=v||{}; netTableWatch(); lobbyRender(); }));
+    NET.unsub.push(NET.db.on(`${R}/chat`,v=>{ NET.chat=v||{}; lobbyRender(); },40));
+    NET.unsub.push(NET.db.on(`${R}/invites/${uid}`,v=>{ NET.invites=v||{}; lobbyRender(); }));
+    lobbyRender();
+  }).catch(e=>{ NET.err='Connexion refusée par Firebase ('+(e&&e.code||e)+').'; lobbyRender(); });
+}
+function netPresence(status){ if(!NET.uid) return; const p=`${R}/players/${NET.uid}`; NET.db.set(p,{name:myName()||'Joueur',status,ts:Date.now()}); NET.db.onDisc(p); }
+function showLobby(){ $('#startm').classList.add('off'); $('#lobby').classList.remove('off'); lobbyRender(); }
+function hideLobby(){ $('#lobby').classList.add('off'); }
+function newTid(){ return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function seatsFor(nb){ return nb===4?['F','orange','bleu','blanc']:['F','orange','bleu']; }
+const seatLbl = (x,i) => x==='F'?'Protecteur':'Exploitant '+i;
+function createTable(nb){
+  if (!myName()) return toast('Choisis d’abord un pseudo.');
+  const tid=newTid(), seats=Object.fromEntries(seatsFor(nb).map(x=>[x,'']));
+  seats.F=NET.uid;
+  NET.db.set(`${R}/tables/${tid}`,{host:NET.uid,hostName:myName(),nb,state:'open',created:Date.now(),seats,names:{[NET.uid]:myName()}});
+  NET.db.onDisc(`${R}/tables/${tid}`); NET.tid=tid; netPresence('table'); lobbyRender();
+}
+function joinTable(tid){
+  const t=NET.tables[tid]; if(!t||t.state!=='open') return toast('Cette table n’est plus disponible.');
+  if (!myName()) return toast('Choisis d’abord un pseudo.');
+  const free=Object.keys(t.seats).find(k=>!t.seats[k]); if(!free) return toast('Table complète.');
+  NET.db.update(`${R}/tables/${tid}`,{['seats/'+free]:NET.uid,['names/'+NET.uid]:myName()}); NET.tid=tid; netPresence('table'); lobbyRender();
+}
+function quickMatch(){
+  const open=Object.entries(NET.tables).filter(([k,t])=>t.state==='open'&&Object.values(t.seats).some(v=>!v)).sort((a,b)=>a[1].created-b[1].created);
+  if (open.length) joinTable(open[0][0]); else createTable(3);
+}
+function leaveTable(){
+  const t=NET.tables[NET.tid]; if(!t){ NET.tid=null; return lobbyRender(); }
+  if (t.host===NET.uid) NET.db.remove(`${R}/tables/${NET.tid}`);
+  else { const s=Object.keys(t.seats).find(k=>t.seats[k]===NET.uid); if(s) NET.db.set(`${R}/tables/${NET.tid}/seats/${s}`,''); }
+  NET.tid=null; netPresence('lobby'); lobbyRender();
+}
+function takeSeat(seat){ const t=NET.tables[NET.tid]; if(!t||t.seats[seat]) return;
+  const old=Object.keys(t.seats).find(k=>t.seats[k]===NET.uid); const u={['seats/'+seat]:NET.uid}; if(old) u['seats/'+old]='';
+  NET.db.update(`${R}/tables/${NET.tid}`,u); }
+function toggleAI(seat){ const t=NET.tables[NET.tid]; if(!t||t.host!==NET.uid) return; const v=t.seats[seat]; if(v&&v!=='ai') return; NET.db.set(`${R}/tables/${NET.tid}/seats/${seat}`, v==='ai'?'':'ai'); }
+function invite(uid){
+  if (!NET.tid) createTable(3);
+  _setTimeout(()=>NET.db.push(`${R}/invites/${uid}`,{from:NET.uid,name:myName(),tid:NET.tid,ts:Date.now()}),50); toast('Invitation envoyée.');
+}
+function answerInvite(iid, ok){ const iv=NET.invites[iid]; NET.db.remove(`${R}/invites/${NET.uid}/${iid}`); if(ok&&iv) joinTable(iv.tid); }
+function sendChat(txt){ txt=(txt||'').trim().slice(0,280); if(!txt) return; NET.db.push(`${R}/chat`,{uid:NET.uid,name:myName()||'Joueur',text:txt,ts:Date.now()}); }
+function startOnline(){
+  const t=NET.tables[NET.tid]; if(!t||t.host!==NET.uid) return;
+  if (Object.values(t.seats).some(v=>!v)) return toast('Toutes les places doivent être prises (joueur ou IA).');
+  UNDO=[]; TURNSNAP=null; newGame(t.nb);
+  S.ai=Object.fromEntries(S.seats.map(x=>[x,t.seats[x]==='ai']));
+  S.online={tid:NET.tid, host:NET.uid, seats:{...t.seats}, names:{...t.names}};
+  NET.game=true; NET.v=0; NET.lastJs=''; netWatchGame(NET.tid);
+  NET.db.update(`${R}/tables/${NET.tid}`,{state:'playing'});
+  enterGame();
+}
+function netTableWatch(){ // un joueur assis voit la partie démarrer
+  if (!NET.tid||NET.game) return; const t=NET.tables[NET.tid];
+  if (!t){ NET.tid=null; toast('La table a été fermée.'); return; }
+  if (t.state==='playing' && Object.values(t.seats).includes(NET.uid)){ NET.game=true; NET.v=0; netWatchGame(NET.tid); }
+}
+function netWatchGame(tid){
+  if (NET.gunsub) NET.gunsub();
+  NET.gunsub=NET.db.on(`${R}/games/${tid}`,val=>{
+    if (!val||val.v<=NET.v||val.by===NET.uid) return;
+    NET.v=val.v; NET.lastJs=val.s;
+    const keep = UI.flow && S && S.online && mySeats().includes(UI.flow.owner) ? UI.flow : null;
+    const first=!S||!S.online||S.online.tid!==tid;
+    S=JSON.parse(val.s); UI={tok:null,flow:keep}; UNDO=[];
+    if (first) enterGame(); else render();
+  });
+}
+function enterGame(){ hideLobby(); STARTED=true; netPresence('game'); VIEW=mySeats()[0]||VIEW; render(); }
+function netPush(){
+  if (!NET.game||!S||!S.online||SIM||FAST) return;
+  const js=JSON.stringify(S); if (js===NET.lastJs) return;
+  NET.lastJs=js; NET.v++; NET.db.set(`${R}/games/${S.online.tid}`,{v:NET.v,by:NET.uid,s:js,ts:Date.now()});
+}
+function netQuit(){ if (NET.gunsub){ NET.gunsub(); NET.gunsub=null; } NET.game=false; if (NET.tid){ const t=NET.tables[NET.tid]; if(t&&t.host===NET.uid) NET.db.remove(`${R}/games/${NET.tid}`); leaveTable(); } }
+
+/* ---------- Rendu du lobby ---------- */
+const STATUS={lobby:'🟢 dispo',table:'🟡 à une table',game:'🔴 en partie'};
+function lobbyRender(){
+  const el=$('#lobbyIn'); if(!el||$('#lobby').classList.contains('off')) return;
+  const keep={}; ['lName','lMsg','lCode'].forEach(id=>{ const x=document.getElementById(id); if(x) keep[id]=[x.value, document.activeElement===x]; });
+  _setTimeout(()=>{ for(const id in keep){ const x=document.getElementById(id); if(x){ x.value=keep[id][0]; if(keep[id][1]) x.focus(); } } },0);
+  if (NET.err){ el.innerHTML=`<p class="lerr">${esc(NET.err)}</p>`; return; }
+  if (!NET.uid){ el.innerHTML='<p class="sub">Connexion au lobby…</p>'; return; }
+  const name=myName(), t=NET.tid&&NET.tables[NET.tid];
+  let left='';
+  if (t){
+    const seats=seatsFor(t.nb), host=t.host===NET.uid;
+    left=`<h2>Table de ${esc(t.hostName)} · ${t.nb} joueurs</h2>`+seats.map((x,i)=>{ const v=t.seats[x], nm=v==='ai'?'🤖 IA':v?esc((t.names||{})[v]||'Joueur'):'— libre —';
+      return `<div class="seatrow"><span class="dot" style="background:${COLOR[x]}"></span><span class="sp">${seatLbl(x,i)}</span><span class="nm">${nm}${v===NET.uid?' (toi)':''}</span>
+        ${!v?btn('Prendre','data-l="seat" data-s="'+x+'"'):''}${host&&(!v||v==='ai')?btn(v==='ai'?'Retirer l’IA':'🤖 IA','data-l="ai" data-s="'+x+'"'):''}</div>`; }).join('')
+      +`<div class="lrow">${host?btn('Lancer la partie','data-l="start"','pri',Object.values(t.seats).some(v=>!v)):'<span class="sub">En attente du lancement par l’hôte…</span>'}${btn('Quitter la table','data-l="leave"')}</div>
+      <p class="sub">Code de la table : <b>${NET.tid}</b></p>`;
+  } else {
+    const open=Object.entries(NET.tables).filter(([k,t])=>t.state==='open').sort((a,b)=>a[1].created-b[1].created);
+    left=`<h2>Jouer</h2><div class="lrow">${btn('⚡ Trouver une partie','data-l="quick"','pri')}${btn('Créer une table · 3 joueurs','data-l="create" data-n="3"')}${btn('Créer une table · 4 joueurs','data-l="create" data-n="4"')}</div>
+      <h2 style="margin-top:14px">Tables ouvertes</h2>${open.length?open.map(([k,t])=>{ const n=Object.values(t.seats).filter(Boolean).length; return `<div class="seatrow"><span class="sp">Table de ${esc(t.hostName)} · ${t.nb} joueurs</span><span class="nm">${n}/${t.nb}</span>${btn('Rejoindre','data-l="join" data-t="'+k+'"','',n>=t.nb)}</div>`; }).join(''):'<p class="sub">Aucune table pour l’instant.</p>'}
+      <div class="lrow"><input id="lCode" placeholder="Code de table" class="lin">${btn('Rejoindre avec un code','data-l="code"')}</div>`;
+  }
+  const pl=Object.entries(NET.players).filter(([u,p])=>p).sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||''));
+  const chat=Object.values(NET.chat||{}).slice(-40);
+  const inv=Object.entries(NET.invites||{}).filter(([k,v])=>v&&Date.now()-v.ts<120000);
+  el.innerHTML=`<div class="lgrid"><div class="lcol">
+      <div class="lrow"><span class="sub">Ton pseudo :</span><input id="lName" class="lin" maxlength="18" value="${esc(name)}" placeholder="Pseudo">${btn('OK','data-l="name"')}${btn('← Menu','data-l="back"')}</div>
+      ${inv.map(([k,v])=>`<div class="linv">📨 <b>${esc(v.name)}</b> t’invite à sa table ${btn('Accepter','data-l="acc" data-i="'+k+'"','pri')}${btn('Refuser','data-l="ref" data-i="'+k+'"')}</div>`).join('')}
+      ${left}</div>
+    <div class="lcol"><h2>Joueurs en ligne (${pl.length})</h2>${pl.map(([u,p])=>`<div class="seatrow"><span class="sp">${esc(p.name||'Joueur')}${u===NET.uid?' (toi)':''}</span><span class="nm">${STATUS[p.status]||''}</span>${u!==NET.uid&&p.status==='lobby'?btn('Inviter','data-l="inv" data-u="'+u+'"'):''}</div>`).join('')}
+      <h2 style="margin-top:14px">Chat</h2><div class="lchat" id="lChat">${chat.map(m=>`<div><b>${esc(m.name)}</b> : ${esc(m.text)}</div>`).join('')}</div>
+      <div class="lrow"><input id="lMsg" class="lin" maxlength="280" placeholder="Message… (Entrée)" style="flex:1">${btn('Envoyer','data-l="chat"')}</div></div></div>`;
+  const c=$('#lChat'); if(c) c.scrollTop=c.scrollHeight;
+}
+function lobbyClick(t){
+  const l=t.closest('[data-l]'); if(!l||l.disabled) return false; const k=l.dataset.l;
+  if (k==='name'){ const v=($('#lName').value||'').trim().slice(0,18); if(!v) return toast('Pseudo vide.'), true; try{ localStorage.setItem('am_name',v); }catch(e){} netPresence(NET.tid?'table':'lobby'); toast('Pseudo enregistré.'); lobbyRender(); }
+  if (k==='back'){ hideLobby(); showStart(); }
+  if (k==='quick') quickMatch();
+  if (k==='create') createTable(+l.dataset.n);
+  if (k==='join') joinTable(l.dataset.t);
+  if (k==='code'){ const c=($('#lCode').value||'').trim(); if(c) joinTable(c); }
+  if (k==='seat') takeSeat(l.dataset.s);
+  if (k==='ai') toggleAI(l.dataset.s);
+  if (k==='start') startOnline();
+  if (k==='leave') leaveTable();
+  if (k==='inv') invite(l.dataset.u);
+  if (k==='acc') answerInvite(l.dataset.i,true);
+  if (k==='ref') answerInvite(l.dataset.i,false);
+  if (k==='chat'){ sendChat($('#lMsg').value); $('#lMsg').value=''; }
+  return true;
+}
+
+/* =========================================================
    ANIMATIONS (non sauvegardées)
    ========================================================= */
 let ANIM=[];
@@ -1646,7 +1851,7 @@ function factory(c){ return `<svg viewBox="0 0 512 512" width="40" height="40"><
 function goal(ico,n,max,tip,emo){ return `<span class="goal" data-tipx="${esc(tip)}"><b>${n}/${max}</b>${ico?`<img src="img/ico/${ico}.png">`:`<span class="emo">${emo}</span>`}</span>`; }
 function renderSum(){
   const F=S.forest, c0=cur(), tk=(L)=>`<span class="tk"><img src="${TOK('foret_r')}"><b>${L}</b></span>`;
-  let h=`<div class="sum F ${c0==='F'?'active':''}" id="sum-F"><div class="shd"><img src="img/ico/protecteur.svg"><h3>Protecteur</h3></div><div class="lines">
+  let h=`<div class="sum F ${c0==='F'?'active':''}" id="sum-F"><div class="shd"><img src="img/ico/protecteur.svg"><h3>Protecteur</h3>${S.online?`<span class="pn">${isAI('F')?'🤖 IA':esc(S.online.names[S.online.seats.F]||'')}</span>`:''}</div><div class="lines">
     <div class="cycle">
       <svg viewBox="0 0 210 118" class="cyarr"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#fff"/></marker></defs>
         <path d="M92,36 Q112,16 128,16" marker-end="url(#ah)"/><path d="M160,44 L160,64" marker-end="url(#ah)"/><path d="M134,96 Q108,100 96,82" marker-end="url(#ah)"/></svg>
@@ -1658,7 +1863,7 @@ function renderSum(){
     <div class="frrem" data-tipx="Cartes encore nécessaires pour compléter la Fresque en cours (Mobiliser une carte de ce type)"><img src="img/ico/i_fresque.png" class="frlogo">${frRemaining().map((r,i)=>(i?'<span class="frsep">|</span>':'')+r.map(t=>`<img src="img/ico/${FR_ICO[t]}.png">`).join('')).join('')}</div>
     <div class="ln">${S.firstPlayer==='F'?`<img class="fp" src="${TOK('premier_r')}">`:''}</div></div></div>`;
   for (const c of EXPL){ const e=S.expl[c];
-    h+=`<div class="sum ${c} ${c0===c?'active':''}" id="sum-${c}"><div class="shd">${factory(c)}<h3>Exploitant ${EXPL.indexOf(c)+1}</h3></div><div class="lines">
+    h+=`<div class="sum ${c} ${c0===c?'active':''}" id="sum-${c}"><div class="shd">${factory(c)}<h3>Exploitant ${EXPL.indexOf(c)+1}</h3>${S.online?`<span class="pn">${isAI(c)?'🤖 IA':esc(S.online.names[S.online.seats[c]]||'')}</span>`:''}</div><div class="lines">
       <div class="ln"><div class="chip big c-money" title="Argent"><img src="${TOK('argent_r')}">${e.money} $</div></div>
       <div class="ln"><div class="chip c-bois" title="Bois en stockage (max 2)" style="opacity:${e.storage.forest?1:.45}"><img src="${TOK('foret_r')}">${e.storage.forest}</div>
         <div class="chip c-petrole" title="Pétrole" style="opacity:${e.storage.petrole?1:.45}"><img src="${TOK('petrole_r')}">${e.storage.petrole}</div>
@@ -1699,7 +1904,7 @@ const halfImg=(id,side)=>`img/cards/obb${side==='F'?'F':'E'}${id.slice(3)}.webp`
 function pbtn(id,seat,attrs,dis){ const col=COLOR[seat==='F'?'F':seat]; return `<button class="btn abtn pbtn" style="--pc:${col}" ${attrs} ${dis?'disabled':''} title="${esc(seat==='F'?OBJ[id].actF.lbl:OBJ[id].actE.lbl)}"><img src="${halfImg(id,seat==='F'?'F':'E')}"><span>Projet</span></button>`; }
 function btn(lbl,attrs,cls='',dis=false,title=''){ return `<button class="btn ${cls}" ${attrs} ${dis?'disabled':''} title="${esc(title)}">${lbl}</button>`; }
 
-function who(seat, sub){ const m=(seat!=='F'&&S.expl[seat])?`<span class="whom"><img src="${TOK('argent_r')}">${S.expl[seat].money} $</span>`:(seat==='F'?`<span class="whom wf"><span class="tk"><img src="${TOK('foret_r')}"><b>A</b></span>${S.forest.A}</span>`:''); return `<div class="whoc"><span class="who" style="color:${COLOR[seat]}">${isAI(seat)?'🤖 ':''}${seat==='F'?'Protecteur':NAME(seat)}</span>${m}${sub?`<span class="whos">${sub}</span>`:''}</div>`; }
+function who(seat, sub){ const m=(seat!=='F'&&S.expl[seat])?`<span class="whom"><img src="${TOK('argent_r')}">${S.expl[seat].money} $</span>`:(seat==='F'?`<span class="whom wf"><span class="tk"><img src="${TOK('foret_r')}"><b>A</b></span>${S.forest.A}</span>`:''); return `<div class="whoc"><span class="who" style="color:${COLOR[seat]}">${isAI(seat)?'🤖 ':''}${seat==='F'?'Protecteur':NAME(seat)}</span>${S.online&&!isAI(seat)?`<span class="pn">${esc(S.online.names[S.online.seats[seat]]||'')}</span>`:''}${m}${sub?`<span class="whos">${sub}</span>`:''}</div>`; }
 function tbtns(T){ return T.buttons.map((o,i)=>o.harv?`<button class="btn harv" data-a="tb" data-i="${i}" title="${esc(o.lbl)}"><span class="toks">${o.harv.imgs.map(src=>`<img src="${src}">`).join('')}</span><span class="arrow">→</span><span class="coin"><img src="${TOK('argent_r')}"><b>+${o.harv.gain}</b></span></button>`
   :o.img?`<button class="btn tokbtn ${o.sel?'sel':''}" data-a="tb" data-i="${i}" data-k="${o.img.split('_')[1]}" ${o.dis||!o.fn?'disabled':''} title="${esc(o.tip||'')}"><img src="${o.img}">${esc(o.lbl)}</button>`
   :btn(esc(o.lbl),`data-a="tb" data-i="${i}"`,o.sel?'sel':'',o.dis||!o.fn,o.why||'')).join(''); }
@@ -1707,6 +1912,7 @@ const backBtn = () => btn('↶','data-a="back"','backb',!UNDO.length||isAI(aiWho
 function renderBar(){
   const b=$('#abar'); let h=''; b.classList.remove('bigbar');
   if (S.over){ b.innerHTML=`<div class="row">${who(S.over.winner,'🏆 Victoire')}<span class="prompt">${esc(S.over.why)}</span><span class="spacer"></span>${btn('Nouvelle partie','data-a="new"','pri')}</div>`; return; }
+  if (NET.game && !amCtrl()){ const w=aiWho(); b.innerHTML=`<div class="row">${w?who(w):''}<span class="prompt">⏳ ${w?(isAI(w)?'L’IA joue…':'En attente de '+esc(S.online.names[S.online.seats[w]]||'l’autre joueur')+'…'):'En attente…'}</span><span class="spacer"></span><span class="hint">Tu joues : ${mySeats().map(x=>x==='F'?'Protecteur':NAME(x)).join(', ')}</span></div>`; return; }
   const pd=S.pending[0];
   if (pd){
     if (pd.type==='forestArena') h=`<div class="row">${who('F')}<span class="prompt">Un Peuple a été chassé : cliquez une Arène (partie verte) pour l’y placer.</span></div>`;
@@ -1757,7 +1963,7 @@ function renderBar(){
   b.innerHTML=h;
 }
 function renderHand(){
-  const el=$('#handPanel'), pd=S.pending[0], disc=pd&&pd.type==='discardAt', seat=disc?pd.c:(pd&&pd.type==='discardEnq'?'F':cur());
+  const el=$('#handPanel'), pd=S.pending[0], disc=pd&&pd.type==='discardAt', seat0=disc?pd.c:(pd&&pd.type==='discardEnq'?'F':cur()), seat=(NET.game&&!mySeats().includes(seat0))?(mySeats()[0]||seat0):seat0;
   if (!seat||S.over){ el.style.display='none'; return; }
   el.style.display=''; el.style.borderTop=`4px solid ${COLOR[seat]}`;
   let h=`<h2 style="color:${COLOR[seat]}">${seat==='F'?'Enquêtes en main':'Main de '+NAME(seat)}</h2><div class="hand side-hand">`;
@@ -1863,7 +2069,7 @@ function meepleDiff(){
   PREVM=cur;
 }
 function render(){ if (SIM) return;
-  if (FAST){ if (!S) return; for (const c of EXPL) if (S.expl[c].money<0) S.expl[c].money=0; if (!S.over) autoRefill(); refreshT(); checkContracts(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean)){ S.learned=true; if(!S.noLearn) aiLearn(); } return; } if (S) for (const c of EXPL) if (S.expl[c].money<0){ console.warn('argent négatif corrigé',c,S.expl[c].money); S.expl[c].money=0; } if (S && !S.over) autoRefill(); if (S) meepleDiff(); UI.T = (S.pending.length||S.over) ? {zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]} : flowTargets(); renderView(); renderSum(); renderBar(); renderBoard(); renderRiver(); renderSide(); requestAnimationFrame(runAnims); checkContracts(); takeCheckpoint(); autoEndForest(); save(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean)){ S.learned=true; aiLearn(); } aiSchedule(); renderPlayers(); }
+  if (FAST){ if (!S) return; for (const c of EXPL) if (S.expl[c].money<0) S.expl[c].money=0; if (!S.over) autoRefill(); refreshT(); checkContracts(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean)){ S.learned=true; if(!S.noLearn) aiLearn(); } return; } if (S) for (const c of EXPL) if (S.expl[c].money<0){ console.warn('argent négatif corrigé',c,S.expl[c].money); S.expl[c].money=0; } if (S && !S.over && amCtrl()) autoRefill(); if (S) meepleDiff(); UI.T = (S.pending.length||S.over) ? {zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]} : flowTargets(); renderView(); renderSum(); renderBar(); renderBoard(); renderRiver(); renderSide(); requestAnimationFrame(runAnims); const ctl=amCtrl(); if (ctl) checkContracts(); takeCheckpoint(); if (ctl) autoEndForest(); if (!NET.game) save(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean) && (!NET.game||iAmHost())){ S.learned=true; aiLearn(); } if (ctl) aiSchedule(); netPush(); renderPlayers(); }
 
 /* =========================================================
    OUTILS MANUELS (effets de cartes non automatisés)
@@ -1909,11 +2115,13 @@ function showCard(src){ GAL={list:[src],i:0}; galShow(); $('#zoom').classList.ad
    ========================================================= */
 document.addEventListener('click', ev=>{
   const t=ev.target;
+  if (t.closest('#lobby')){ lobbyClick(t); return; }
+  if (t.closest('[data-online]')){ netStart(); return; }
   if (!t.closest('#menu')) $('#menu').classList.remove('open');
   if (t.closest('#bMenu')) { $('#menu').classList.toggle('open'); return; }
   const m=t.closest('.dd [data-m]'); if (m){ $('#menu').classList.remove('open'); const k=m.dataset.m;
-    if (k==='new'){ UNDO=[]; newGame(S.nb); render(); toast('Nouvelle partie prête.'); }
-    if (k==='home'){ showStart(); }
+    if (k==='new'){ if (NET.game) return toast('Partie en ligne : passe par le menu principal.'); UNDO=[]; newGame(S.nb); render(); toast('Nouvelle partie prête.'); }
+    if (k==='home'){ if (NET.game) netQuit(); showStart(); }
     if (k==='aispeed'){ AISPEED = AISPEED===1700?800:AISPEED===800?2800:1700; $('#aiSpd').textContent={1700:'normale',800:'rapide',2800:'lente'}[AISPEED]; }
     if (k==='undo') undo();
     if (k==='manual'){ MANUAL=!MANUAL; render(); toast(MANUAL?'Outils manuels : cliquez sur une zone du plateau.':'Outils manuels désactivés.'); }
@@ -1927,14 +2135,14 @@ document.addEventListener('click', ev=>{
     if (v==='resume'){ if (!loadSave()) return toast('Aucune partie sauvegardée.'); }
     else { UNDO=[]; TURNSNAP=null; newGame(CFG.nb); S.ai=Object.fromEntries(S.seats.map(x=>[x,!!CFG.ai[x]])); VIEW=isAI(cur())?(S.seats.find(x=>!isAI(x))||cur()):cur(); }
     STARTED=true; $('#startm').classList.add('off'); render(); return; }
-  const v=t.closest('[data-view]'); if (v){ VIEW=v.dataset.view; render(); return; }
+  const v=t.closest('[data-view]'); if (v){ if (NET.game) return toast('En ligne, tu vois seulement ton rôle.'); VIEW=v.dataset.view; render(); return; }
   if (t.closest('[data-close]')) return closeModal();
   const mz=t.closest('[data-mz]'); if (mz) return manualApply($('#modal').dataset.ctx, mz.dataset.mz);
   if (t.closest('#zPrev')) return galStep(-1);
   if (t.closest('#zNext')) return galStep(1);
   if (t.closest('#zoom')) { $('#zoom').classList.remove('on'); return; }
   if (t.closest('#modal') && !t.closest('.box')) return closeModal();
-  if (S && STARTED && isAI(aiWho()) && t.closest('#abar,#board,#river,#handPanel,#players') && !t.closest('[data-zoom]')) return toast('C’est au tour d’une IA…');
+  if (S && STARTED && (isAI(aiWho())||(NET.game&&!amCtrl())) && t.closest('#abar,#board,#river,#handPanel,#players') && !t.closest('[data-zoom]')) return toast(isAI(aiWho())?'C’est au tour d’une IA…':'Ce n’est pas ton tour.');
 
   const a=t.closest('[data-a]');
   if (a && !a.disabled){ const k=a.dataset.a;
@@ -1981,7 +2189,7 @@ document.addEventListener('click', ev=>{
   const lx=t.closest('[data-luxe]'); if (lx && UI.T.luxe[+lx.dataset.luxe]) return UI.T.luxe[+lx.dataset.luxe]();
   const z=t.closest('[data-zoom]'); if (z){ openGallery(z); }
 });
-document.addEventListener('keydown', e=>{ if($('#zoom').classList.contains('on')){ if(e.key==='ArrowLeft') galStep(-1); if(e.key==='ArrowRight') galStep(1); } if(e.key==='Escape'){ $('#zoom').classList.remove('on'); closeModal(); } if((e.ctrlKey||e.metaKey)&&e.key==='z'){ e.preventDefault(); undo(); } });
+document.addEventListener('keydown', e=>{ if (e.key==='Enter' && e.target && e.target.id==='lMsg'){ sendChat(e.target.value); e.target.value=''; return; } if (e.key==='Enter' && e.target && e.target.id==='lName'){ lobbyClick({closest:()=>({dataset:{l:'name'}})}); return; } if($('#zoom').classList.contains('on')){ if(e.key==='ArrowLeft') galStep(-1); if(e.key==='ArrowRight') galStep(1); } if(e.key==='Escape'){ $('#zoom').classList.remove('on'); closeModal(); } if((e.ctrlKey||e.metaKey)&&e.key==='z'){ e.preventDefault(); undo(); } });
 const HOV={t:null,el:null,x:0,y:0};
 function hovHide(){ clearTimeout(HOV.t); HOV.el=null; $('#hov').classList.remove('on'); }
 function hovPlace(){ const h=$('#hov'), r=h.getBoundingClientRect(), W=innerWidth, H=innerHeight;
@@ -2018,5 +2226,6 @@ function renderCfg(){ const seats=CFG.nb===4?['F','orange','bleu','blanc']:['F',
 function showStart(){ const b=aiBrain(); $('#aiStats').textContent=b.games?`🤖 L’IA a appris de ${b.games} partie(s) · Protecteur IA : ${b.roles.F.wins}/${b.roles.F.games} victoires · Exploitants IA : ${b.roles.E.wins}/${b.roles.E.games}`:'🤖 L’IA apprend de chaque partie jouée contre elle.'; $('#seatcfg').style.display='none'; const d=readSave(); $('#bResume').disabled=!d; $('#resumeInfo').textContent=d?`${d.S.nb||3} joueurs · manche ${d.S.round} · ${new Date(d.at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}`:'aucune partie en cours'; $('#startm').classList.remove('off'); }
 newGame(3); render(); showStart();
 </script>
+<script>try{ if('serviceWorker' in navigator && location.protocol==='https:' && window.self===window.top && !/claude/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}</script>
 </body>
 </html>
