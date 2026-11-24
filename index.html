@@ -800,6 +800,44 @@ function fillSlot(i, how, enqId){
   if (how==='en') { S.river[i]={k:'en',id:enqId}; S.forest.hand=S.forest.hand.filter(x=>x!==enqId); log(`Le Protecteur place une Enquête face cachée dans la Rivière (emplacement ${i+1}).`); }
   else { markInfo(); const id=S.decks.protecteurs.shift(); if(!id){ log('Pioche Protecteurs vide.'); S.river[i]=null; } else { S.river[i]={k:'pr',id}; log(`Rivière ${i+1} : ${CARD[id].name}.`); } }
 }
+/* ---------- Bonus de bout de piste des Alignements ---------- */
+function alignBonusF(a){
+  if (a==='politique'){ S.regenBonus=(S.regenBonus||0)+3; if(FAST) statC('Bonus politique (régénère 3)'); log('Alignement politique déjà en bas : le Protecteur régénérera 3 jetons.', true); }
+  if (a==='judiciaire'){ S.pending.push({type:'alignReb',n:2}); if(FAST) statC('Bonus judiciaire (reboise 2)'); log('Alignement judiciaire déjà en bas : le Protecteur reboise 2 (gratuit).', true); }
+  if (a==='media'){ if (forestAvail()>0){ S.pending.push({type:'alignMeeple'}); if(FAST) statC('Bonus médiatique (1 Peuple)'); } log('Alignement médiatique déjà en bas : le Protecteur place un Peuple sur une zone boisée.', true); }
+}
+function alignBonusE(a,c){ const e=S.expl[c];
+  if (a==='politique'){ e.money+=1; statM(c,'+Bonus politique (Alignement au maximum)',1); drawAtouts(c,1); log(`${CAP(NAME(c))} : Alignement politique en haut → +1 $ et 1 Atout.`, true); }
+  if (a==='judiciaire'){ if (['soja','betail','coca'].some(k=>e.prod[k])) S.pending.push({type:'alignProd',c}); log(`${CAP(NAME(c))} : Alignement judiciaire en haut → pose 1 production.`, true); }
+  if (a==='media'){ if (e.atouts.length) S.pending.push({type:'alignMedia',c,sel:[]}); log(`${CAP(NAME(c))} : Alignement médiatique en haut → peut défausser des Atouts (+X+1 $).`, true); }
+}
+function statC(k){ const st=S.st||(S.st={vp:{},cons:{}}); st.bonus=st.bonus||{}; st.bonus[k]=(st.bonus[k]||0)+1; }
+const pdOwner = pd => pd.c || 'F';
+function alignTargets(){
+  const T=EMPTYT(); T.prompt=''; const pd=S.pending[0]; if(!pd) return T;
+  const next=()=>{ S.pending.shift(); resolvePending(); render(); };
+  if (pd.type==='alignReb'){
+    allZ().filter(id=>{ const z=Z(id); return !z.piece&&z.forest<3; }).forEach(id=>T.zones[id]=()=>{ snapshot(); Z(id).forest++; fly(TOK('foret_r'),{sel:'#sum-F .c-A'},{zone:id}); log('Bonus judiciaire : le Protecteur reboise une zone.'); const p=S.pending[0]; p.n--; if(p.n<=0) next(); else render(); });
+    T.prompt=`Bonus judiciaire : cliquez une zone vide ou boisée à reboiser (${3-pd.n}/2).`; T.buttons.push({lbl:'Passer',fn:next});
+  }
+  if (pd.type==='alignMeeple'){
+    allZ().filter(id=>isWooded(id)&&!Z(id).meeple).forEach(id=>T.zones[id]=()=>{ snapshot(); Z(id).meeple=true; log('Bonus médiatique : un Peuple est placé sur une zone boisée.'); next(); });
+    T.prompt='Bonus médiatique : cliquez une zone boisée pour y placer un Peuple.'; T.buttons.push({lbl:'Passer',fn:next});
+  }
+  if (pd.type==='alignProd'){ const c=pd.c, e=S.expl[c]; const kinds=['soja','betail','coca'].filter(k=>e.prod[k]); if(!pd.kind||!e.prod[pd.kind]) pd.kind=kinds[0];
+    kinds.forEach(k=>T.buttons.push({lbl:PROD[k],img:TOK(`${c}_${k}_r`),tip:PROD[k],sel:pd.kind===k,fn:()=>{ S.pending[0].kind=k; render(); }}));
+    explAdj(c).filter(isEmpty).forEach(id=>T.zones[id]=()=>{ snapshot(); placeProd(c,S.pending[0].kind,id); log(`Bonus judiciaire : ${NAME(c)} pose ${PROD[S.pending[0].kind]}.`); checkObjectives(); next(); });
+    T.prompt='Bonus judiciaire : choisissez une production, puis cliquez une zone vide adjacente.'; T.buttons.push({lbl:'Passer',fn:next});
+  }
+  if (pd.type==='alignMedia'){ const c=pd.c, e=S.expl[c], sel=pd.sel||[];
+    e.atouts.forEach(id=>T.buttons.push({lbl:(sel.includes(id)?'✓ ':'')+CARD[id].name,sel:sel.includes(id),fn:()=>{ const p=S.pending[0]; p.sel=p.sel.includes(id)?p.sel.filter(x=>x!==id):[...p.sel,id]; render(); }}));
+    const X=sel.length;
+    T.buttons.push({lbl:X?`Défausser ${X} Atout${X>1?'s':''} → +${X+1} $`:'Défausser (choisissez des Atouts)',dis:!X,fn:X?()=>{ snapshot(); const p=S.pending[0]; p.sel.forEach(id=>discardAtout(c,id)); e.money+=X+1; statM(c,'+Bonus médiatique (Atouts défaussés)',X+1); log(`Bonus médiatique : ${NAME(c)} défausse ${X} Atout(s) et gagne ${X+1} $.`, true); next(); }:null});
+    T.buttons.push({lbl:'Ne rien défausser',fn:next});
+    T.prompt='Bonus médiatique : sélectionnez les Atouts à défausser (X Atouts → X+1 $).';
+  }
+  return T;
+}
 function resolvePending(){
   if (S.pending.length) return;
   const a = S.afterPending; S.afterPending=null;
@@ -962,9 +1000,9 @@ function endRound(){
   // b) Rapport de force
   for (const a of ARENAS){
     const f=S.arenas[a].F, x=EXPL.reduce((n,c)=>n+S.arenas[a][c],0);
-    if (f>x){ if (S.align[a]<2){ S.align[a]++; log(`Arène ${ARENA_LABEL[a]} : le Protecteur l’emporte (${f}–${x}), l’alignement descend.`); } else moveConscience(1,`Arène ${ARENA_LABEL[a]} déjà en bas`); }
+    if (f>x){ if (S.align[a]<2){ S.align[a]++; log(`Arène ${ARENA_LABEL[a]} : le Protecteur l’emporte (${f}–${x}), l’alignement descend.`); } else alignBonusF(a); }
     else if (x>f){ if (S.align[a]>0){ S.align[a]--; log(`Arène ${ARENA_LABEL[a]} : les Exploitants l’emportent (${x}–${f}), l’alignement monte.`); }
-      else for (const c of EXPL) if (S.arenas[a][c]){ const g=2*S.arenas[a][c]; S.expl[c].money+=g; statM(c,'+Arènes (Alignement au maximum)',g); log(`${CAP(NAME(c))} gagne ${g} $ (Arène ${ARENA_LABEL[a]} déjà en haut).`); } }
+      else EXPL.filter(c=>S.arenas[a][c]).forEach(c=>alignBonusE(a,c)); }
     else log(`Arène ${ARENA_LABEL[a]} : égalité (${f}–${x}).`);
     for (const c of EXPL){ S.expl[c].meeplesHand+=S.arenas[a][c]; } S.arenas[a]=Object.fromEntries(S.seats.map(x=>[x,0]));
   }
@@ -982,6 +1020,7 @@ function endRound(){
   if (S.over){ render(); return; }
   // f) Régénération / récupération
   const F=S.forest; F.B+=sumv(F.onAct); for(const k in F.onAct) F.onAct[k]=0;
+  if (S.regenBonus){ const k=Math.min(S.regenBonus,F.B); F.B-=k; F.A+=k; S.regenBonus=0; if(k) log(`Bonus d’Alignement politique : le Protecteur régénère ${k} jeton(s) (B → A).`, true); }
   for(let i=0;i<Math.min(F.C,6);i++) ANIM.push({type:'fly',img:TOK('foret_r'),from:{sel:'#sum-F .c-C'},to:{sel:'#sum-F .c-A'},delay:i*90,size:28});
   for(let i=0;i<Math.min(F.B,6);i++) ANIM.push({type:'fly',img:TOK('foret_r'),from:{sel:'#sum-F .c-B'},to:{sel:'#sum-F .c-C'},delay:900+i*90,size:28});
   F.A+=F.C; F.C=F.B; F.B=0; log(`Régénération : A = ${F.A}, C = ${F.C}.`);
@@ -1502,7 +1541,7 @@ const _setTimeout=window.setTimeout.bind(window);
 window.setTimeout=(f,t,...r)=>SIM?0:(FAST?(f(...r),0):_setTimeout(f,t,...r));
 const isAI = seat => !!(S && S.ai && seat && S.ai[seat]);
 const EMPTYT = () => ({zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]});
-function refreshT(){ UI.T = (S.pending.length||S.over) ? EMPTYT() : flowTargets(); }
+function refreshT(){ UI.T = S.over ? EMPTYT() : S.pending.length ? (/^align/.test(S.pending[0].type)?alignTargets():EMPTYT()) : flowTargets(); }
 
 /* ---------- Poids (appris d'une partie à l'autre) ---------- */
 const W0 = { // v3.1 : valeur de l'argent et des cultures calculée d'après les règles, ré-entraîné
@@ -1730,11 +1769,18 @@ let PLANV=null;
 function aiWho(){
   if (!S||S.over) return null;
   const pd=S.pending[0];
-  if (pd) return pd.type==='discardAt' ? pd.c : 'F';
+  if (pd) return pdOwner(pd);
   if (!S.turn) return S.order[S.order.length-1];
   return cur();
 }
 function aiPending(pd){
+  if (/^align/.test(pd.type)){ const T=alignTargets(); const opts=[...Object.keys(T.zones).map(id=>()=>alignTargets().zones[id]())];
+    if (pd.type==='alignProd') for (const k of ['soja','betail','coca']) if (S.expl[pd.c].prod[k]) for (const id of Object.keys(T.zones)) opts.push(()=>{ S.pending[0].kind=k; alignTargets().zones[id](); });
+    if (pd.type==='alignMedia'){ const e=S.expl[pd.c], L=e.atouts.slice().sort((a,b)=>CARD[a].cost-CARD[b].cost); for (let x=1;x<=L.length;x++) opts.push(()=>{ S.pending[0].sel=L.slice(0,x); const b=alignTargets().buttons.find(o=>/^Défausser \d/.test(o.lbl)); b.fn(); }); }
+    opts.push(()=>{ S.pending.shift(); resolvePending(); });
+    const me=pdOwner(pd); AISEAT=me; let best=opts[opts.length-1], bs=-1e18; const snap=JSON.stringify(S);
+    for (const o of opts){ const v=simRun(()=>{ o(); },false,snap); if (v>bs){ bs=v; best=o; } }
+    best(); return; }
   if (pd.type==='refill'){
     const hasEn=S.river.some(r=>r&&r.k==='en'), en=S.forest.hand.find(id=>EN[id].ok());
     snapshot(); S.pending.shift();
@@ -2154,7 +2200,7 @@ function renderSum(){
   let st='';
   if (!S.over){
     const pd=S.pending[0];
-    if (pd) st = pd.type==='refill'?'Le Protecteur complète la Rivière':pd.type==='discardAt'?`${CAP(NAME(pd.c))} défausse des Atouts`:pd.type==='discardEnq'?'Le Protecteur défausse une Enquête':'Le Protecteur place un Peuple chassé dans une Arène';
+    if (pd) st = pd.type==='refill'?'Le Protecteur complète la Rivière':pd.type==='discardAt'?`${CAP(NAME(pd.c))} défausse des Atouts`:pd.type==='discardEnq'?'Le Protecteur défausse une Enquête':/^align/.test(pd.type)?`${pdOwner(pd)==='F'?'Le Protecteur':CAP(NAME(pd.c))} reçoit un bonus d’Alignement`:'Le Protecteur place un Peuple chassé dans une Arène';
     else if (!S.turn) st='Fin de manche à résoudre';
     else { const seat=cur(), na=Math.min(2,S.turn.actions+(UI.flow?0:1));
       st=`<b style="color:${COLOR[seat]}">Tour ${seat==='F'?'du Protecteur':'de l’'+NAME(seat)}</b> : action ${UI.flow?S.turn.actions:na}/2`;
@@ -2209,10 +2255,11 @@ function renderBar(){
   if (S.over){ b.innerHTML=`<div class="row">${who(S.over.winner,'🏆 Victoire')}<span class="prompt">${esc(S.over.why)}</span><span class="spacer"></span>${btn('Nouvelle partie','data-a="new"','pri')}</div>`; return; }
   if (NET.game && !amCtrl() && !S.pending.length){ const w=aiWho(); if (S.turn&&w){ b.classList.add('wbar'); b.innerHTML=watchBar(w); return; } b.innerHTML=`<div class="row"><span class="prompt">⏳ En attente…</span></div>`; return; }
   const pd=S.pending[0];
-  if (pd){ const ow=pd.type==='discardAt'?pd.c:'F';
-    if (!localHuman(ow)){ const what={refill:'complète la Rivière…',forestArena:'place un Peuple chassé dans une Arène…',discardEnq:'défausse des Enquêtes…',discardAt:'défausse des cartes (main pleine)…'}[pd.type]||'réfléchit…';
+  if (pd){ const ow=pdOwner(pd);
+    if (!localHuman(ow)){ const what={refill:'complète la Rivière…',forestArena:'place un Peuple chassé dans une Arène…',discardEnq:'défausse des Enquêtes…',discardAt:'défausse des cartes (main pleine)…',alignReb:'reboise (bonus judiciaire)…',alignMeeple:'place un Peuple (bonus médiatique)…',alignProd:'pose une production (bonus judiciaire)…',alignMedia:'choisit les Atouts à défausser (bonus médiatique)…'}[pd.type]||'réfléchit…';
       b.innerHTML=`<div class="row watch">${who(ow)}<span class="prompt wst">${isAI(ow)?'🤖 L’IA':esc(S.online?(S.online.names[S.online.seats[ow]]||'L’autre joueur'):'')} ${what}</span></div>`; return; }
     if (pd.type==='forestArena') h=`<div class="row">${who('F')}<span class="prompt">Un Peuple a été chassé : cliquez une Arène (partie verte) pour l’y placer.</span></div>`;
+    if (/^align/.test(pd.type)){ const T=UI.T||alignTargets(); h=`<div class="row">${who(pdOwner(pd),'✦ Bonus d’Alignement')}<span class="prompt">${T.prompt||''}</span>${tbtns(T)}</div>`; }
     if (pd.type==='refill'){
       const hasEn=S.river.some(r=>r&&r.k==='en');
       b.classList.add('bigbar'); h=`<div class="row">${who('F','Rivière '+(pd.slot+1))}<span class="prompt">Compléter la Rivière :</span>
@@ -2367,7 +2414,7 @@ function meepleDiff(){
   PREVM=cur;
 }
 function render(){ if (SIM) return;
-  if (FAST){ if (!S) return; for (const c of EXPL) if (S.expl[c].money<0) S.expl[c].money=0; if (!S.over) autoRefill(); refreshT(); checkContracts(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean)){ S.learned=true; if(!S.noLearn) aiLearn(); } return; } if (S) for (const c of EXPL) if (S.expl[c].money<0){ console.warn('argent négatif corrigé',c,S.expl[c].money); S.expl[c].money=0; } if (S && !S.over && amCtrl()) autoRefill(); if (S) meepleDiff(); UI.T = (S.pending.length||S.over) ? {zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]} : flowTargets(); renderView(); renderSum(); renderBar(); renderBoard(); renderRiver(); renderSide(); requestAnimationFrame(runAnims); const ctl=amCtrl(); if (ctl) checkContracts(); takeCheckpoint(); if (ctl) autoEndForest(); if (!NET.game) save(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean) && (!NET.game||iAmHost())){ S.learned=true; aiLearn(); } if (ctl) aiSchedule(); netPush(); renderPlayers(); tutTick(); }
+  if (FAST){ if (!S) return; for (const c of EXPL) if (S.expl[c].money<0) S.expl[c].money=0; if (!S.over) autoRefill(); refreshT(); checkContracts(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean)){ S.learned=true; if(!S.noLearn) aiLearn(); } return; } if (S) for (const c of EXPL) if (S.expl[c].money<0){ console.warn('argent négatif corrigé',c,S.expl[c].money); S.expl[c].money=0; } if (S && !S.over && amCtrl()) autoRefill(); if (S) meepleDiff(); UI.T = (!S.over && S.pending.length && /^align/.test(S.pending[0].type) && localHuman(pdOwner(S.pending[0]))) ? alignTargets() : (S.pending.length||S.over) ? {zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]} : flowTargets(); renderView(); renderSum(); renderBar(); renderBoard(); renderRiver(); renderSide(); requestAnimationFrame(runAnims); const ctl=amCtrl(); if (ctl) checkContracts(); takeCheckpoint(); if (ctl) autoEndForest(); if (!NET.game) save(); if (S.over && !S.learned && S.ai && Object.values(S.ai).some(Boolean) && (!NET.game||iAmHost())){ S.learned=true; aiLearn(); } if (ctl) aiSchedule(); netPush(); renderPlayers(); tutTick(); }
 
 /* =========================================================
    OUTILS MANUELS (effets de cartes non automatisés)
@@ -2540,7 +2587,7 @@ const TUTO = [
    <ul><li>Acheter un <b>Bien de luxe</b> : 1 ⭐</li><li>Réaliser 2 <b>Objectifs</b> : 1 ⭐</li><li>Réussir 3 <b>Contrats</b> : 1 ⭐</li><li>Collectionner 3 cartes <b>Esprit</b> : 1 ⭐</li><li>Être le <b>premier donateur</b> de la Fondation Amazonie quand la Conscience passe de 3 à 4, puis de 7 à 8</li></ul>
    <p>La victoire se vérifie en fin de manche. En cas d’égalité, le plus riche l’emporte.</p>
    <h4>La Forêt gagne quand la Conscience écologique 🌍 atteint la dernière case</h4>
-   <p>Elle avance d’une case à chaque fin de manche, et la Forêt peut l’accélérer : militer dans une Arène déjà tout en bas, réaliser des Objectifs, publier 2 Enquêtes, créer 2 Fresques ou déclencher un Événement avec une force de 3.</p>` },
+   <p>Elle avance d’une case à chaque fin de manche, et la Forêt peut l’accélérer : réaliser des Objectifs, publier 2 Enquêtes, créer 2 Fresques ou déclencher un Événement avec une force de 3.</p>` },
  { t:'Le plateau', img:['img/boards/central.webp'], h:`
    <ul><li>Le plateau est fait de <b>zones hexagonales</b>. Une zone avec au moins 1 jeton Forêt ${TT('foret_r')} est <b>boisée</b> ; avec 3 jetons, elle est <b>dense</b>.</li>
    <li>Les <b>gisements</b> cachent de l’Or ${TT('or_r')} et du Pétrole ${TT('petrole_r')} sous les arbres : celui qui retire le dernier jeton Forêt les récupère.</li>
@@ -2549,7 +2596,10 @@ const TUTO = [
    <li>Les <b>Objectifs</b> sont des motifs à former sur la carte ; les <b>Événements</b> se révèlent quand les Exploitants dépensent leur Or et leur Pétrole.</li></ul>` },
  { t:'Déroulement d’une manche', img:[], h:`
    <ol class="phases"><li><b>Actions</b> : chacun joue à son tour, en commençant par le Premier joueur.</li>
-   <li><b>Rapport de force</b> : dans chaque Arène, le camp majoritaire déplace l’Alignement d’un cran.</li>
+   <li><b>Rapport de force</b> : dans chaque Arène, le camp majoritaire déplace l’Alignement d’un cran. S’il est déjà au bout de la piste, ce camp reçoit un <b>bonus</b> :
+     <ul><li><b>Politique</b> : en bas, la Forêt régénère 3 jetons ; en haut, chaque Exploitant présent gagne 1 $ et pioche 1 Atout.</li>
+     <li><b>Judiciaire</b> : en bas, la Forêt reboise 2 (gratuit) ; en haut, chaque Exploitant présent pose 1 production (comme Exploiter).</li>
+     <li><b>Médiatique</b> : en bas, la Forêt pose 1 Peuple sur une zone boisée ; en haut, chaque Exploitant présent peut défausser X Atouts pour gagner X+1 $.</li></ul></li>
    <li><b>Revenus</b> : chaque carte Animal achetée rapporte 2 $.</li>
    <li><b>Victoire ?</b> Un Exploitant à 4 ⭐ ou plus gagne.</li>
    <li><b>Conscience</b> : le pion avance d’une case.</li>
@@ -2675,14 +2725,14 @@ const COACH=[
  {t:'À toi de jouer', wait:()=>!S.turn&&!S.pending.length, txt:()=>{ const s=tSeat(); const tip=!s?'':s==='F'?`<b>Protéger</b> pose un Peuple sur une zone dense, qu’on ne peut alors plus déforester. <b>Résister</b> affaiblit les cultures voisines d’un Peuple.`:`Essaie <b>Récolter</b> pour vendre ton bois ou tes cultures. <b>Influencer</b> peut aussi piocher des <b>Contrats</b> : quand tu en remplis un, il renforce une action pour toujours.`;
    return `Chaque camp a <b>3 tours</b> par manche, soit 6 jetons d’action. Finis la manche librement : seuls les coups permis sont cliquables, et <b>↶</b> annule.<br><br>💡 ${tip}${s&&s!=='F'&&tRes(s)?'<br>💡 Pense à ton Or/Pétrole !':''}`; }},
  {t:'Fin de manche', hl:['[data-a="endround"]'], wait:()=>S.round>=2, txt:()=>S.turn===null&&!S.pending.length?`La phase Actions est finie.<br>👉 Clique <b>Résoudre la fin de manche</b>.`:`La fin de manche est en cours…`},
- {t:'Ce qui s’est passé', next:true, hl:['#sumbar','#log'], txt:()=>`La fin de manche s’est jouée automatiquement :<br>1. <b>Rapport de force</b> dans les Arènes ;<br>2. <b>Revenus</b> (2 $ par Animal) ;<br>3. la <b>Conscience</b> avance d’une case ;<br>4. la Forêt <b>régénère</b> ses jetons (C → A, B → C), les Exploitants reprennent leurs jetons ;<br>5. <b>pioche</b> selon l’Alignement médiatique ;<br>6. la Rivière se décale.<br>Tout est noté dans le <b>Journal</b>.`},
+ {t:'Ce qui s’est passé', next:true, hl:['#sumbar','#log'], txt:()=>`La fin de manche s’est jouée automatiquement :<br>1. <b>Rapport de force</b> dans les Arènes (avec un bonus si l’Alignement était déjà au bout de sa piste) ;<br>2. <b>Revenus</b> (2 $ par Animal) ;<br>3. la <b>Conscience</b> avance d’une case ;<br>4. la Forêt <b>régénère</b> ses jetons (C → A, B → C), les Exploitants reprennent leurs jetons ;<br>5. <b>pioche</b> selon l’Alignement médiatique ;<br>6. la Rivière se décale.<br>Tout est noté dans le <b>Journal</b>.`},
  {t:'Tu sais jouer !', end:true, txt:()=>`Bravo ! Tu connais l’essentiel.<br>Pour les détails, chaque carte et chaque bouton ont une info-bulle au survol.<br>Que veux-tu faire ?`},
 ];
 function startCoach(){ UNDO=[]; TURNSNAP=null; newGame(3); S.ai={F:false,orange:false,bleu:false}; S.tuto=true; VIEW='orange'; TUT={on:true,i:0}; STARTED=true;
   $('#startm').classList.add('off'); $('#tuto').classList.add('off'); render(); }
 function stopCoach(){ TUT.on=false; if(S) delete S.tuto; $('#coach').style.display='none'; document.querySelectorAll('.tuthl').forEach(x=>x.classList.remove('tuthl')); }
 function tutPend(s){ const pd=S.pending[0]; if(!pd||s.t==='Compléter la Rivière') return '';
-  const m={discardAt:'✋ <b>Main trop pleine</b> (5 Atouts et 5 Contrats au maximum) : clique dans la main les cartes à défausser, puis <b>Valider</b>.',discardEnq:'✋ <b>Plus de 3 Enquêtes</b> : clique celles à défausser.',refill:'🌊 La Forêt doit <b>compléter la Rivière</b> : choisis une carte dans la barre.',forestArena:'🌿 Un Peuple a été chassé : clique une <b>Arène</b> (partie verte) pour l’y placer.'}[pd.type];
+  const m={discardAt:'✋ <b>Main trop pleine</b> (5 Atouts et 5 Contrats au maximum) : clique dans la main les cartes à défausser, puis <b>Valider</b>.',discardEnq:'✋ <b>Plus de 3 Enquêtes</b> : clique celles à défausser.',refill:'🌊 La Forêt doit <b>compléter la Rivière</b> : choisis une carte dans la barre.',forestArena:'🌿 Un Peuple a été chassé : clique une <b>Arène</b> (partie verte) pour l’y placer.',alignReb:'🌳 <b>Bonus judiciaire</b> : clique 2 zones à reboiser.',alignMeeple:'🌳 <b>Bonus médiatique</b> : clique une zone boisée pour y poser un Peuple.',alignProd:'🏭 <b>Bonus judiciaire</b> : choisis une production puis une zone vide adjacente.',alignMedia:'🏭 <b>Bonus médiatique</b> : sélectionne des Atouts à défausser (X Atouts → X+1 $), ou ne défausse rien.'}[pd.type];
   return m?`<div class="cpend">${m}</div>`:''; }
 function tutTick(){
   const box=$('#coach'); if(!TUT.on||!S||!S.tuto){ if(box) box.style.display='none'; return; }
