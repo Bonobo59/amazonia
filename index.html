@@ -1257,25 +1257,26 @@ const SHAPE = {
   line:  [[0,0],[1,-1],[2,-2]],                    // Surveillance / Piste : 3 en ligne droite
   zig5:  [[0,0],[1,0],[-1,0],[1,-1],[-1,1]],         // Autodémarcation / Barrage
 };
+let OBJ_ARENA = 2; // Peuples requis dans l’Arène pour les Objectifs de la Forêt
 const OBJ = {
-  Obj01:{ F:()=>S.arenas.judiciaire.F>=2 && !!matchPattern(SHAPE.line.map(c=>[...c,pM])),
+  Obj01:{ F:()=>S.arenas.judiciaire.F>=OBJ_ARENA && !!matchPattern(SHAPE.line.map(c=>[...c,pM])),
           E:()=>matchPattern(SHAPE.line.map(c=>[...c,pP])),
           actF:{lbl:'Détruire 1 production',run(done){ pickZones('Piste','Cliquez la production à détruire',()=>prodZones(),1,id=>{ const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; },done); }},
           actE:{lbl:'Placer 1 production n’importe où',run(c,done){ const e=S.expl[c];
             ask({title:'Piste d’atterrissage',prompt:'Quelle production ?',buttons:['betail','coca','soja'].map(q=>({lbl:PROD[q],dis:!e.prod[q],fn:()=>{ UI.ask=null; pickZones('Piste','Cliquez une zone vide',()=>allZ().filter(isEmpty),1,id=>{ e.prod[q]--; Z(id).piece={type:'prod',kind:q,owner:c,weak:false}; },done); }}))}); }} },
-  Obj02:{ F:()=>S.arenas.politique.F>=2 && !prodZones('betail').length,
+  Obj02:{ F:()=>S.arenas.politique.F>=OBJ_ARENA && !prodZones('betail').length,
           E:()=>{ const m=matchPattern([[0,0,pK('betail')],[1,0,pE],[0,1,pE],[1,1,pK('betail')]]); return m?[m[0],m[3]]:null; }, // Abattoir : losange Bétail / vide / vide / Bétail
           actF:{lbl:'Placer 2 Forêt du C',run(done){ pickZones('Coopérative','Cliquez une zone vide ou boisée',()=>S.forest.C?allZ().filter(canPlaceForest):[],2,id=>placeFromC(id),done); }},
           actE:{lbl:'Récolter 2 fois vos Bétail',run(c,done){ harvestKind(c,'betail'); harvestKind(c,'betail'); done(); }} },
-  Obj03:{ F:()=>S.arenas.judiciaire.F>=2 && !prodZones('coca').length,
+  Obj03:{ F:()=>S.arenas.judiciaire.F>=OBJ_ARENA && !prodZones('coca').length,
           E:()=>matchPattern([[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP],[-1,1,pP]]), // Laboratoire : Coca + 4 productions autour
           actF:{lbl:'Détruire 1 Coca',run(done){ pickZones('Narcotrafic','Cliquez la Coca à détruire',()=>prodZones('coca'),1,id=>{ const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; },done); }},
           actE:{lbl:'Récolter 2 fois vos Coca',run(c,done){ harvestKind(c,'coca'); harvestKind(c,'coca'); done(); }} },
-  Obj04:{ F:()=>S.arenas.politique.F>=2 && !prodZones('soja').length,
+  Obj04:{ F:()=>S.arenas.politique.F>=OBJ_ARENA && !prodZones('soja').length,
           E:()=>matchPattern([[0,0,pK('soja')],[1,-1,pK('soja')],[1,0,pK('soja')],[0,1,pBase]]), // Front pionnier : 3 Soja + camp de base
           actF:{lbl:'Régénérer (1 par Peuple sur zone boisée)',run(done){ regenerate(allZ().filter(id=>Z(id).meeple&&isWooded(id)).length); done(); }},
           actE:{lbl:'Récolter 2 fois vos Soja',run(c,done){ harvestKind(c,'soja'); harvestKind(c,'soja'); done(); }} },
-  Obj05:{ F:()=>S.arenas.judiciaire.F>=2 && !!matchPattern(SHAPE.zig5.map(c=>[...c,pM])),
+  Obj05:{ F:()=>S.arenas.judiciaire.F>=OBJ_ARENA && !!matchPattern(SHAPE.zig5.map(c=>[...c,pM])),
           E:()=>matchPattern(SHAPE.zig5.map(c=>[...c,pP])),
           actF:{lbl:'1 Peuple sur 2 zones denses',run(done){ pickZones('Autodémarcation','Cliquez une zone dense',()=>forestAvail()>0?allZ().filter(id=>isDense(id)&&!Z(id).meeple):[],2,id=>{ Z(id).meeple=true; },done); }},
           actE:{lbl:'+② à votre prochaine action',run(c,done){ S.expl[c].bonusNext=2; log(`${CAP(NAME(c))} : +2 à sa prochaine action.`); done(); }} },
@@ -1545,8 +1546,8 @@ function refreshT(){ UI.T = S.over ? EMPTYT() : S.pending.length ? (/^align/.tes
 
 /* ---------- Poids (appris d'une partie à l'autre) ---------- */
 const W0 = { // v3.1 : valeur de l'argent et des cultures calculée d'après les règles, ré-entraîné
-  E:{ vp:2.331, money:-0.197, res:3.125, prod:0.635, harvest:0.033, cards:0.747, ctDone:1.425, ctHand:0.368, atouts:0.354, donation:0.455, arena:0.686, frontier:0.132, forestTok:0.01, conscience:-8.665, rivalVp:-2.19, align:0.19, objProg:1.035, luxeReady:1.324, threat:-0.621, rivalObj:-1.037, forestObj:-2.289, forestArena:-0.999, moneyPV:3.855, prodPot:1.918 },
-  F:{ conscience:20.018, wooded:1.961, forestTok:1.083, dense:0.949, meeples:0.852, arena:1.2, tokens:0.912, published:5.68, fresque:3.33, hand:0.715, explVp:-7.866, explProd:-3.991, explMoney:-0.483, align:2.274, objProg:7.769, pubReady:2.565, exposed:-0.418, explObj:-2.468 },
+  E:{ vp:2.331, money:-0.197, res:3.125, prod:0.635, harvest:0.033, cards:0.747, ctDone:1.425, ctHand:0.368, atouts:0.354, donation:0.455, arena:0.686, frontier:0.132, forestTok:0.01, conscience:-8.665, rivalVp:-2.19, align:0.19, objProg:3, luxeReady:1.324, threat:-0.621, rivalObj:-0.8, forestObj:-2.289, forestArena:-0.999, objNear:2.5, moneyPV:3.855, prodPot:1.918 },
+  F:{ conscience:20.018, wooded:1.961, forestTok:1.083, dense:0.949, meeples:0.852, arena:1.2, tokens:0.912, published:5.68, fresque:3.33, hand:0.715, explVp:-7.866, explProd:-3.991, explMoney:-0.483, align:2.274, objProg:7.769, pubReady:2.565, exposed:-0.418, explObj:-2.468, explNear:-3 },
 };
 function aiStore(){ try{ return JSON.parse(localStorage.getItem('amazonia_ai_v31')||'null'); }catch(e){ return null; } }
 function freshRole(r,w){ return { champ:{...w}, chall:mutate(w), cg:0, cs:0, xg:0, xs:0, gen:1, games:0, promos:0 }; }
@@ -1616,19 +1617,26 @@ const CELLS_M={ Obj01:SHAPE.line.map(c=>[...c,pM]), Obj05:SHAPE.zig5.map(c=>[...
 function partialPatF(key){ let best=0; for (const pl of placements('F'+key, CELLS_M[key])){ let ok=0, bad=false;
     for (const [id] of pl){ if (Z(id).meeple) ok++; else if (!isWooded(id)||Z(id).piece){ bad=true; break; } }
     if (!bad && ok/pl.length>best) best=ok/pl.length; } return best; }
-function objProgAll(){ // progrès de chaque Exploitant vers les Objectifs en jeu (somme des carrés)
-  const R=Object.fromEntries(EXPL.map(c=>[c,0]));
-  for (const id of S.objectifs){ const cells=OBJ_CELLS[id]; if(!cells) continue; const best=Object.fromEntries(EXPL.map(c=>[c,0]));
-    for (const pl of placements('E'+id, cells)){ let ok=0, bad=false; const own=new Set();
-      for (const [z,f] of pl){ if (f(z)){ ok++; const p=Z(z).piece; if(p&&p.owner) own.add(p.owner); } else if (Z(z).piece){ bad=true; break; } }
+function objInfo(){ // IA opportuniste : motifs partagés, participation possible, motifs à 1 coup de la fin
+  const adj=Object.fromEntries(EXPL.map(c=>[c,new Set(explAdj(c))]));
+  const R={prog:{},near:{},excl:{},anyNear:0}; EXPL.forEach(c=>{ R.prog[c]=0; R.near[c]=0; R.excl[c]=0; });
+  for (const id of S.objectifs){ const cells=OBJ_CELLS[id]; if(!cells) continue;
+    const best={}, nb={}, ex={}; EXPL.forEach(c=>{ best[c]=0; nb[c]=0; ex[c]=0; }); let anyN=0;
+    for (const pl of placements('E'+id, cells)){ let ok=0, bad=false; const own=new Set(), miss=[];
+      for (const [z,f] of pl){ if (f(z)){ ok++; const p=Z(z).piece; if(p&&p.owner) own.add(p.owner); } else if (Z(z).piece){ bad=true; break; } else miss.push(z); }
       if (bad||!ok) continue; const v=ok/pl.length;
-      for (const c of EXPL){ const x=v*(own.has(c)?1:0.5); if (x>best[c]) best[c]=x; } }
-    for (const c of EXPL) R[c]+=best[c]*best[c]; }
+      for (const c of EXPL){ const mine=own.has(c), join=miss.some(z=>adj[c].has(z)&&isEmpty(z));
+        const x=v*(mine?1:join?0.8:0.3); if (x>best[c]) best[c]=x;
+        if (miss.length===1 && isEmpty(miss[0]) && (mine||join) && (adj[c].has(miss[0])||mine)) nb[c]=1;
+        if (!mine && !join && own.size && v>ex[c]) ex[c]=v; }
+      if (miss.length===1 && isEmpty(miss[0]) && EXPL.some(c=>adj[c].has(miss[0]))) anyN=1; }
+    EXPL.forEach(c=>{ R.prog[c]+=best[c]*best[c]; R.near[c]+=nb[c]; R.excl[c]+=ex[c]*ex[c]; }); R.anyNear+=anyN; }
   return R;
 }
+function objProgAll(){ return objInfo().prog; }
 function objProgE(seat){ return objProgAll()[seat]; }
 function objProgF(){ let s=0; for (const id of S.objectifs){
-    const arena = (id==='Obj01'||id==='Obj03'||id==='Obj05')?'judiciaire':'politique', ar=Math.min(1,S.arenas[arena].F/2);
+    const arena = (id==='Obj01'||id==='Obj03'||id==='Obj05')?'judiciaire':'politique', ar=Math.min(1,S.arenas[arena].F/OBJ_ARENA);
     let v;
     if (CELLS_M[id]) v=partialPatF(id);
     else { const k={Obj02:'betail',Obj03:'coca',Obj04:'soja'}[id]; v=1/(1+prodZones(k).length); }
@@ -1650,7 +1658,7 @@ function evalSeat(seat){
     f.fresque=S.fresque.done.length*3+S.fresque.active.reduce((n,x)=>n+x.slots.filter(Boolean).length,0);
     f.hand=S.forest.hand.length; f.explVp=Math.max(...EXPL.map(c=>S.expl[c].vp)); f.explProd=prods.reduce((n,id)=>n+(Z(id).piece.weak?0.5:1),0);
     f.explMoney=EXPL.reduce((n,c)=>n+S.expl[c].money,0); f.align=ARENAS.reduce((n,a)=>n+S.align[a],0);
-    if (w.objProg!==undefined){ f.objProg=objProgF(); f.pubReady=S.forest.hand.filter(id=>EN[id]&&EN[id].ok()).length; f.exposed=exposedF(); f.explObj=Math.max(0,...Object.values(objProgAll())); }
+    if (w.objProg!==undefined){ f.objProg=objProgF(); f.pubReady=S.forest.hand.filter(id=>EN[id]&&EN[id].ok()).length; f.exposed=exposedF(); const OI=objInfo(); f.explObj=Math.max(0,...Object.values(OI.prog)); f.explNear=OI.anyNear; }
   } else {
     const e=S.expl[seat], mine=prods.filter(id=>Z(id).piece.owner===seat);
     f.vp=e.vp + (S.over? (S.over.winner===seat?20:-20):0); f.money=e.money; f.res=e.storage.or*5+e.storage.petrole*3+e.storage.forest;
@@ -1661,7 +1669,7 @@ function evalSeat(seat){
     f.frontier=explAdj(seat).filter(id=>isEmpty(id)||isWooded(id)).length; f.forestTok=forestTok; f.conscience=S.conscience;
     f.rivalVp=Math.max(0,...EXPL.filter(c=>c!==seat).map(c=>S.expl[c].vp)); f.align=ARENAS.reduce((n,a)=>n+(2-S.align[a]),0);
     if (w.moneyPV!==undefined){ const lc=10+S.conscience; f.moneyPV=Math.min(e.money,40)/lc; f.prodPot=mine.reduce((n,id)=>n+harvestValue(id)*(Z(id).piece.weak?1:1.8),0)/lc;  f.res=(e.storage.or*5+e.storage.petrole*3+e.storage.forest)/lc; }
-    if (w.objProg!==undefined){ const OP=objProgAll(); f.objProg=OP[seat]; f.luxeReady=S.luxe.length?Math.min(1,e.money/(10+S.conscience)):0; f.threat=threatE(seat); f.rivalObj=Math.max(0,...EXPL.filter(c=>c!==seat).map(c=>OP[c])); f.forestObj=objProgF(); f.forestArena=ARENAS.reduce((n,a)=>n+Math.min(2,S.arenas[a].F),0); }
+    if (w.objProg!==undefined){ const OI=objInfo(), OP=OI.prog; f.objProg=OP[seat]; f.objNear=OI.near[seat]; f.luxeReady=S.luxe.length?Math.min(1,e.money/(10+S.conscience)):0; f.threat=threatE(seat); f.rivalObj=OI.excl[seat]; f.forestObj=objProgF(); f.forestArena=ARENAS.reduce((n,a)=>n+Math.min(2,S.arenas[a].F),0); }
   }
   let sc=0; for (const k in f) sc+=(w[k]||0)*f[k]; return sc;
 }
