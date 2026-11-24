@@ -490,7 +490,7 @@ main{min-width:0}
 /* config IA du menu */
 .seatcfg{background:#f3e6c8;border:3px solid #6b4423;border-radius:16px;padding:12px 14px;box-shadow:0 4px 0 #6b4423,0 10px 24px #0008;color:#4a2f1d;gap:8px!important;margin-top:0!important;min-width:0!important}
 .cfgl{font-family:'Bree Serif',serif;font-size:16px;color:#6b4423;text-align:left}
-.cfgseg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cfgseg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cfgseg.c3{grid-template-columns:1fr 1fr 1fr}
 .cfgseg button{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fffaf0;border:2px solid #c9b083;border-radius:12px;padding:8px;cursor:pointer;color:#4a2f1d;font-family:'Bree Serif',serif;font-size:17px}
 .cfgseg button b{font-weight:400}.cfgseg button small{font-family:Nunito,sans-serif;font-size:12px;font-weight:700;color:#9a7a55}
 .cfgseg button img,.cfgseg button svg{width:30px;height:30px}
@@ -782,8 +782,9 @@ function weaken(id, by){
 }
 function upgradeToken(c){ const e=S.expl[c]; let k=-1; for(let i=e.tokens.length-1;i>=0;i--) if(e.tokens[i].v===1){ k=i; break; }
   if (k<0) return; e.tokens[k].v=2; log(`${CAP(NAME(c))} retourne un jeton ① en ② (2 Personnes).`); ANIM.push({type:'tokup',c,i:k}); }
-function gainVP(c, n, why){ const e=S.expl[c]; if (DISPVP[c]===undefined) DISPVP[c]=e.vp; const from=e.vp; e.vp += n; log(`${CAP(NAME(c))} gagne ${n} Prestige (${why}).`, true); vpPopup(c, n, why, from, e.vp); }
+function gainVP(c, n, why){ const e=S.expl[c]; if(FAST){ const st=S.st||(S.st={vp:{},cons:{}}); st.vp[why]=(st.vp[why]||0)+n; } if (DISPVP[c]===undefined) DISPVP[c]=e.vp; const from=e.vp; e.vp += n; log(`${CAP(NAME(c))} gagne ${n} Prestige (${why}).`, true); vpPopup(c, n, why, from, e.vp); }
 function moveConscience(n, why){
+  if(FAST){ const st=S.st||(S.st={vp:{},cons:{}}); st.cons[why]=(st.cons[why]||0)+n; }
   for (let i=0;i<n;i++){ if (S.conscience>=12) break; S.conscience++; }
   log(`Conscience écologique +${n} → ${S.conscience} (${why}).`, true);
   if (S.conscience>=12 && !S.over) { S.over = { winner:'F', why:'La Conscience écologique atteint la dernière case.' }; log('🌳 Le Protecteur gagne la partie !', true); }
@@ -1502,33 +1503,99 @@ const EMPTYT = () => ({zones:{},arenas:{},river:{},luxe:{},hand:{},buttons:[]});
 function refreshT(){ UI.T = (S.pending.length||S.over) ? EMPTYT() : flowTargets(); }
 
 /* ---------- Poids (appris d'une partie à l'autre) ---------- */
-const W0 = { // poids appris par ~1600 parties d'auto-entraînement
-  E:{ vp:4.312, money:0.144, res:1.424, prod:1.509, harvest:0.198, cards:0.49, ctDone:2.752, ctHand:0.358, atouts:0.368, donation:0.217, arena:0.862, frontier:0.162, forestTok:-0.067, conscience:-3.194, rivalVp:-5.383, align:0.455 },
-  F:{ conscience:25.471, wooded:2.624, forestTok:0.675, dense:1.909, meeples:0.686, arena:1.576, tokens:0.828, published:4.749, fresque:4.518, hand:0.67, explVp:-10.982, explProd:-1.973, explMoney:-0.234, align:2.569 },
+const W0 = { // v3 : planification du tour + objectifs à moyen terme, entraîné par auto-apprentissage
+  E:{ vp:5.271, money:0.04, res:1.035, prod:1.514, harvest:0.292, cards:0.539, ctDone:2.497, ctHand:0.257, atouts:0.347, donation:0.302, arena:0.782, frontier:0.08, forestTok:-0.059, conscience:-4.277, rivalVp:-4.156, align:0.431, objProg:1.267, luxeReady:1.905, threat:-1.028, rivalObj:-0.606, forestObj:-2.714, forestArena:-0.807 },
+  F:{ conscience:25.471, wooded:2.624, forestTok:0.675, dense:1.909, meeples:0.686, arena:1.576, tokens:0.828, published:4.749, fresque:4.518, hand:0.67, explVp:-10.982, explProd:-1.973, explMoney:-0.234, align:2.569, objProg:6, pubReady:2, exposed:-0.3, explObj:-4 },
 };
-function aiStore(){ try{ return JSON.parse(localStorage.getItem('amazonia_ai_v2')||'null'); }catch(e){ return null; } }
-function aiBrain(){
+function aiStore(){ try{ return JSON.parse(localStorage.getItem('amazonia_ai_v3')||'null'); }catch(e){ return null; } }
+function freshRole(r,w){ return { champ:{...w}, chall:mutate(w), cg:0, cs:0, xg:0, xs:0, gen:1, games:0, promos:0 }; }
+function aiBrain(){ // cerveau : champion + challenger testé à tour de rôle (partagé en ligne si possible)
   let b=aiStore();
-  if (!b) b={ games:0, roles:{ E:{champ:{...W0.E}, chall:mutate(W0.E), games:0, wins:0}, F:{champ:{...W0.F}, chall:mutate(W0.F), games:0, wins:0} } };
+  if (!b||!b.roles||!b.roles.F||!b.roles.F.champ) b={ games:0, roles:{ E:freshRole('E',W0.E), F:freshRole('F',W0.F) } };
   for (const r of ['E','F']) for (const k in W0[r]){ if(b.roles[r].champ[k]===undefined) b.roles[r].champ[k]=W0[r][k]; if(b.roles[r].chall[k]===undefined) b.roles[r].chall[k]=b.roles[r].champ[k]; }
   return b;
 }
-function aiSaveBrain(b){ try{ localStorage.setItem('amazonia_ai_v2', JSON.stringify(b)); }catch(e){} }
+function aiSaveBrain(b){ try{ localStorage.setItem('amazonia_ai_v3', JSON.stringify(b)); }catch(e){} }
 function gauss(){ return Math.sqrt(-2*Math.log(Math.random()||1e-9))*Math.cos(2*Math.PI*Math.random()); }
-function mutate(w){ const o={}; for (const k in w) o[k]=+(w[k]*(1+0.18*gauss())).toFixed(3); return o; }
-let BRAIN=null;
-const weights = seat => (BRAIN||(BRAIN=aiBrain())).roles[seat==='F'?'F':'E'].chall;
-function aiLearn(){
-  const b=BRAIN||aiBrain(), win=S.over.winner; b.games++;
-  for (const r of ['F','E']){
-    const seats = r==='F' ? ['F'] : EXPL; const aiSeats=seats.filter(isAI); if(!aiSeats.length) continue;
-    const R=b.roles[r]; R.games++;
-    const won = r==='F' ? win==='F' : aiSeats.includes(win);
-    if (won){ R.wins++; R.champ={...R.chall}; log(`🤖 IA ${r==='F'?'Protecteur':'Exploitants'} : stratégie gagnante retenue.`); }
-    R.chall=mutate(R.champ);
-  }
-  aiSaveBrain(b); BRAIN=b;
+function mutate(w){ const o={}; for (const k in w) o[k]=+(w[k]*(1+0.12*gauss())).toFixed(3); return o; }
+let BRAIN=null, BDB=null;
+function brainDB(){ if (BDB!==null) return BDB; try{ BDB = /fbfake/.test(location.hash) ? fakeDB() : fbDB(); }catch(e){ BDB=false; } return BDB; }
+function brainSync(){ // récupère le cerveau partagé
+  const db=brainDB(); if(!db) return;
+  db.ready.then(()=>db.get(`${R}/brain`)).then(v=>{ if (v&&v.roles&&v.roles.F&&v.roles.F.champ){ BRAIN=v; aiSaveBrain(v); if(!STARTED) showStart(); } else { const b=BRAIN||aiBrain(); db.tx(`${R}/brain`, cur=>cur||b); } }).catch(()=>{});
 }
+function aiAssign(){ // au lancement d'une partie : chaque camp IA reçoit le champion ou le challenger
+  const b=BRAIN||(BRAIN=aiBrain()); S.aiW={}; S.aiUse={}; S.aiGen={};
+  for (const r of ['F','E']){ const R0=b.roles[r], use=Math.random()<0.5?'chall':'champ'; S.aiW[r]=R0[use]; S.aiUse[r]=use; S.aiGen[r]=R0.gen; }
+}
+const weights = seat => { const r=seat==='F'?'F':'E'; if (!FAST && S && S.aiW && S.aiW[r]) return S.aiW[r]; return (BRAIN||(BRAIN=aiBrain())).roles[r].chall; };
+function learnRole(R0, use, gen, score){ // mise à jour champion / challenger (appelée dans une transaction)
+  if (!R0||R0.gen!==gen) return R0;
+  R0.games=(R0.games||0)+1;
+  if (use==='champ'){ R0.cg++; R0.cs+=score; } else { R0.xg++; R0.xs+=score; }
+  if (R0.xg>=20 && R0.cg>=20){
+    if (R0.xs/R0.xg > R0.cs/R0.cg + 0.05){ R0.champ=R0.chall; R0.promos=(R0.promos||0)+1; R0.cg=R0.xg; R0.cs=R0.xs; }
+    R0.chall=mutate(R0.champ); R0.xg=0; R0.xs=0; R0.gen++;
+    if (R0.cg>60){ R0.cs=R0.cs/R0.cg*30; R0.cg=30; }
+  }
+  return R0;
+}
+function aiLearn(){
+  if (!S.aiW||!S.aiUse) return;
+  const win=S.over.winner, res={};
+  for (const r of ['F','E']){ const aiSeats=(r==='F'?['F']:EXPL).filter(isAI); if(!aiSeats.length) continue;
+    res[r] = r==='F' ? (win==='F'?1:0)+S.conscience/40 : (aiSeats.includes(win)?1:0)+Math.max(...aiSeats.map(c=>S.expl[c].vp))/16; }
+  const b=BRAIN||(BRAIN=aiBrain()); b.games=(b.games||0)+1;
+  for (const r in res) b.roles[r]=learnRole(b.roles[r], S.aiUse[r], S.aiGen[r], res[r]);
+  aiSaveBrain(b);
+  const db=brainDB(); if (db) db.ready.then(()=>{ for (const r in res) db.tx(`${R}/brain/roles/${r}`, cur=>learnRole(cur, S.aiUse[r], S.aiGen[r], res[r])); db.tx(`${R}/brain/games`, n=>(n||0)+1); }).catch(()=>{});
+  log('🤖 L’IA retient cette partie pour s’améliorer.');
+}
+
+/* ---------- Progrès vers les Objectifs (moyen terme) ---------- */
+const OBJ_PART = { // motifs côté Exploitant : prédicats de cellule
+  Obj01:()=>SHAPE.line.map(c=>[...c,pP]),
+  Obj02:()=>[[0,0,pK('betail')],[1,0,pE],[0,1,pE],[1,1,pK('betail')]],
+  Obj03:()=>[[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP],[-1,1,pP]],
+  Obj04:()=>[[0,0,pK('soja')],[1,-1,pK('soja')],[1,0,pK('soja')],[0,1,pBase]],
+  Obj05:()=>SHAPE.zig5.map(c=>[...c,pP]),
+};
+const PLC={}; // placements précalculés des motifs
+function placements(key, cells){
+  if (PLC[key]) return PLC[key];
+  const seen=new Set(), L=[];
+  for (const T of SYM){ const m=cells.map(([q,r,f])=>[...T([q,r]),f]);
+    for (const z of ZONES){ const pl=[]; let bad=false;
+      for (const [dq,dr,f] of m){ const id=ZQR[(z.q+dq)+','+(z.r+dr)]; if(!id){ bad=true; break; } pl.push([id,f]); }
+      if (bad) continue; const sig=pl.map(([id,f])=>id+'@'+cells.findIndex(c=>c[2]===f)).sort().join('|'); if (seen.has(sig)) continue; seen.add(sig); L.push(pl); } }
+  return PLC[key]=L;
+}
+const OBJ_CELLS={}; for (const k in OBJ_PART) OBJ_CELLS[k]=OBJ_PART[k]();
+const CELLS_M={ Obj01:SHAPE.line.map(c=>[...c,pM]), Obj05:SHAPE.zig5.map(c=>[...c,pM]) };
+function partialPatF(key){ let best=0; for (const pl of placements('F'+key, CELLS_M[key])){ let ok=0, bad=false;
+    for (const [id] of pl){ if (Z(id).meeple) ok++; else if (!isWooded(id)||Z(id).piece){ bad=true; break; } }
+    if (!bad && ok/pl.length>best) best=ok/pl.length; } return best; }
+function objProgAll(){ // progrès de chaque Exploitant vers les Objectifs en jeu (somme des carrés)
+  const R=Object.fromEntries(EXPL.map(c=>[c,0]));
+  for (const id of S.objectifs){ const cells=OBJ_CELLS[id]; if(!cells) continue; const best=Object.fromEntries(EXPL.map(c=>[c,0]));
+    for (const pl of placements('E'+id, cells)){ let ok=0, bad=false; const own=new Set();
+      for (const [z,f] of pl){ if (f(z)){ ok++; const p=Z(z).piece; if(p&&p.owner) own.add(p.owner); } else if (Z(z).piece){ bad=true; break; } }
+      if (bad||!ok) continue; const v=ok/pl.length;
+      for (const c of EXPL){ const x=v*(own.has(c)?1:0.5); if (x>best[c]) best[c]=x; } }
+    for (const c of EXPL) R[c]+=best[c]*best[c]; }
+  return R;
+}
+function objProgE(seat){ return objProgAll()[seat]; }
+function objProgF(){ let s=0; for (const id of S.objectifs){
+    const arena = (id==='Obj01'||id==='Obj03'||id==='Obj05')?'judiciaire':'politique', ar=Math.min(1,S.arenas[arena].F/2);
+    let v;
+    if (CELLS_M[id]) v=partialPatF(id);
+    else { const k={Obj02:'betail',Obj03:'coca',Obj04:'soja'}[id]; v=1/(1+prodZones(k).length); }
+    s+=(0.5*ar+0.5*v)*(0.5*ar+0.5*v); } return s; }
+function threatE(seat){ // mes cultures menacées par un Peuple voisin (Résister)
+  let t=0; for (const id of occupied(seat)){ const p=Z(id).piece; if(!p||p.type!=='prod') continue; if (ZB[id].adj.some(a=>Z(a).meeple)) t+=p.weak?1:0.6; } return t; }
+function exposedF(){ // jetons Forêt à portée de déforestation
+  const adj=new Set(); EXPL.forEach(c=>explAdj(c).forEach(a=>adj.add(a))); let n=0; adj.forEach(id=>{ if(isWooded(id)&&!Z(id).meeple) n+=Z(id).forest; }); return n; }
 
 /* ---------- Évaluation d'un état pour un siège ---------- */
 function evalSeat(seat){
@@ -1542,6 +1609,7 @@ function evalSeat(seat){
     f.fresque=S.fresque.done.length*3+S.fresque.active.reduce((n,x)=>n+x.slots.filter(Boolean).length,0);
     f.hand=S.forest.hand.length; f.explVp=Math.max(...EXPL.map(c=>S.expl[c].vp)); f.explProd=prods.reduce((n,id)=>n+(Z(id).piece.weak?0.5:1),0);
     f.explMoney=EXPL.reduce((n,c)=>n+S.expl[c].money,0); f.align=ARENAS.reduce((n,a)=>n+S.align[a],0);
+    if (w.objProg!==undefined){ f.objProg=objProgF(); f.pubReady=S.forest.hand.filter(id=>EN[id]&&EN[id].ok()).length; f.exposed=exposedF(); f.explObj=Math.max(0,...Object.values(objProgAll())); }
   } else {
     const e=S.expl[seat], mine=prods.filter(id=>Z(id).piece.owner===seat);
     f.vp=e.vp + (S.over? (S.over.winner===seat?20:-20):0); f.money=e.money; f.res=e.storage.or*5+e.storage.petrole*3+e.storage.forest;
@@ -1551,15 +1619,16 @@ function evalSeat(seat){
     f.donation=e.donation; f.arena=ARENAS.reduce((n,a)=>n+S.arenas[a][seat]-S.arenas[a].F*0.4,0);
     f.frontier=explAdj(seat).filter(id=>isEmpty(id)||isWooded(id)).length; f.forestTok=forestTok; f.conscience=S.conscience;
     f.rivalVp=Math.max(0,...EXPL.filter(c=>c!==seat).map(c=>S.expl[c].vp)); f.align=ARENAS.reduce((n,a)=>n+(2-S.align[a]),0);
+    if (w.objProg!==undefined){ const OP=objProgAll(); f.objProg=OP[seat]; f.luxeReady=S.luxe.length?Math.min(1,e.money/(10+S.conscience)):0; f.threat=threatE(seat); f.rivalObj=Math.max(0,...EXPL.filter(c=>c!==seat).map(c=>OP[c])); f.forestObj=objProgF(); f.forestArena=ARENAS.reduce((n,a)=>n+Math.min(2,S.arenas[a].F),0); }
   }
   let sc=0; for (const k in f) sc+=(w[k]||0)*f[k]; return sc;
 }
 
 /* ---------- Simulation ---------- */
-function simRun(fn){ // exécute fn sur une copie, renvoie [score, rétablit]
-  const sS=JSON.stringify(S), sUI={...UI, flow:UI.flow?{...UI.flow,hit:[...(UI.flow.hit||[])]}:null}, sAN=ANIM.length, sVP={...DISPVP}, sDN={...DISPDON}, sM=MANUAL, sU=UNDO.length;
+function simRun(fn, usePlan, snap){ // exécute fn sur une copie
+  const sS=snap||JSON.stringify(S), sUI={...UI, flow:UI.flow?{...UI.flow,hit:[...(UI.flow.hit||[])]}:null}, sAN=ANIM.length, sVP={...DISPVP}, sDN={...DISPDON}, sM=MANUAL, sU=UNDO.length;
   const wasSim=SIM; SIM=true; let sc=-1e9;
-  try { fn(); sc=evalSeat(AISEAT); } catch(err){ sc=-1e9; }
+  try { PLANV=null; fn(); sc=(usePlan&&PLANV!==null)?Math.max(PLANV,evalSeat(AISEAT)):evalSeat(AISEAT); } catch(err){ sc=-1e9; }
   S=JSON.parse(sS); UI=sUI; ANIM.length=sAN; DISPVP=sVP; DISPDON=sDN; MANUAL=sM; UNDO.length=sU; SIM=wasSim; refreshT();
   return sc;
 }
@@ -1603,7 +1672,7 @@ function greedyStep(){ // choisit et joue le meilleur point d'action
   if (UI.ask) return heurAsk();
   refreshT(); const L=candList(); if(!L.length) return false;
   let best=null, bs=-1e18;
-  for (const c of L){ const sc=simRun(()=>applyCand(c))+Math.random()*0.4; if (sc>bs){ bs=sc; best=c; } }
+  const snap=JSON.stringify(S); for (const c of L){ const sc=simRun(()=>applyCand(c),false,snap)+Math.random()*0.4; if (sc>bs){ bs=sc; best=c; } }
   applyCand(best); return true;
 }
 function rollout(){ for (let i=0;i<12 && (UI.flow||UI.ask) && !S.pending.length && !S.over;i++){ if(!greedyStep()) break; } return evalSeat(AISEAT); }
@@ -1637,12 +1706,22 @@ function topCands(seat){
   }
   return L;
 }
+const LEVELS={ ancien:{plan:0,noise:0.5}, facile:{plan:0,noise:6}, normal:{plan:2,noise:0.5}, difficile:{plan:4,noise:0.2} };
+const aiLevel=()=>LEVELS[(S&&S.levels&&S.levels[AISEAT==='F'?'F':'E'])||(S&&S.level)||'normal']||LEVELS.normal;
 function bestTop(seat){
   const L=topCands(seat); if(!L.length) return null;
+  const lv=aiLevel(), sc=[];
+  const snap=JSON.stringify(S); for (const c of L){ const v = c.end ? evalSeat(seat)+0.2 : simRun(()=>{ c.run(); rollout(); },false,snap); sc.push([v,c]); }
+  sc.sort((a,b)=>b[0]-a[0]);
+  // planification du tour : pour les K meilleurs premiers coups, on cherche le meilleur coup suivant
+  if (lv.plan && S.turn && S.turn.actions<1) for (const it of sc.slice(0,lv.plan)){ if (it[1].end) continue;
+    it[0]=Math.max(it[0], simRun(()=>{ it[1].run(); rollout(); if (S.turn&&cur()===seat&&!S.pending.length&&!S.over){ const L2=topCands(seat).filter(c=>!c.end); let b=-1e18; const sn2=JSON.stringify(S);
+      for (const c2 of L2){ const v=simRun(()=>{ c2.run(); rollout(); },false,sn2); if(v>b) b=v; } if (L2.length){ PLANV=b; } } }, true)); }
   let best=null, bs=-1e18;
-  for (const c of L){ const sc = c.end ? evalSeat(seat)+0.2 : simRun(()=>{ c.run(); rollout(); }); const v=sc+Math.random()*0.5; if (v>bs){ bs=v; best=c; } }
+  for (const [v,c] of sc){ const x=v+Math.random()*lv.noise; if (x>bs){ bs=x; best=c; } }
   return best;
 }
+let PLANV=null;
 
 /* ---------- Décisions hors tour (Rivière, défausses…) ---------- */
 function aiWho(){
@@ -1676,10 +1755,15 @@ function aiPending(pd){
 }
 
 /* ---------- Partie rapide (auto-entraînement) ---------- */
-function fastGame(nb, wF, wE, maxRounds=12){
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function fastGame(nb, wF, wE, maxRounds=12, levels, seed){
+  const MR=Math.random; if (seed) Math.random=mulberry(seed);
+  try { return fastGame0(nb, wF, wE, maxRounds, levels); } finally { Math.random=MR; }
+}
+function fastGame0(nb, wF, wE, maxRounds=12, levels){
   FAST=true; const keep=BRAIN; BRAIN={games:0,roles:{F:{chall:wF},E:{chall:wE}}};
   try{
-    newGame(nb); S.ai=Object.fromEntries(S.seats.map(x=>[x,true])); S.noLearn=true; render();
+    newGame(nb); S.ai=Object.fromEntries(S.seats.map(x=>[x,true])); S.noLearn=true; if(levels) S.levels=levels; render();
     let guard=0;
     while(!S.over && S.round<=maxRounds && guard++<4000){
       const who=aiWho(); AISEAT=who;
@@ -1692,7 +1776,7 @@ function fastGame(nb, wF, wE, maxRounds=12){
       render();
     }
     const maxVp=Math.max(...EXPL.map(c=>S.expl[c].vp)), w=S.over?S.over.winner:null;
-    return { winner:w, rounds:S.round, conscience:S.conscience, maxVp, mF:(w==='F'?10:w?-10:0)+S.conscience-2*maxVp };
+    return { winner:w, rounds:S.round, conscience:S.conscience, maxVp, st:S.st||{vp:{},cons:{}}, vps:EXPL.map(c=>S.expl[c].vp), mF:(w==='F'?10:w?-10:0)+S.conscience-2*maxVp };
   } finally { FAST=false; BRAIN=keep; }
 }
 /* ---------- Pilote ---------- */
@@ -1730,7 +1814,8 @@ function fbDB(){
     set:(p,v)=>db.ref(p).set(v).catch(fbErr), update:(p,o)=>db.ref(p).update(o).catch(fbErr), remove:p=>db.ref(p).remove().catch(fbErr), push:(p,v)=>db.ref(p).push(v).catch(fbErr),
     on(p,cb,lim){ let q=db.ref(p); if(lim) q=q.orderByKey().limitToLast(lim); const h=s=>cb(s.val()); q.on('value',h,fbErr); return ()=>q.off('value',h); },
     onDisc(p){ try{ db.ref(p).onDisconnect().remove(); }catch(e){} },
-    claim(p,uid){ return db.ref(p).transaction(v=>v?undefined:uid).then(r=>r.committed); } };
+    claim(p,uid){ return db.ref(p).transaction(v=>v?undefined:uid).then(r=>r.committed); },
+    get:p=>db.ref(p).once('value').then(x=>x.val()), tx:(p,fn)=>db.ref(p).transaction(fn).then(r=>r.snapshot.val()).catch(e=>console.warn('brain',e)) };
 }
 function fbErr(e){ console.error('Firebase',e); NET.err='Firebase refuse l’accès ('+((e&&(e.code||e.message))||e)+'). Vérifie les règles de la base (bloc "am") puis recharge la page.'; lobbyRender(); }
 function fakeDB(){ // tests hors ligne : base partagée entre onglets (localStorage)
@@ -1750,7 +1835,8 @@ function fakeDB(){ // tests hors ligne : base partagée entre onglets (localStor
     push:(p,v)=>{ const tr=read(); put(tr,p+'/'+(Date.now().toString(36)+(n++).toString(36).padStart(3,'0')+uid.slice(1,4)),v); write(tr); return Promise.resolve(); },
     on(p,cb,lim){ const s={p,cb,lim,last:undefined}; subs.push(s); notify(); return ()=>{ const i=subs.indexOf(s); if(i>=0) subs.splice(i,1); }; },
     onDisc(p){ discs.push(p); },
-    claim(p,u){ const tr=read(); if(get(tr,p)) return Promise.resolve(false); put(tr,p,u); write(tr); return Promise.resolve(true); } };
+    claim(p,u){ const tr=read(); if(get(tr,p)) return Promise.resolve(false); put(tr,p,u); write(tr); return Promise.resolve(true); },
+    get:p=>Promise.resolve(JSON.parse(JSON.stringify(get(read(),p)??null))), tx(p,fn){ const tr=read(); const v=fn(JSON.parse(JSON.stringify(get(tr,p)??null))); if(v!==undefined){ put(tr,p,v); write(tr); } return Promise.resolve(v); } };
 }
 const NET={ on:false, db:null, uid:null, tid:null, table:null, tables:{}, players:{}, chat:{}, invites:{}, game:false, v:0, lastJs:'', unsub:[], gunsub:null, err:'' };
 const myName = () => { const x=document.getElementById('lName'); const v=x&&x.value.trim(); if (v){ try{ if(localStorage.getItem('am_name')!==v) localStorage.setItem('am_name',v.slice(0,18)); }catch(e){} return v.slice(0,18); } try{ return localStorage.getItem('am_name')||''; }catch(e){ return ''; } };
@@ -1815,7 +1901,7 @@ function startOnline(){
   const t=NET.tables[NET.tid]; if(!t||t.host!==NET.uid) return;
   if (Object.values(t.seats).some(v=>!v)) return toast('Toutes les places doivent être prises (joueur ou IA).');
   UNDO=[]; TURNSNAP=null; newGame(t.nb);
-  S.ai=Object.fromEntries(S.seats.map(x=>[x,t.seats[x]==='ai']));
+  S.ai=Object.fromEntries(S.seats.map(x=>[x,t.seats[x]==='ai'])); aiAssign();
   S.online={tid:NET.tid, host:NET.uid, seats:{...t.seats}, names:{...t.names}};
   NET.game=true; NET.v=0; NET.lastJs=''; netWatchGame(NET.tid);
   NET.db.update(`${R}/tables/${NET.tid}`,{state:'playing'});
@@ -2335,9 +2421,10 @@ document.addEventListener('click', ev=>{
   const cf=t.closest('[data-cfg]'); if (cf){ if($('#seatcfg').style.display==='none') renderCfg(); else $('#seatcfg').style.display='none'; return; }
   const cn=t.closest('[data-cnb]'); if (cn){ CFG.nb=+cn.dataset.cnb; renderCfg(); return; }
   const cs=t.closest('[data-cside]'); if (cs){ CFG.side=cs.dataset.cside; renderCfg(); return; }
+  const cl=t.closest('[data-clvl]'); if (cl){ CFG.level=cl.dataset.clvl; renderCfg(); return; }
   const st=t.closest('[data-start]'); if (st){ const v=st.dataset.start;
     if (v==='resume'){ if (!loadSave()) return toast('Aucune partie sauvegardée.'); }
-    else { UNDO=[]; TURNSNAP=null; newGame(CFG.nb); const me=CFG.side==='F'?'F':EXPL[Math.floor(Math.random()*EXPL.length)]; S.ai=Object.fromEntries(S.seats.map(x=>[x,x!==me])); if(me!=='F') toast(`Tu joues l’${NAME(me)}.`); VIEW=isAI(cur())?(S.seats.find(x=>!isAI(x))||cur()):cur(); }
+    else { UNDO=[]; TURNSNAP=null; newGame(CFG.nb); const me=CFG.side==='F'?'F':EXPL[Math.floor(Math.random()*EXPL.length)]; S.ai=Object.fromEntries(S.seats.map(x=>[x,x!==me])); S.level=CFG.level||'normal'; aiAssign(); if(me!=='F') toast(`Tu joues l’${NAME(me)}.`); VIEW=isAI(cur())?(S.seats.find(x=>!isAI(x))||cur()):cur(); }
     STARTED=true; $('#startm').classList.add('off'); render(); return; }
   const v=t.closest('[data-view]'); if (v){ if (NET.game) return toast('En ligne, tu vois seulement ton rôle.'); VIEW=v.dataset.view; render(); return; }
   if (t.closest('[data-close]')) return closeModal();
@@ -2603,19 +2690,20 @@ document.addEventListener('pointerdown',e=>{ const h=e.target.closest('#coach .c
 function coachClick(k){
   if(k==='next'){ TUT.i++; render(); }
   if(k==='quit'||k==='free'){ stopCoach(); render(); }
-  if(k==='ai'){ S.ai={F:true,orange:false,bleu:true}; stopCoach(); VIEW='orange'; render(); toast('L’IA joue maintenant la Forêt et l’Exploitant 2.'); }
+  if(k==='ai'){ S.ai={F:true,orange:false,bleu:true}; aiAssign(); stopCoach(); VIEW='orange'; render(); toast('L’IA joue maintenant la Forêt et l’Exploitant 2.'); }
   if(k==='menu'){ stopCoach(); showStart(); }
 }
 
-let CFG={nb:3, side:'F'};
+let CFG={nb:3, side:'F', level:'normal'};
 function renderCfg(){ const el=$('#seatcfg'); el.style.display='';
   el.innerHTML=`<div class="cfgl">Nombre de joueurs</div><div class="cfgseg">${[3,4].map(n=>`<button class="${CFG.nb===n?'on':''}" data-cnb="${n}"><b>${n}</b> joueurs<small>1 Protecteur · ${n-1} Exploitants</small></button>`).join('')}</div>
    <div class="cfgl">Ton camp</div><div class="cfgseg">
      <button class="${CFG.side==='F'?'on':''}" data-cside="F"><img src="img/ico/protecteur.svg"><b>Protecteur</b><small>Défends la forêt</small></button>
      <button class="${CFG.side==='E'?'on':''}" data-cside="E">${factory('orange')}<b>Exploitant</b><small>Couleur tirée au hasard</small></button></div>
+   <div class="cfgl">Difficulté</div><div class="cfgseg c3">${[['facile','🌱','Facile','Joue vite, fait des erreurs'],['normal','🌿','Normal','Prévoit son tour'],['difficile','🌳','Difficile','Explore plus de plans']].map(([k,i,l,d])=>`<button class="${CFG.level===k?'on':''}" data-clvl="${k}"><span style="font-size:22px">${i}</span><b>${l}</b><small>${d}</small></button>`).join('')}</div>
    <button class="btn big mm green cgo" data-start="go"><span class="mi">▶</span><span class="mt">Lancer la partie</span></button>`; }
-function showStart(){ const b=aiBrain(); $('#aiStats').textContent=b.games?`🤖 L’IA a appris de ${b.games} partie(s) · Protecteur IA : ${b.roles.F.wins}/${b.roles.F.games} victoires · Exploitants IA : ${b.roles.E.wins}/${b.roles.E.games}`:'🤖 L’IA apprend de chaque partie jouée contre elle.'; $('#seatcfg').style.display='none'; const d=readSave(); $('#bResume').disabled=!d; $('#resumeInfo').textContent=d?`${d.S.nb||3} joueurs · manche ${d.S.round} · ${new Date(d.at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}`:'aucune partie en cours'; $('#startm').classList.remove('off'); }
-newGame(3); render(); showStart();
+function showStart(){ const b=BRAIN||aiBrain(); $('#aiStats').textContent=b.games?`🤖 L’IA a déjà appris de ${b.games} partie(s) · ${(b.roles.F.promos||0)+(b.roles.E.promos||0)} amélioration(s) retenue(s)`:'🤖 L’IA apprend de chaque partie jouée contre elle.'; $('#seatcfg').style.display='none'; const d=readSave(); $('#bResume').disabled=!d; $('#resumeInfo').textContent=d?`${d.S.nb||3} joueurs · manche ${d.S.round} · ${new Date(d.at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}`:'aucune partie en cours'; $('#startm').classList.remove('off'); }
+newGame(3); render(); showStart(); setTimeout(brainSync, 800);
 </script>
 <script>try{ if('serviceWorker' in navigator && location.protocol==='https:' && window.self===window.top && !/claude/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}</script>
 </body>
