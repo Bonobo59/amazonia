@@ -395,6 +395,43 @@ main{min-width:0}
 .lbox .btn.pri{background:#3f8f3a;color:#fff;border-color:#24561f}
 .lbox .linv{background:#fff1c2;border:2px solid #d4a017;color:#4a2f1d}
 .lbox .lerr{color:#a52a1a}
+
+#tuto::after,#cards::after{filter:blur(4px) brightness(.6)}
+.mrow{display:flex;gap:12px}.mrow .btn.mm{flex:1;padding:8px 12px}.btn.mm.sm .mt{font-size:18px;white-space:nowrap}.btn.mm.sm .mi{width:40px;height:40px;font-size:21px}
+@media(max-width:600px){.mrow{flex-direction:column}}
+.zoom{z-index:800!important}
+.tbox{display:flex;flex-direction:column;width:min(1050px,94vw);height:min(720px,90vh);padding:22px 28px;box-sizing:border-box}
+.tpg{flex:1;overflow:auto;position:relative}
+.tnum{position:absolute;right:0;top:4px;font-family:'Bree Serif',serif;color:#9a7a55}
+.ttl{font-family:'Alfa Slab One',serif;font-weight:400;font-size:34px;color:#4a2f1d;margin:0 0 14px;text-shadow:0 2px 0 #d9c59a}
+.tbody{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;align-items:start}.tbody.noimg{grid-template-columns:1fr}
+@media(max-width:800px){.tbody{grid-template-columns:1fr}}
+.timgs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.timgs img{max-width:100%;max-height:420px;border-radius:10px;box-shadow:0 6px 18px #0005;cursor:zoom-in;border:2px solid #c9b083;background:#fff8}
+.timgs.n2 img{max-width:40%;max-height:170px}.timgs.n3 img{max-width:31%}
+.ttext{font-family:Nunito,sans-serif;font-size:17px;line-height:1.5;color:#3d2817}
+.ttext p{margin:0 0 10px}.ttext ul,.ttext ol{margin:0 0 10px;padding-left:22px}.ttext li{margin-bottom:6px}
+.ttext h4{font-family:'Bree Serif',serif;font-weight:400;font-size:20px;color:#3f8f3a;margin:14px 0 6px}
+.ttext .tip{background:#e6f0d4;border-left:5px solid #3f8f3a;padding:8px 12px;border-radius:8px}
+.ti{height:26px;vertical-align:middle;margin:0 2px}
+.tacts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}@media(max-width:800px){.tacts{grid-template-columns:1fr}}
+.tacts>div{display:flex;gap:12px;align-items:flex-start;background:#fffaf0;border:2px solid #c9b083;border-radius:12px;padding:10px}
+.tacts>div>.ti{height:54px;flex:none;margin:0}.tacts p{margin:0}
+.phases li{margin-bottom:4px}
+.tnav{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:14px;border-top:2px dashed #c9b083;margin-top:10px;flex-wrap:wrap}
+.tdots{display:flex;gap:6px}.tdot{width:13px;height:13px;border-radius:50%;border:2px solid #6b4423;background:#f3e6c8;padding:0;cursor:pointer}.tdot.on{background:#6b4423}
+.cbox{display:flex;flex-direction:column;width:min(1200px,96vw);height:92vh;padding:18px 22px;box-sizing:border-box}
+.chead{display:flex;justify-content:space-between;align-items:center}.chead .mtitle.sm{margin:0}
+.cscroll{flex:1;overflow:auto;margin-top:8px}
+.ctabs{display:flex;flex-wrap:wrap;gap:8px;position:sticky;top:0;background:#f3e6c8;padding:4px 0 10px;z-index:2}
+.ctab{display:flex;align-items:center;gap:6px;font-family:'Bree Serif',serif;font-size:16px;padding:6px 14px;border-radius:999px;border:2px solid #6b4423;background:#e2cfa3;color:#4a2f1d;cursor:pointer}
+.ctab img{height:22px}.ctab.on{background:#6b4423;color:#f3e6c8}
+.cdesc{color:#6b4423;margin:2px 0 10px;font-size:15px}
+.cgh{font-family:'Bree Serif',serif;font-weight:400;color:#3f8f3a;font-size:22px;margin:16px 0 8px;border-bottom:2px dashed #c9b083;padding-bottom:4px}.cgh small{color:#9a7a55;font-size:15px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}.cgrid.wide{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.cgrid figure{margin:0;text-align:center}
+.cgrid img{width:100%;border-radius:10px;box-shadow:0 4px 12px #0004;cursor:zoom-in;transition:transform .15s}.cgrid img:hover{transform:translateY(-4px) scale(1.03)}
+.cgrid figcaption{font-size:13px;font-weight:700;color:#6b4423;margin-top:4px}
 </style>
 </head>
 <body>
@@ -447,8 +484,13 @@ main{min-width:0}
     <button class="btn big mm" data-cfg="3"><span class="mi"><img src="img/ico/protecteur.svg"></span><span class="mt">Partie à 3 joueurs<small>1 Protecteur · 2 Exploitants</small></span></button>
     <button class="btn big mm" data-cfg="4"><span class="mi"><img src="img/ico/protecteur.svg"></span><span class="mt">Partie à 4 joueurs<small>1 Protecteur · 3 Exploitants</small></span></button>
     <button class="btn big mm ghost" id="bResume" data-start="resume"><span class="mi">↻</span><span class="mt">Reprendre la partie<small id="resumeInfo"></small></span></button>
+    <div class="msep">Découvrir le jeu</div>
+    <div class="mrow"><button class="btn big mm sm" data-tuto="1"><span class="mi">📖</span><span class="mt">Apprendre à jouer<small>Règles en 11 pages</small></span></button>
+    <button class="btn big mm sm" data-cards="1"><span class="mi">🃏</span><span class="mt">Toutes les cartes<small>Triées par type</small></span></button></div>
   </div><div class="seatcfg" id="seatcfg" style="display:none"></div><p class="sub" id="aiStats" style="margin-top:18px"></p></div></div></div>
 <div class="startm off" id="lobby"><div class="lbox"><h1 class="mtitle sm">Amazonia <span>en ligne</span></h1><div id="lobbyIn"></div></div></div>
+<div class="startm off" id="tuto"><div class="lbox tbox" id="tutoIn"></div></div>
+<div class="startm off" id="cards"><div class="lbox cbox"><div class="chead"><h1 class="mtitle sm">Les cartes</h1><button class="btn" data-mback="1">← Menu</button></div><div class="cscroll" id="cardsScroll"><div id="cardsIn"></div></div></div></div>
 <div class="zoom" id="zoom"><button class="zarr" id="zPrev">‹</button><img id="zoomImg" alt=""><button class="zarr" id="zNext">›</button><div class="zcount" id="zCount"></div></div>
 <div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
 <div class="toast" id="toast"></div>
@@ -2178,6 +2220,9 @@ document.addEventListener('click', ev=>{
   const t=ev.target;
   if (t.closest('#lobby')){ lobbyClick(t); return; }
   if (t.closest('[data-online]')){ netStart(); return; }
+  if (t.closest('[data-tuto]')){ showTuto(0); return; }
+  if (t.closest('[data-cards]')){ showCards(); return; }
+  if (t.closest('#tuto,#cards') && tutoClick(t)) return;
   if (!t.closest('#menu')) $('#menu').classList.remove('open');
   if (t.closest('#bMenu')) { $('#menu').classList.toggle('open'); return; }
   const m=t.closest('.dd [data-m]'); if (m){ $('#menu').classList.remove('open'); const k=m.dataset.m;
@@ -2280,6 +2325,121 @@ let STARTED=false;
 function save(){ if(!STARTED||SIM||FAST) return; try{ localStorage.setItem('amazonia_save', JSON.stringify({S, snap:TURNSNAP, at:Date.now()})); }catch(e){} }
 function readSave(){ try{ return JSON.parse(localStorage.getItem('amazonia_save')||'null'); }catch(e){ return null; } }
 function loadSave(){ const d=readSave(); if(!d||!d.S) return false; S=d.S; if(!S.fresque){ S.fresque={deck:shuffle(FRESQUES.map(f=>f.id)),active:[],done:[],max:1}; newFresque(); } if(!Array.isArray(S.expl[Object.keys(S.expl)[0]].contrats)) for(const c in S.expl){ S.expl[c].contrats=[]; S.expl[c].ctDone=[]; } S.nb=S.nb||3; applyLayout(S.nb); EXPL=S.seats.filter(x=>x!=='F'); TURNSNAP=d.snap||JSON.stringify(S); UI={tok:null,flow:null}; VIEW=cur()||EXPL[0]; return true; }
+/* =========================================================
+   TUTORIEL & CATALOGUE DES CARTES (menu principal)
+   ========================================================= */
+const TI = n => `<img class="ti" src="img/ico/${n}">`;
+const TT = n => `<img class="ti" src="img/tok/${n}.png">`;
+const TUTO = [
+ { t:'Bienvenue en Amazonia', img:['img/boards/central.webp'], h:`
+   <p><b>Amazonia</b> est un jeu <b>asymétrique</b> de contrôle de zones pour 3 ou 4 joueurs.</p>
+   <p>D’un côté, <b>le Protecteur</b> incarne la Forêt et ses peuples. De l’autre, <b>2 ou 3 Exploitants</b> (Orange, Bleu, Blanc) veulent tirer profit de ses ressources.</p>
+   <p>Les Exploitants sont <b>rivaux entre eux</b> : un seul peut gagner. Mais ils ont tous intérêt à freiner la Forêt.</p>
+   <p class="tip">Ce tutoriel résume les règles en quelques pages. Tu peux aussi apprendre en jouant : le jeu ne te laisse cliquer que sur les coups autorisés.</p>` },
+ { t:'Comment gagner ?', img:['img/tok/orange_vp_r.png','img/tok/conscience_r.png'], h:`
+   <h4>Un Exploitant gagne avec 4 points de Prestige ⭐</h4>
+   <ul><li>Acheter un <b>Bien de luxe</b> : 1 ⭐</li><li>Réaliser 2 <b>Objectifs</b> : 1 ⭐</li><li>Réussir 3 <b>Contrats</b> : 1 ⭐</li><li>Collectionner 3 cartes <b>Esprit</b> : 1 ⭐</li><li>Être le <b>premier donateur</b> de la Fondation Amazonie quand la Conscience passe de 3 à 4, puis de 7 à 8</li></ul>
+   <p>La victoire se vérifie en fin de manche. En cas d’égalité, le plus riche l’emporte.</p>
+   <h4>La Forêt gagne quand la Conscience écologique 🌍 atteint la dernière case</h4>
+   <p>Elle avance d’une case à chaque fin de manche, et la Forêt peut l’accélérer : militer dans une Arène déjà tout en bas, réaliser des Objectifs, publier 2 Enquêtes, créer 2 Fresques ou déclencher un Événement avec une force de 3.</p>` },
+ { t:'Le plateau', img:['img/boards/central.webp'], h:`
+   <ul><li>Le plateau est fait de <b>zones hexagonales</b>. Une zone avec au moins 1 jeton Forêt ${TT('foret_r')} est <b>boisée</b> ; avec 3 jetons, elle est <b>dense</b>.</li>
+   <li>Les <b>gisements</b> cachent de l’Or ${TT('or_r')} et du Pétrole ${TT('petrole_r')} sous les arbres : celui qui retire le dernier jeton Forêt les récupère.</li>
+   <li>Les <b>3 Arènes</b> (politique, médiatique, judiciaire) font bouger 3 <b>Alignements</b> qui changent les règles : PV des objectifs, nombre de cartes piochées, zones boisées minimum…</li>
+   <li>La <b>Rivière</b> (5 cartes, coût 1 à 5) propose des cartes Forêt que les Exploitants achètent et que la Forêt active.</li>
+   <li>Les <b>Objectifs</b> sont des motifs à former sur la carte ; les <b>Événements</b> se révèlent quand les Exploitants dépensent leur Or et leur Pétrole.</li></ul>` },
+ { t:'Déroulement d’une manche', img:[], h:`
+   <ol class="phases"><li><b>Actions</b> : chacun joue à son tour, en commençant par le Premier joueur.</li>
+   <li><b>Rapport de force</b> : dans chaque Arène, le camp majoritaire déplace l’Alignement d’un cran.</li>
+   <li><b>Revenus</b> : chaque carte Animal achetée rapporte 2 $.</li>
+   <li><b>Victoire ?</b> Un Exploitant à 4 ⭐ ou plus gagne.</li>
+   <li><b>Conscience</b> : le pion avance d’une case.</li>
+   <li><b>Récupération</b> : la Forêt régénère ses jetons, les Exploitants reprennent leurs jetons d’action.</li>
+   <li><b>Pioche</b> selon l’Alignement médiatique.</li>
+   <li><b>Rivière</b> : la première carte est défaussée, les autres glissent et une nouvelle arrive.</li>
+   <li>Le pion <b>Premier joueur</b> passe à gauche.</li></ol>
+   <p class="tip">Dans le jeu, tout ceci est automatique et animé.</p>` },
+ { t:'Le tour d’un Exploitant', img:['img/boards/expl_orange.webp'], h:`
+   <p>À son tour, un Exploitant fait <b>2 actions</b> en posant 2 jetons d’action ${TT('orange_action_r')}. Côté recto : 1 possibilité. Côté verso ${TT('orange_action_v')} : 2 possibilités (ou 2 fois la même).</p>
+   <p>On peut refaire une action déjà faite dans la manche.</p>
+   <h4>Or et Pétrole</h4>
+   <p>Une fois par tour, il peut dépenser un ${TT('or_r')} ou un ${TT('petrole_r')} :</p>
+   <ul><li>pour une <b>3ᵉ action</b> (le Pétrole donne un jeton recto, l’Or un jeton verso),</li><li>ou pour le <b>vendre</b> (Pétrole = 3 $, Or = 5 $).</li></ul>
+   <p>Mais attention : le jeton dépensé va sur la carte <b>Événement</b>. Au 3ᵉ jeton, l’Événement se révèle et devient une nouvelle action pour la Forêt !</p>` },
+ { t:'Les 5 actions des Exploitants', img:[], h:`
+   <div class="tacts">
+   <div>${TI('orange_deforester.webp')}<p><b>Déforester</b> : retirer un jeton Forêt d’une zone boisée adjacente (stocké pour être vendu, 2 max), ou chasser un Peuple de la Forêt.</p></div>
+   <div>${TI('orange_exploiter.webp')}<p><b>Exploiter</b> : poser une culture (Soja, Bétail ou Coca) sur une zone vide adjacente, ou affaiblir la culture d’un rival.</p></div>
+   <div>${TI('orange_recolter.webp')}<p><b>Récolter</b> tous les jetons d’un type : le bois stocké (1 $ chacun), le Soja, le Bétail (selon les zones vides reliées) ou la Coca (selon les voisins). Une culture récoltée s’affaiblit, puis disparaît.</p></div>
+   <div>${TI('orange_acheter.webp')}<p><b>Acheter</b> : une carte de la Rivière, un Bien de luxe (10 $ + Conscience), un Atout de sa main… ou faire un <b>don</b> à la Fondation Amazonie.</p></div>
+   <div>${TI('orange_influencer.webp')}<p><b>Influencer</b> : placer un meeple dans une Arène, ou piocher un Atout ou un Contrat.</p></div></div>
+   <p class="tip">« Adjacent » = touchant une zone où tu as déjà un jeton (camp de base, culture, meeple…).</p>` },
+ { t:'Cartes des Exploitants', img:['img/cards/at01.webp','img/cards/ct01.webp','img/cards/ob01.webp'], h:`
+   <ul><li><b>Cartes Forêt achetées</b> : glissées sous ton plateau, elles donnent des bonus. Chaque Animal rapporte 2 $ par manche, 2 Personnes retournent un jeton d’action sur sa face verso, et 3 Esprits donnent 1 ⭐.</li>
+   <li><b>Atouts</b> : des coups spéciaux à acheter depuis ta main (3 cartes max).</li>
+   <li><b>Contrats</b> : des défis. Quand tu remplis la condition, le Contrat se glisse sous une action et la <b>renforce pour toujours</b>. Tous les 3 Contrats : 1 ⭐.</li>
+   <li><b>Objectifs</b> : former un motif précis sur le plateau, dans n’importe quel sens. Tous les participants gagnent de l’argent, et l’Objectif devient une nouvelle action.</li></ul>` },
+ { t:'Le tour de la Forêt', img:['img/boards/foret.webp'], h:`
+   <p>La Forêt prend <b>1, 2 ou 3 jetons</b> ${TT('foret_r')} dans sa réserve <b>A</b> et les pose sur une action : c’est la <b>force X</b> de l’action.</p>
+   <p>Dans cette version, la Forêt fait <b>2 actions par tour</b>. Elle peut garder des jetons pour plus tard.</p>
+   <h4>Le cycle des jetons</h4>
+   <p>Les jetons utilisés restent sur les actions (<b>B</b>). En fin de manche : <b>C → A</b> et <b>B → C</b>. Un jeton dépensé met donc <b>deux manches</b> à revenir !</p>
+   <p>Le bois vendu par les Exploitants revient aussi dans C. Créer une Fresque ou les dons à la Fondation régénèrent des jetons directement dans A.</p>` },
+ { t:'Les 5 actions de la Forêt', img:[], h:`
+   <div class="tacts">
+   <div>${TI('foret_reboiser.webp')}<p><b>Reboiser</b> : poser X jetons Forêt sur des zones vides ou boisées (3 max par zone).</p></div>
+   <div>${TI('foret_proteger.webp')}<p><b>Protéger</b> : poser des Peuples de la Forêt ${TT('foret_meeple_r')} sur des zones denses (on ne peut plus y déforester), ou les déplacer.</p></div>
+   <div>${TI('foret_resister.webp')}<p><b>Résister</b> : affaiblir X cultures adjacentes à un Peuple.</p></div>
+   <div>${TI('foret_mobiliser.webp')}<p><b>Mobiliser</b> : activer une carte de la Rivière qui coûte X. Elle rejoint ensuite la Fresque si son symbole y a sa place.</p></div>
+   <div>${TI('foret_militer.webp')}<p><b>Militer</b> : placer X Peuples dans les Arènes, ou piocher X Enquêtes.</p></div></div>` },
+ { t:'Fresques, Enquêtes, Événements', img:['img/cards/fr01.webp','img/cards/en01.webp','img/cards/ev01.webp'], h:`
+   <ul><li><b>Fresques</b> : chaque carte activée par Mobiliser remplit un motif (Animal, Personne, Esprit). Au 3ᵉ, la Fresque est créée : 3 jetons régénérés, et 2 Fresques = 1 Conscience.</li>
+   <li><b>Enquêtes</b> : la Forêt les place dans la Rivière, puis les <b>publie</b> si ce qu’elles dénoncent est vrai sur le plateau (ex. : 2 gisements miniers occupés). Elle applique la conséquence. 2 Enquêtes = 1 Conscience.</li>
+   <li><b>Événements</b> : révélés par l’Or et le Pétrole des Exploitants, ce sont de puissantes actions à usage unique pour la Forêt (Incendie, Sécheresse…). À force 3 : +1 Conscience.</li>
+   <li><b>Objectifs</b> : la Forêt peut aussi les réaliser (face verte). La Conscience avance de 1 à 3 cases selon l’Alignement politique.</li></ul>` },
+ { t:'Jouer sur cet écran', img:[], h:`
+   <ul><li>Choisis une action dans la <b>barre du bas</b>, puis clique sur les <b>zones surlignées en rouge</b>.</li>
+   <li>Survole un bouton ou une carte : une <b>info-bulle</b> apparaît, et les cartes s’agrandissent.</li>
+   <li>Le bouton <b>↶</b> annule ta dernière action (sauf après une pioche ou une révélation).</li>
+   <li>Le tour passe tout seul au joueur suivant quand tes actions sont faites.</li>
+   <li>Chaque rôle peut être joué par un <b>humain</b> ou par l’<b>IA</b>, qui apprend de chaque partie. Sa vitesse se règle dans le menu ☰.</li>
+   <li><b>Jouer en ligne</b> : crée une table, partage le code ou invite un joueur du lobby. Les places libres peuvent être tenues par l’IA.</li></ul>
+   <p class="tip">Prêt ? Lance une partie à 3 joueurs contre l’IA pour commencer !</p>` },
+];
+let TP=0;
+function showTuto(i){ TP=Math.max(0,Math.min(TUTO.length-1,i)); const p=TUTO[TP];
+  $('#startm').classList.add('off'); $('#tuto').classList.remove('off');
+  $('#tutoIn').innerHTML=`<div class="tpg"><div class="tnum">${TP+1} / ${TUTO.length}</div><h2 class="ttl">${p.t}</h2>
+   <div class="tbody ${p.img.length?'':'noimg'}">${p.img.length?`<div class="timgs n${p.img.length}">${p.img.map(s=>`<img src="${s}" data-zoom="${s}">`).join('')}</div>`:''}<div class="ttext">${p.h}</div></div></div>
+   <div class="tnav"><button class="btn" data-mback="1">← Menu</button>
+   <div class="tdots">${TUTO.map((_,k)=>`<button class="tdot ${k===TP?'on':''}" data-tp="${k}" title="${TUTO[k].t}"></button>`).join('')}</div>
+   <span><button class="btn" data-tp="${TP-1}" ${TP?'':'disabled'}>‹ Précédent</button> ${TP<TUTO.length-1?`<button class="btn pri" data-tp="${TP+1}">Suivant ›</button>`:`<button class="btn pri" data-mback="play">Jouer !</button>`}</span></div>`;
+  $('#tutoIn').scrollTop=0; }
+const CAT=[
+ {k:'pr', l:'Cartes Forêt', ico:'i_animal.png', groups:()=>['Animal','Personne','Esprit'].map(ty=>({n:ty+'s', cards:PROTECTEURS.filter(c=>c.type===ty)})), d:'Achetées par les Exploitants dans la Rivière, activées par la Forêt (Mobiliser).'},
+ {k:'en', l:'Enquêtes', ico:'i_enquete.png', groups:()=>[{cards:ENQUETES}], d:'Publiées par la Forêt quand les faits sont vérifiés sur le plateau.'},
+ {k:'ev', l:'Événements', ico:'i_objectif.png', groups:()=>[{cards:EVENEMENTS}], d:'Révélés par l’Or et le Pétrole dépensés ; actions à usage unique de la Forêt.'},
+ {k:'ob', l:'Objectifs', ico:'i_objectif.png', groups:()=>[{n:'Recto', cards:OBJECTIFS},{n:'Verso Exploitant', cards:OBJECTIFS.map((o,i)=>({name:o.expl,img:`img/cards/obbE${String(i+1).padStart(2,'0')}.webp`}))},{n:'Verso Forêt', cards:OBJECTIFS.map((o,i)=>({name:o.foret,img:`img/cards/obbF${String(i+1).padStart(2,'0')}.webp`}))}], d:'Motifs à former sur le plateau ; une fois réalisés, ils deviennent de nouvelles actions.'},
+ {k:'at', l:'Atouts', ico:'i_atout.png', groups:()=>[{cards:ATOUTS}], d:'Coups spéciaux des Exploitants, achetés depuis leur main.'},
+ {k:'ct', l:'Contrats', ico:'i_contrat.png', groups:()=>[{cards:CONTRATS}], d:'Défis des Exploitants ; réussis, ils renforcent une action pour toute la partie.'},
+ {k:'fr', l:'Fresques', ico:'i_fresque.png', groups:()=>[{cards:FRESQUES}], d:'Motifs que la Forêt complète avec les cartes qu’elle mobilise.'},
+ {k:'lx', l:'Biens de luxe', ico:'i_luxe.png', groups:()=>[{cards:LUXE}], d:'1 point de Prestige chacun ; seuls 3 sont en jeu à chaque partie.'},
+];
+let CATK='pr';
+function showCards(k){ if(k) CATK=k; const c=CAT.find(x=>x.k===CATK);
+  $('#startm').classList.add('off'); $('#cards').classList.remove('off');
+  const gs=c.groups(); const tot=gs.reduce((a,g)=>a+g.cards.length,0);
+  $('#cardsIn').innerHTML=`<div class="ctabs">${CAT.map(x=>`<button class="ctab ${x.k===CATK?'on':''}" data-ctab="${x.k}"><img src="img/ico/${x.ico}">${x.l}</button>`).join('')}</div>
+   <p class="cdesc">${c.d} <b>(${tot} cartes)</b></p>
+   ${gs.map(g=>`${g.n?`<h3 class="cgh">${g.n} <small>${g.cards.length}</small></h3>`:''}<div class="cgrid ${CATK==='ob'||CATK==='fr'?'wide':''}">${g.cards.map(x=>`<figure><img loading="lazy" src="${x.img}" data-zoom="${x.img}"><figcaption>${x.name||''}</figcaption></figure>`).join('')}</div>`).join('')}`;
+  $('#cardsScroll').scrollTop=0; }
+function tutoClick(t){
+  const z=t.closest('[data-zoom]'); if(z){ const box=t.closest('#tuto,#cards'); const list=[...new Set([...box.querySelectorAll('[data-zoom]')].map(x=>x.dataset.zoom))]; GAL={list,i:list.indexOf(z.dataset.zoom)}; galShow(); $('#zoom').classList.add('on'); return true; }
+  const b=t.closest('[data-mback]'); if(b){ $('#tuto').classList.add('off'); $('#cards').classList.add('off'); showStart(); if(b.dataset.mback==='play'){ CFG.nb=3; renderCfg(); } return true; }
+  const p=t.closest('[data-tp]'); if(p){ showTuto(+p.dataset.tp); return true; }
+  const c=t.closest('[data-ctab]'); if(c){ showCards(c.dataset.ctab); return true; }
+  return false; }
+
 let CFG={nb:3, ai:{F:false,orange:true,bleu:true,blanc:true}};
 function renderCfg(){ const seats=CFG.nb===4?['F','orange','bleu','blanc']:['F','orange','bleu'], el=$('#seatcfg'); el.style.display='';
   el.innerHTML=`<div class="sub">Qui joue chaque rôle ? (${CFG.nb} joueurs)</div>`+seats.map((x,i)=>`<div class="seatrow"><span class="dot" style="background:${COLOR[x]}"></span><span class="sp">${x==='F'?'Protecteur':'Exploitant '+i}</span><div class="seg"><button class="${!CFG.ai[x]?'on':''}" data-seat="${x}" data-v="h">👤 Humain</button><button class="${CFG.ai[x]?'on':''}" data-seat="${x}" data-v="ai">🤖 IA</button></div></div>`).join('')
