@@ -445,6 +445,68 @@ main{min-width:0}
 .coach.cleft{right:auto!important;left:16px}
 .coach .cpend{background:#fff1c2;border:2px solid #d4a017;border-radius:10px;padding:6px 10px;margin-bottom:8px}
 .tutoff{opacity:.35!important;filter:grayscale(1)}
+
+#lobby::after{filter:none!important}
+#lobby::before{background:linear-gradient(180deg,#0a140daa,#0a140d66 40%,#0a140dcc)!important}
+#lobby{align-items:flex-start}
+.lwrap{width:min(1180px,95vw);margin:24px auto;display:flex;flex-direction:column;gap:14px;text-align:left}
+.lhead{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.lhead .mtitle.sm{margin:0;font-size:54px!important;flex:1;text-align:left;color:#ffd36b!important;text-shadow:0 4px 0 #5a3a1e,0 10px 24px #000c!important}
+.lhead .mtitle.sm span{color:#cfe8b0;font-family:'Bree Serif',serif;font-size:28px}
+.lme{display:flex;align-items:center;gap:6px;background:#f3e6c8;border:3px solid #6b4423;border-radius:999px;padding:4px 6px 4px 14px;box-shadow:0 4px 0 #6b4423}
+.lme .lin{border:0;background:transparent;font-family:'Bree Serif',serif;font-size:18px;width:150px;color:#4a2f1d;outline:none}
+#lobby .btn{background:#e2cfa3;color:#4a2f1d;border:2px solid #6b4423;font-family:Nunito,sans-serif;font-weight:800;border-radius:10px}
+#lobby .btn:hover:not(:disabled){background:#efdcae}
+#lobby .btn.pri{background:#3f8f3a;color:#fff;border-color:#24561f}
+#lobby .btn.lback{background:#f3e6c8;border-width:3px;box-shadow:0 4px 0 #6b4423;font-size:16px}
+#lobby .btn.mm{background:#f3e6c8;border:3px solid #6b4423;border-radius:16px;font-weight:400}
+#lobby .btn.mm.green{background:#3f8f3a;color:#fff;border-color:#24561f;width:100%}
+#lobby .btn.mm .mi{font-family:'Alfa Slab One',serif;color:#6b4423}
+#lobby .lgrid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+@media(max-width:850px){#lobby .lgrid{grid-template-columns:1fr}}
+#lobby .lcol{display:flex;flex-direction:column;gap:16px}
+.lpan{background:#f3e6c8f2;border:3px solid #6b4423;border-radius:18px;box-shadow:0 6px 0 #6b4423,0 18px 40px #000a;padding:14px 18px;color:#4a2f1d;display:flex;flex-direction:column;gap:10px}
+.lpan h2{font-family:'Bree Serif',serif;font-weight:400;font-size:24px;color:#4a2f1d;margin:0;padding-bottom:6px;border-bottom:2px dashed #c9b083}
+.lpan h2 small{font-family:Nunito,sans-serif;font-size:13px;font-weight:800;background:#6b4423;color:#f3e6c8;border-radius:999px;padding:2px 9px;vertical-align:middle;margin-left:6px}
+.ltab,.lpl,.lseat{display:flex;align-items:center;gap:12px;background:#fffaf0;border:2px solid #c9b083;border-radius:12px;padding:8px 12px}
+.ltab:hover{border-color:#6b4423}
+.lth,.lpn,.lsn{display:flex;flex-direction:column;flex:1;line-height:1.2}.lth b,.lsn b,.lpn b{font-family:'Bree Serif',serif;font-weight:400;font-size:18px}
+.lth small,.lsn small,.lpn small{color:#9a7a55;font-weight:700;font-size:12px}
+.ldots{display:flex;gap:4px}.ldots i{width:14px;height:14px;border-radius:50%;border:2px solid}
+.lnb{font-weight:900;color:#6b4423}
+.lpl i{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 0 3px #fff}
+.lplist{display:flex;flex-direction:column;gap:6px;max-height:230px;overflow:auto}
+.lseats{display:flex;flex-direction:column;gap:8px}
+.lseat{border-left:8px solid var(--pc)}.lseat.free{border-style:dashed;border-left-style:solid;opacity:.9}
+.lsi{width:44px;height:44px;border-radius:50%;background:#f3e6c8;border:2px solid var(--pc);display:flex;align-items:center;justify-content:center;flex:none}.lsi img,.lsi svg{width:28px;height:28px}
+.lsb{display:flex;gap:6px}
+.lfoot{justify-content:space-between;margin-top:4px}.lwait{font-family:'Bree Serif',serif;color:#7a5a3a}
+#lobby .lchat{height:230px;overflow:auto;background:#fffaf0;border:2px solid #c9b083;border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+.lmsg{background:#efe3c6;border-radius:10px;padding:4px 10px;align-self:flex-start;max-width:90%}.lmsg b{display:block;font-size:12px;color:#3f8f3a}
+#lobby .lin{background:#fffaf0;border:2px solid #c9b083;border-radius:10px;padding:8px 10px;color:#4a2f1d;font-size:15px}
+.lempty{color:#9a7a55;text-align:center;margin:8px 0;font-style:italic}
+#lobby .linv{display:flex;align-items:center;gap:10px;background:#fff1c2;border:3px solid #d4a017;border-radius:14px;padding:10px 14px;color:#4a2f1d;box-shadow:0 4px 0 #a07a10;animation:cin .35s}
+#lobby .lerr{background:#f3e6c8;padding:14px;border-radius:12px;color:#a52a1a}
+/* config IA du menu */
+.seatcfg{background:#f3e6c8;border:3px solid #6b4423;border-radius:16px;padding:12px 14px;box-shadow:0 4px 0 #6b4423,0 10px 24px #0008;color:#4a2f1d;gap:8px!important;margin-top:0!important;min-width:0!important}
+.cfgl{font-family:'Bree Serif',serif;font-size:16px;color:#6b4423;text-align:left}
+.cfgseg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cfgseg button{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fffaf0;border:2px solid #c9b083;border-radius:12px;padding:8px;cursor:pointer;color:#4a2f1d;font-family:'Bree Serif',serif;font-size:17px}
+.cfgseg button b{font-weight:400}.cfgseg button small{font-family:Nunito,sans-serif;font-size:12px;font-weight:700;color:#9a7a55}
+.cfgseg button img,.cfgseg button svg{width:30px;height:30px}
+.cfgseg button.on{border-color:#3f8f3a;background:#e6f0d4;box-shadow:0 0 0 2px #3f8f3a}
+.seatcfg .cgo{margin-top:4px}
+/* bandeau d'observation */
+.abar.wbar{background:#1b2a20;border-color:var(--pc,#3a5)}
+.row.watch{align-items:center;gap:14px}
+.wch{font-family:'Bree Serif',serif;color:#cfe0b8;font-size:17px}
+.wsel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#fff;border:4px solid var(--pc);border-radius:12px;padding:5px 10px;min-width:100px;box-shadow:0 0 0 3px #ffd54a,0 0 24px #ffd54a99;animation:wpop .45s ease-out,wglow 1.4s ease-in-out .45s infinite}
+.wsel img{height:52px}.wsel .wph{height:56px}.wsel span{font-weight:900;color:#333;font-size:15px}
+.wsel.wev img{height:70px;border-radius:6px}
+.wtok{display:flex;gap:4px}.wtok img{width:46px;height:46px;filter:drop-shadow(0 3px 4px #000a);animation:wpop .45s ease-out .15s both}
+.wst{font-style:italic;color:#cfe0b8}
+@keyframes wpop{from{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}to{transform:none;opacity:1}}
+@keyframes wglow{0%,100%{box-shadow:0 0 0 3px #ffd54a,0 0 18px #ffd54a66}50%{box-shadow:0 0 0 3px #ffd54a,0 0 32px #ffd54acc}}
 </style>
 </head>
 <body>
@@ -493,16 +555,15 @@ main{min-width:0}
   <h1 class="mtitle">Amazonia</h1><p class="msub">Protéger la forêt · ou l’exploiter</p>
   <div class="sbtns">
     <button class="btn big mm green" data-online="1"><span class="mi">🌍</span><span class="mt">Jouer en ligne<small>Tables, invitations et discussion avec d’autres joueurs</small></span></button>
-    <div class="msep">Contre l’IA ou autour de cet écran</div>
-    <button class="btn big mm" data-cfg="3"><span class="mi"><img src="img/ico/protecteur.svg"></span><span class="mt">Partie à 3 joueurs<small>1 Protecteur · 2 Exploitants</small></span></button>
-    <button class="btn big mm" data-cfg="4"><span class="mi"><img src="img/ico/protecteur.svg"></span><span class="mt">Partie à 4 joueurs<small>1 Protecteur · 3 Exploitants</small></span></button>
+    <button class="btn big mm" data-cfg="ai"><span class="mi">🤖</span><span class="mt">Jouer contre l’IA<small>Choisis le nombre de joueurs et ton camp</small></span></button>
+    <div class="seatcfg" id="seatcfg" style="display:none"></div>
     <button class="btn big mm ghost" id="bResume" data-start="resume"><span class="mi">↻</span><span class="mt">Reprendre la partie<small id="resumeInfo"></small></span></button>
     <div class="msep">Découvrir le jeu</div>
     <button class="btn big mm green" data-tuto="1"><span class="mi">🎓</span><span class="mt">Apprendre à jouer<small>Tutoriel interactif : joue ta première manche, guidé pas à pas</small></span></button>
     <div class="mrow"><button class="btn big mm sm" data-rules="1"><span class="mi">📖</span><span class="mt">Règles résumées<small>11 pages illustrées</small></span></button>
     <button class="btn big mm sm" data-cards="1"><span class="mi">🃏</span><span class="mt">Toutes les cartes<small>Triées par type</small></span></button></div>
-  </div><div class="seatcfg" id="seatcfg" style="display:none"></div><p class="sub" id="aiStats" style="margin-top:18px"></p></div></div></div>
-<div class="startm off" id="lobby"><div class="lbox"><h1 class="mtitle sm">Amazonia <span>en ligne</span></h1><div id="lobbyIn"></div></div></div>
+  </div><p class="sub" id="aiStats" style="margin-top:18px"></p></div></div></div>
+<div class="startm off" id="lobby"><div class="lwrap" id="lobbyIn"></div></div>
 <div class="startm off" id="tuto"><div class="lbox tbox" id="tutoIn"></div></div>
 <div class="startm off" id="cards"><div class="lbox cbox"><div class="chead"><h1 class="mtitle sm">Les cartes</h1><button class="btn" data-mback="1">← Menu</button></div><div class="cscroll" id="cardsScroll"><div id="cardsIn"></div></div></div></div>
 <div class="coach" id="coach" style="display:none"></div>
@@ -767,7 +828,7 @@ function useResource(kind, mode){
 }
 function startExplAction(act, value, extraFrom){
   const c=cur(), e=S.expl[c];
-  snapshot();
+  snapshot(); S.turn.last={owner:c,act,v:value,res:extraFrom||null};
   if (extraFrom){ e.storage[extraFrom]--; S.turn.usedRes=true; placeOnEvent(extraFrom); log(`${CAP(NAME(c))} utilise 1 ${extraFrom==='or'?'Or':'Pétrole'} : action supplémentaire (valeur ${value}).`); }
   else { e.tokens[UI.tok].used=act; S.turn.actions++; UI.tok=null; }
   const firstKind=['betail','coca','soja'].find(k=>e.prod[k]>0)||null;
@@ -780,7 +841,7 @@ function startExplAction(act, value, extraFrom){
   render();
 }
 function startForestAction(act, X, evId){
-  snapshot();
+  snapshot(); S.turn.last={owner:'F',act,X,ev:evId||null};
   const F=S.forest; F.A-=X; S.turn.actions++; for(let i=0;i<X;i++) ANIM.push({type:'fly',img:TOK('foret_r'),from:{sel:'#sum-F .c-A'},to:{sel:'#sum-F .c-B'},delay:i*110,size:28});
   if (evId){ F.events=F.events.filter(x=>x!==evId); F.evUsed.push(evId); log(`Le Protecteur déclenche « ${CARD[evId].name} » (force ${X}).`, true); if (X===3) moveConscience(1,'catastrophe de force 3'); flash(CARD[evId].img); UI.effDone=finishEffect; EV_EFFECT[evId](X, finishEffect); return; }
   if (act!=='reboiser') F.onAct[act]+=X;
@@ -1433,7 +1494,7 @@ function renderFresques(){
 /* =========================================================
    IA — simulation + évaluation, poids adaptatifs
    ========================================================= */
-let SIM=false, FAST=false, AISPEED=1700, AIBUSY=false, AITIMER=null;
+let SIM=false, FAST=false, AISPEED=2800, AIBUSY=false, AITIMER=null;
 const _setTimeout=window.setTimeout.bind(window);
 window.setTimeout=(f,t,...r)=>SIM?0:(FAST?(f(...r),0):_setTimeout(f,t,...r));
 const isAI = seat => !!(S && S.ai && seat && S.ai[seat]);
@@ -1788,35 +1849,37 @@ function netQuit(){ if (NET.gunsub){ NET.gunsub(); NET.gunsub=null; } NET.game=f
 const STATUS={lobby:'🟢 dispo',table:'🟡 à une table',game:'🔴 en partie'};
 function lobbyRender(){
   const el=$('#lobbyIn'); if(!el||$('#lobby').classList.contains('off')) return;
-  const keep={}; ['lName','lMsg','lCode'].forEach(id=>{ const x=document.getElementById(id); if(x) keep[id]=[x.value, document.activeElement===x]; });
+  const keep={}; ['lName','lMsg'].forEach(id=>{ const x=document.getElementById(id); if(x) keep[id]=[x.value, document.activeElement===x]; });
   _setTimeout(()=>{ for(const id in keep){ const x=document.getElementById(id); if(x){ x.value=keep[id][0]; if(keep[id][1]) x.focus(); } } },0);
   if (NET.err){ el.innerHTML=`<p class="lerr">${esc(NET.err)}</p><div class="lrow">${btn('Réessayer','data-l="retry"','pri')}${btn('← Menu','data-l="back"')}</div>`; return; }
   if (!NET.uid){ el.innerHTML='<p class="sub">Connexion au lobby…</p>'; return; }
   const name=myName(), t=NET.tid&&NET.tables[NET.tid];
+  const sico=x=>x==='F'?'<img src="img/ico/protecteur.svg">':factory(x);
   let left='';
   if (t){
     const seats=seatsFor(t.nb), host=t.host===NET.uid;
-    left=`<h2>Table de ${esc(t.hostName)} · ${t.nb} joueurs</h2>`+seats.map((x,i)=>{ const v=t.seats[x], nm=v==='ai'?'🤖 IA':v?esc((t.names||{})[v]||'Joueur'):'— libre —';
-      return `<div class="seatrow"><span class="dot" style="background:${COLOR[x]}"></span><span class="sp">${seatLbl(x,i)}</span><span class="nm">${nm}${v===NET.uid?' (toi)':''}</span>
-        ${!v?btn('Prendre','data-l="seat" data-s="'+x+'"'):''}${host&&(!v||v==='ai')?btn(v==='ai'?'Retirer l’IA':'🤖 IA','data-l="ai" data-s="'+x+'"'):''}</div>`; }).join('')
-      +`<div class="lrow">${host?btn('Lancer la partie','data-l="start"','pri',Object.values(t.seats).some(v=>!v)):'<span class="sub">En attente du lancement par l’hôte…</span>'}${btn('Quitter la table','data-l="leave"')}</div>
-      <p class="sub">Code de la table : <b>${NET.tid}</b></p>`;
+    left=`<section class="lpan"><h2>🎲 Table de ${esc(t.hostName)} <small>${t.nb} joueurs</small></h2><div class="lseats">`+seats.map((x,i)=>{ const v=t.seats[x], nm=v==='ai'?'🤖 IA':v?esc((t.names||{})[v]||'Joueur'):'Place libre';
+      return `<div class="lseat ${v?'':'free'}" style="--pc:${COLOR[x]}"><span class="lsi">${sico(x)}</span><span class="lsn"><small>${seatLbl(x,i)}</small><b>${nm}${v===NET.uid?' (toi)':''}</b></span>
+        <span class="lsb">${!v?btn('S’asseoir','data-l="seat" data-s="'+x+'"','pri'):''}${host&&(!v||v==='ai')?btn(v==='ai'?'Retirer l’IA':'🤖 Mettre l’IA','data-l="ai" data-s="'+x+'"'):''}</span></div>`; }).join('')
+      +`</div><div class="lrow lfoot">${host?btn('▶ Lancer la partie','data-l="start"','pri big',Object.values(t.seats).some(v=>!v)):'<span class="lwait">⏳ En attente du lancement par l’hôte…</span>'}${btn('Quitter la table','data-l="leave"')}</div></section>`;
   } else {
     const open=Object.entries(NET.tables).filter(([k,t])=>t.state==='open').sort((a,b)=>a[1].created-b[1].created);
-    left=`<h2>Jouer</h2><div class="lrow">${btn('⚡ Trouver une partie','data-l="quick"','pri')}${btn('Créer une table · 3 joueurs','data-l="create" data-n="3"')}${btn('Créer une table · 4 joueurs','data-l="create" data-n="4"')}</div>
-      <h2 style="margin-top:14px">Tables ouvertes</h2>${open.length?open.map(([k,t])=>{ const n=Object.values(t.seats).filter(Boolean).length; return `<div class="seatrow"><span class="sp">Table de ${esc(t.hostName)} · ${t.nb} joueurs</span><span class="nm">${n}/${t.nb}</span>${btn('Rejoindre','data-l="join" data-t="'+k+'"','',n>=t.nb)}</div>`; }).join(''):'<p class="sub">Aucune table pour l’instant.</p>'}
-      <div class="lrow"><input id="lCode" placeholder="Code de table" class="lin">${btn('Rejoindre avec un code','data-l="code"')}</div>`;
+    left=`<section class="lpan"><h2>🎲 Jouer</h2>
+      <button class="btn big mm green" data-l="quick"><span class="mi">⚡</span><span class="mt">Trouver une partie<small>Rejoins une table ouverte ou crée-en une</small></span></button>
+      <div class="mrow"><button class="btn big mm sm" data-l="create" data-n="3"><span class="mi">3</span><span class="mt">Créer une table<small>3 joueurs</small></span></button>
+      <button class="btn big mm sm" data-l="create" data-n="4"><span class="mi">4</span><span class="mt">Créer une table<small>4 joueurs</small></span></button></div></section>
+      <section class="lpan"><h2>🌿 Tables ouvertes <small>${open.length}</small></h2>${open.length?open.map(([k,t])=>{ const n=Object.values(t.seats).filter(Boolean).length; return `<div class="ltab"><span class="lth"><b>Table de ${esc(t.hostName)}</b><small>${t.nb} joueurs</small></span><span class="ldots">${seatsFor(t.nb).map(x=>`<i style="background:${t.seats[x]?COLOR[x]:'transparent'};border-color:${COLOR[x]}"></i>`).join('')}</span><span class="lnb">${n}/${t.nb}</span>${btn('Rejoindre','data-l="join" data-t="'+k+'"','pri',n>=t.nb)}</div>`; }).join(''):'<p class="lempty">Aucune table ouverte pour l’instant.<br>Crée la tienne et invite un joueur !</p>'}</section>`;
   }
   const pl=Object.entries(NET.players).filter(([u,p])=>p).sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||''));
   const chat=Object.values(NET.chat||{}).slice(-40);
   const inv=Object.entries(NET.invites||{}).filter(([k,v])=>v&&Date.now()-v.ts<120000);
-  el.innerHTML=`<div class="lgrid"><div class="lcol">
-      <div class="lrow"><span class="sub">Ton pseudo :</span><input id="lName" class="lin" maxlength="18" value="${esc(name)}" placeholder="Pseudo">${btn('OK','data-l="name"')}${btn('← Menu','data-l="back"')}</div>
-      ${inv.map(([k,v])=>`<div class="linv">📨 <b>${esc(v.name)}</b> t’invite à sa table ${btn('Accepter','data-l="acc" data-i="'+k+'"','pri')}${btn('Refuser','data-l="ref" data-i="'+k+'"')}</div>`).join('')}
-      ${left}</div>
-    <div class="lcol"><h2>Joueurs en ligne (${pl.length})</h2>${pl.map(([u,p])=>`<div class="seatrow"><span class="sp">${esc(p.name||'Joueur')}${u===NET.uid?' (toi)':''}</span><span class="nm">${STATUS[p.status]||''}</span>${u!==NET.uid&&p.status==='lobby'?btn('Inviter','data-l="inv" data-u="'+u+'"'):''}</div>`).join('')}
-      <h2 style="margin-top:14px">Chat</h2><div class="lchat" id="lChat">${chat.map(m=>`<div><b>${esc(m.name)}</b> : ${esc(m.text)}</div>`).join('')}</div>
-      <div class="lrow"><input id="lMsg" class="lin" maxlength="280" placeholder="Message… (Entrée)" style="flex:1">${btn('Envoyer','data-l="chat"')}</div></div></div>`;
+  const SD={lobby:['#3f8f3a','disponible'],table:['#d4a017','à une table'],game:['#b3402a','en partie']};
+  el.innerHTML=`<header class="lhead"><h1 class="mtitle sm">Amazonia <span>en ligne</span></h1><div class="lme"><span>👤</span><input id="lName" class="lin" maxlength="18" value="${esc(name)}" placeholder="Ton pseudo">${btn('OK','data-l="name"')}</div>${btn('← Menu','data-l="back"','lback')}</header>
+    ${inv.map(([k,v])=>`<div class="linv">📨 <b>${esc(v.name)}</b> t’invite à sa table <span class="spacer"></span>${btn('Accepter','data-l="acc" data-i="'+k+'"','pri')}${btn('Refuser','data-l="ref" data-i="'+k+'"')}</div>`).join('')}
+    <div class="lgrid"><div class="lcol">${left}</div>
+    <div class="lcol"><section class="lpan"><h2>👥 Joueurs en ligne <small>${pl.length}</small></h2><div class="lplist">${pl.map(([u,p])=>{ const d=SD[p.status]||['#999','']; return `<div class="lpl"><i style="background:${d[0]}"></i><span class="lpn"><b>${esc(p.name||'Joueur')}${u===NET.uid?' (toi)':''}</b><small>${d[1]}</small></span>${u!==NET.uid&&p.status==='lobby'?btn('Inviter','data-l="inv" data-u="'+u+'"'):''}</div>`; }).join('')}</div></section>
+      <section class="lpan lchatp"><h2>💬 Discussion</h2><div class="lchat" id="lChat">${chat.map(m=>`<div class="lmsg"><b>${esc(m.name)}</b>${esc(m.text)}</div>`).join('')||'<p class="lempty">Dis bonjour !</p>'}</div>
+      <div class="lrow"><input id="lMsg" class="lin" maxlength="280" placeholder="Écris un message… (Entrée)" style="flex:1">${btn('Envoyer','data-l="chat"','pri')}</div></section></div></div>`;
   const c=$('#lChat'); if(c) c.scrollTop=c.scrollHeight;
 }
 function lobbyClick(t){
@@ -1868,8 +1931,8 @@ function vpPopup(c, n, why, from, to){
     after:()=>{ ANIM.push({type:'fly',img:TOK(c+'_vp_r'),from:{sel:'#pop'},to:{sel:`#sum-${c} .vpsm`}}); runAnims(); setTimeout(()=>runSteps('vp',c,from,to,()=>render()),950); }});
 }
 function doPact(id){ const seat=cur(); snapshot();
-      if (seat==='F'){ const X=UI.fx; UI.fx=null; S.forest.A-=X; S.forest.B+=X; S.turn.actions++; log(`Le Protecteur utilise le Projet « ${CARD[id].foret} ».`, true); UI.effDone=finishEffect; return OBJ[id].actF.run(finishEffect); }
-      const e=S.expl[seat]; e.tokens[UI.tok].used='projet'; UI.tok=null; S.turn.actions++; log(`${CAP(NAME(seat))} utilise le Projet « ${CARD[id].expl} ».`, true); UI.effDone=finishEffect; return OBJ[id].actE.run(seat, finishEffect); }
+      if (seat==='F'){ const X=UI.fx; UI.fx=null; S.turn.last={owner:'F',pact:id,X}; S.forest.A-=X; S.forest.B+=X; S.turn.actions++; log(`Le Protecteur utilise le Projet « ${CARD[id].foret} ».`, true); UI.effDone=finishEffect; return OBJ[id].actF.run(finishEffect); }
+      const e=S.expl[seat]; S.turn.last={owner:seat,pact:id,v:e.tokens[UI.tok].v}; e.tokens[UI.tok].used='projet'; UI.tok=null; S.turn.actions++; log(`${CAP(NAME(seat))} utilise le Projet « ${CARD[id].expl} ».`, true); UI.effDone=finishEffect; return OBJ[id].actE.run(seat, finishEffect); }
 function stepTrack(kind,c,from,to){ if(from===to) return; (kind==='vp'?DISPVP:DISPDON)[c]=from; ANIM.push({type:'steps',kind,c,from,to}); }
 function runSteps(kind,c,from,to,done){
   const el=document.querySelector(`[data-trk="${kind}-${c}"]`), L=kind==='vp'?TRACK.prestige:TRACK.donation, D=kind==='vp'?DISPVP:DISPDON;
@@ -2027,10 +2090,26 @@ function tbtns(T){ return T.buttons.map((o,i)=>o.harv?`<button class="btn harv" 
   :o.img?`<button class="btn tokbtn ${o.sel?'sel':''}" data-a="tb" data-i="${i}" data-k="${o.img.split('_')[1]}" ${o.dis||!o.fn?'disabled':''} title="${esc(o.tip||'')}"><img src="${o.img}">${esc(o.lbl)}</button>`
   :btn(esc(o.lbl),`data-a="tb" data-i="${i}"`,o.sel?'sel':'',o.dis||!o.fn,o.why||'')).join(''); }
 const backBtn = () => btn('↶','data-a="back"','backb',!UNDO.length||isAI(aiWho()),'Annuler la dernière action (pas au-delà d’une pioche)');
+function localHuman(seat){ return !isAI(seat) && (!NET.game || mySeats().includes(seat)); }
+function watchBar(seat){
+  const L=S.turn&&S.turn.last, col=COLOR[seat];
+  let blk='', toks='', lab='';
+  if (L){
+    if (L.pact){ blk=`<div class="wsel" style="--pc:${col}"><img class="wph" src="${halfImg(L.pact,seat==='F'?'F':'E')}"><span>Projet</span></div>`; lab='Projet'; }
+    else if (L.ev){ blk=`<div class="wsel wev" style="--pc:${col}"><img src="${CARD[L.ev].img}"><span>${esc(CARD[L.ev].name)}</span></div>`; lab=CARD[L.ev].name; }
+    else { lab=(seat==='F'?FOREST_ACTIONS:EXPL_ACTIONS)[L.act]; blk=`<div class="wsel" style="--pc:${col}"><img src="img/ico/${seat==='F'?'foret':seat}_${L.act}.webp"><span>${lab}</span></div>`; }
+    if (seat==='F') toks=Array.from({length:L.X||1},()=>`<img src="${TOK('foret_r')}">`).join('');
+    else if (L.res) toks=`<img src="${TOK(L.res==='or'?'or_r':'petrole_r')}">`;
+    else toks=`<img src="${TOK(seat+'_action_'+(L.v>=2?'v':'r'))}">`;
+  }
+  const busy=UI.flow||UI.ask, ai=isAI(seat), nm=ai?'L’IA':(S.online?esc(S.online.names[S.online.seats[seat]]||'L’autre joueur'):'');
+  const st=!L?`${ai?'🤖':'⏳'} ${nm} réfléchit…`:(busy||!S.turn.actions||S.turn.actions<2)?`${nm} résout l’action…`:`${nm} termine son tour…`;
+  return `<div class="row watch">${who(seat,`Action ${Math.max(1,S.turn.actions)}/2`)}${L?`<span class="wch">a choisi</span>${blk}<div class="wtok">${toks}</div>`:''}<span class="prompt wst">${st}</span><span class="spacer"></span>${NET.game?`<span class="hint">Tu joues : ${mySeats().map(x=>x==='F'?'Protecteur':NAME(x)).join(', ')}</span>`:''}</div>`;
+}
 function renderBar(){
   const b=$('#abar'); let h=''; b.classList.remove('bigbar');
   if (S.over){ b.innerHTML=`<div class="row">${who(S.over.winner,'🏆 Victoire')}<span class="prompt">${esc(S.over.why)}</span><span class="spacer"></span>${btn('Nouvelle partie','data-a="new"','pri')}</div>`; return; }
-  if (NET.game && !amCtrl()){ const w=aiWho(); b.innerHTML=`<div class="row">${w?who(w):''}<span class="prompt">⏳ ${w?(isAI(w)?'L’IA joue…':'En attente de '+esc(S.online.names[S.online.seats[w]]||'l’autre joueur')+'…'):'En attente…'}</span><span class="spacer"></span><span class="hint">Tu joues : ${mySeats().map(x=>x==='F'?'Protecteur':NAME(x)).join(', ')}</span></div>`; return; }
+  if (NET.game && !amCtrl() && !S.pending.length){ const w=aiWho(); if (S.turn&&w){ b.classList.add('wbar'); b.innerHTML=watchBar(w); return; } b.innerHTML=`<div class="row"><span class="prompt">⏳ En attente…</span></div>`; return; }
   const pd=S.pending[0];
   if (pd){
     if (pd.type==='forestArena') h=`<div class="row">${who('F')}<span class="prompt">Un Peuple a été chassé : cliquez une Arène (partie verte) pour l’y placer.</span></div>`;
@@ -2047,7 +2126,8 @@ function renderBar(){
     b.innerHTML=h; return;
   }
   if (!S.turn){ b.innerHTML=`<div class="row"><span class="who">Fin de la phase Actions</span><span class="spacer"></span>${btn('Résoudre la fin de manche','data-a="endround"','pri')}</div>`; return; }
-  const seat=cur();
+  const seat=cur(); b.classList.remove('wbar');
+  if (!localHuman(seat)){ b.classList.add('wbar'); b.innerHTML=watchBar(seat); return; }
   if (UI.ask){ const T=UI.T;
     b.innerHTML=`<div class="row">${who(seat,'✦ '+esc(T.title||'Effet'))}<span class="prompt">${T.prompt}</span>${tbtns(T)}<span class="spacer"></span>${backBtn()}</div>`; return; }
   if (UI.flow){ const f=UI.flow, T=UI.T, lab=(f.owner==='F'?FOREST_ACTIONS:EXPL_ACTIONS)[f.act];
@@ -2081,7 +2161,7 @@ function renderBar(){
   b.innerHTML=h;
 }
 function renderHand(){
-  const el=$('#handPanel'), pd=S.pending[0], disc=pd&&pd.type==='discardAt', seat0=disc?pd.c:(pd&&pd.type==='discardEnq'?'F':cur()), seat=(NET.game&&!mySeats().includes(seat0))?(mySeats()[0]||seat0):seat0;
+  const el=$('#handPanel'), pd=S.pending[0], disc=pd&&pd.type==='discardAt', seat0=disc?pd.c:(pd&&pd.type==='discardEnq'?'F':cur()), seat=(NET.game&&!mySeats().includes(seat0))?(mySeats()[0]||seat0):(!NET.game&&isAI(seat0)&&S.seats.some(x=>!isAI(x)))?S.seats.find(x=>!isAI(x)):seat0;
   if (!seat||S.over){ el.style.display='none'; return; }
   el.style.display=''; el.style.borderTop=`4px solid ${COLOR[seat]}`;
   let h=`<h2 style="color:${COLOR[seat]}">${seat==='F'?'Enquêtes en main':'Main de '+NAME(seat)}</h2><div class="hand side-hand">`;
@@ -2125,7 +2205,7 @@ function renderPlayers(){
   let h='';
   const F=S.forest, seeF=VIEW==='F';
   const fz=(n)=>Array.from({length:n},()=>`<img src="${TOK('foret_r')}">`).join('');
-  h+=`<div class="pl F"><header><img src="${TOK('foret_r')}" style="width:30px"><h2>Le Protecteur</h2></header>
+  if(0) h+=`<div class="pl F"><header><img src="${TOK('foret_r')}" style="width:30px"><h2>Le Protecteur</h2></header>
     <div class="pboard"><div class="img" style="aspect-ratio:2882/3310;background-image:url(img/boards/foret.webp)">
       <div class="zoneF" style="left:3%;top:5%;width:92%;height:16%">${fz(F.C)}</div>
       <div class="zoneF" style="left:6%;top:62%;width:63%;height:17%">${fz(F.A)}</div>
@@ -2245,18 +2325,19 @@ document.addEventListener('click', ev=>{
   const m=t.closest('.dd [data-m]'); if (m){ $('#menu').classList.remove('open'); const k=m.dataset.m;
     if (k==='new'){ if (NET.game) return toast('Partie en ligne : passe par le menu principal.'); UNDO=[]; newGame(S.nb); render(); toast('Nouvelle partie prête.'); }
     if (k==='home'){ if (NET.game) netQuit(); showStart(); }
-    if (k==='aispeed'){ AISPEED = AISPEED===1700?800:AISPEED===800?2800:1700; $('#aiSpd').textContent={1700:'normale',800:'rapide',2800:'lente'}[AISPEED]; }
+    if (k==='aispeed'){ AISPEED = AISPEED===2800?1700:AISPEED===1700?4200:2800; $('#aiSpd').textContent={2800:'normale',1700:'rapide',4200:'lente'}[AISPEED]; }
     if (k==='undo') undo();
     if (k==='manual'){ MANUAL=!MANUAL; render(); toast(MANUAL?'Outils manuels : cliquez sur une zone du plateau.':'Outils manuels désactivés.'); }
     if (k==='endround'){ S.turn=null; UI={tok:null,flow:null}; render(); }
     if (k==='export'){ navigator.clipboard.writeText(JSON.stringify(S)).then(()=>toast('État copié dans le presse-papiers.'),()=>toast('Copie refusée par le navigateur.')); }
     return; }
   if (t.closest('#bUndo')) return undo();
-  const cf=t.closest('[data-cfg]'); if (cf){ CFG.nb=+cf.dataset.cfg; renderCfg(); return; }
-  const ss=t.closest('[data-seat]'); if (ss){ CFG.ai[ss.dataset.seat]=ss.dataset.v==='ai'; renderCfg(); return; }
+  const cf=t.closest('[data-cfg]'); if (cf){ if($('#seatcfg').style.display==='none') renderCfg(); else $('#seatcfg').style.display='none'; return; }
+  const cn=t.closest('[data-cnb]'); if (cn){ CFG.nb=+cn.dataset.cnb; renderCfg(); return; }
+  const cs=t.closest('[data-cside]'); if (cs){ CFG.side=cs.dataset.cside; renderCfg(); return; }
   const st=t.closest('[data-start]'); if (st){ const v=st.dataset.start;
     if (v==='resume'){ if (!loadSave()) return toast('Aucune partie sauvegardée.'); }
-    else { UNDO=[]; TURNSNAP=null; newGame(CFG.nb); S.ai=Object.fromEntries(S.seats.map(x=>[x,!!CFG.ai[x]])); VIEW=isAI(cur())?(S.seats.find(x=>!isAI(x))||cur()):cur(); }
+    else { UNDO=[]; TURNSNAP=null; newGame(CFG.nb); const me=CFG.side==='F'?'F':EXPL[Math.floor(Math.random()*EXPL.length)]; S.ai=Object.fromEntries(S.seats.map(x=>[x,x!==me])); if(me!=='F') toast(`Tu joues l’${NAME(me)}.`); VIEW=isAI(cur())?(S.seats.find(x=>!isAI(x))||cur()):cur(); }
     STARTED=true; $('#startm').classList.add('off'); render(); return; }
   const v=t.closest('[data-view]'); if (v){ if (NET.game) return toast('En ligne, tu vois seulement ton rôle.'); VIEW=v.dataset.view; render(); return; }
   if (t.closest('[data-close]')) return closeModal();
@@ -2419,7 +2500,7 @@ const TUTO = [
    <li>Survole un bouton ou une carte : une <b>info-bulle</b> apparaît, et les cartes s’agrandissent.</li>
    <li>Le bouton <b>↶</b> annule ta dernière action (sauf après une pioche ou une révélation).</li>
    <li>Le tour passe tout seul au joueur suivant quand tes actions sont faites.</li>
-   <li>Chaque rôle peut être joué par un <b>humain</b> ou par l’<b>IA</b>, qui apprend de chaque partie. Sa vitesse se règle dans le menu ☰.</li>
+   <li><b>Contre l’IA</b> : choisis le nombre de joueurs et ton camp. Si tu prends un Exploitant, sa couleur est tirée au hasard. Pendant le tour de l’IA, le bandeau montre l’action qu’elle a choisie et les jetons qu’elle a utilisés.</li>
    <li><b>Jouer en ligne</b> : crée une table, partage le code ou invite un joueur du lobby. Les places libres peuvent être tenues par l’IA.</li></ul>
    <p class="tip">Prêt ? Lance une partie à 3 joueurs contre l’IA pour commencer !</p>` },
 ];
@@ -2452,7 +2533,7 @@ function showCards(k){ if(k) CATK=k; const c=CAT.find(x=>x.k===CATK);
   $('#cardsScroll').scrollTop=0; }
 function tutoClick(t){
   const z=t.closest('[data-zoom]'); if(z){ const box=t.closest('#tuto,#cards'); const list=[...new Set([...box.querySelectorAll('[data-zoom]')].map(x=>x.dataset.zoom))]; GAL={list,i:list.indexOf(z.dataset.zoom)}; galShow(); $('#zoom').classList.add('on'); return true; }
-  const b=t.closest('[data-mback]'); if(b){ $('#tuto').classList.add('off'); $('#cards').classList.add('off'); showStart(); if(b.dataset.mback==='play'){ CFG.nb=3; renderCfg(); } return true; }
+  const b=t.closest('[data-mback]'); if(b){ $('#tuto').classList.add('off'); $('#cards').classList.add('off'); showStart(); if(b.dataset.mback==='play'){ renderCfg(); } return true; }
   const p=t.closest('[data-tp]'); if(p){ showTuto(+p.dataset.tp); return true; }
   const c=t.closest('[data-ctab]'); if(c){ showCards(c.dataset.ctab); return true; }
   return false; }
@@ -2514,7 +2595,7 @@ function tutTick(){
   box.style.display=''; const pd=S.pending[0]; box.classList.toggle('cleft',!!pd&&/^discard/.test(pd.type));
   box.innerHTML=`<div class="chd"><span class="cst">Tutoriel · ${TUT.i+1}/${COACH.length}</span><button class="cx" data-coach="quit" title="Quitter le tutoriel">✕</button></div>
    <h3>${s.t}</h3><div class="ctx">${tutPend(s)}${s.txt()}</div>
-   <div class="cbt">${s.next?`<button class="btn pri" data-coach="next">Suivant ›</button>`:''}${s.end?`<button class="btn pri" data-coach="ai">Continuer contre l’IA</button><button class="btn" data-coach="free">Continuer seul</button><button class="btn" data-coach="menu">Menu</button>`:''}</div>`;
+   <div class="cbt">${s.next?`<button class="btn pri" data-coach="next">Suivant ›</button>`:''}${s.end?`<button class="btn pri" data-coach="ai">Continuer contre l’IA</button><button class="btn" data-coach="menu">Menu</button>`:''}</div>`;
 }
 document.addEventListener('pointerdown',e=>{ const h=e.target.closest('#coach .chd'); if(!h||e.target.closest('.cx')) return; const box=$('#coach'), r=box.getBoundingClientRect(), dx=e.clientX-r.left, dy=e.clientY-r.top;
   const mv=ev=>{ box.style.left=Math.max(0,Math.min(innerWidth-r.width,ev.clientX-dx))+'px'; box.style.top=Math.max(0,Math.min(innerHeight-60,ev.clientY-dy))+'px'; box.style.right='auto'; box.style.bottom='auto'; };
@@ -2526,10 +2607,13 @@ function coachClick(k){
   if(k==='menu'){ stopCoach(); showStart(); }
 }
 
-let CFG={nb:3, ai:{F:false,orange:true,bleu:true,blanc:true}};
-function renderCfg(){ const seats=CFG.nb===4?['F','orange','bleu','blanc']:['F','orange','bleu'], el=$('#seatcfg'); el.style.display='';
-  el.innerHTML=`<div class="sub">Qui joue chaque rôle ? (${CFG.nb} joueurs)</div>`+seats.map((x,i)=>`<div class="seatrow"><span class="dot" style="background:${COLOR[x]}"></span><span class="sp">${x==='F'?'Protecteur':'Exploitant '+i}</span><div class="seg"><button class="${!CFG.ai[x]?'on':''}" data-seat="${x}" data-v="h">👤 Humain</button><button class="${CFG.ai[x]?'on':''}" data-seat="${x}" data-v="ai">🤖 IA</button></div></div>`).join('')
-    +`<button class="btn pri big" data-start="go">Lancer la partie</button>`; }
+let CFG={nb:3, side:'F'};
+function renderCfg(){ const el=$('#seatcfg'); el.style.display='';
+  el.innerHTML=`<div class="cfgl">Nombre de joueurs</div><div class="cfgseg">${[3,4].map(n=>`<button class="${CFG.nb===n?'on':''}" data-cnb="${n}"><b>${n}</b> joueurs<small>1 Protecteur · ${n-1} Exploitants</small></button>`).join('')}</div>
+   <div class="cfgl">Ton camp</div><div class="cfgseg">
+     <button class="${CFG.side==='F'?'on':''}" data-cside="F"><img src="img/ico/protecteur.svg"><b>Protecteur</b><small>Défends la forêt</small></button>
+     <button class="${CFG.side==='E'?'on':''}" data-cside="E">${factory('orange')}<b>Exploitant</b><small>Couleur tirée au hasard</small></button></div>
+   <button class="btn big mm green cgo" data-start="go"><span class="mi">▶</span><span class="mt">Lancer la partie</span></button>`; }
 function showStart(){ const b=aiBrain(); $('#aiStats').textContent=b.games?`🤖 L’IA a appris de ${b.games} partie(s) · Protecteur IA : ${b.roles.F.wins}/${b.roles.F.games} victoires · Exploitants IA : ${b.roles.E.wins}/${b.roles.E.games}`:'🤖 L’IA apprend de chaque partie jouée contre elle.'; $('#seatcfg').style.display='none'; const d=readSave(); $('#bResume').disabled=!d; $('#resumeInfo').textContent=d?`${d.S.nb||3} joueurs · manche ${d.S.round} · ${new Date(d.at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}`:'aucune partie en cours'; $('#startm').classList.remove('off'); }
 newGame(3); render(); showStart();
 </script>
