@@ -1271,7 +1271,7 @@ const ATOUTS = [
 ].map(([name,cost],i)=>({ id:'E'+String(i+1).padStart(2,'0'), name, cost, img:`img/cards/at${String(i+1).padStart(2,'0')}.webp` }));
 ATOUTS.forEach(c=>CARD[c.id]=c);
 BACK.at='img/cards/back_at.webp';
-const MAX_HAND_AT = 3;
+const MAX_HAND_AT = 5;
 
 function drawAtouts(c, n){
   const e=S.expl[c]; let k=0;
@@ -1389,7 +1389,7 @@ const CONTRATS = [
 ].map(([name,act],i)=>({ id:'C'+String(i+1).padStart(2,'0'), name, act, img:`img/cards/ct${String(i+1).padStart(2,'0')}.webp` }));
 CONTRATS.forEach(c=>CARD[c.id]=c);
 BACK.ct='img/cards/back_ct.webp';
-const MAX_HAND_CT = 3;
+const MAX_HAND_CT = 5;
 const CT_COND = {
   C01:'Récoltez 1 Coca entourée de 3 jetons ou plus', C02:'Récoltez 3 Soja renforcés', C03:'Récoltez 1 Bétail relié à au moins 3 zones vides',
   C04:'Faites 2 récoltes de bois durant le même tour', C05:'Réalisez un Projet en collaboration avec un autre Exploitant', C06:'Atteignez le niveau 6 de la Fondation',
@@ -2031,7 +2031,9 @@ function runSteps(kind,c,from,to,done){
   setTimeout(tick,150);
 }
 function runAnims(){
-  const list=ANIM; ANIM=[];
+  const list=ANIM; ANIM=[]; const pend={};
+  const numNode=el=>{ const tw=document.createTreeWalker(el,NodeFilter.SHOW_TEXT); let last=null,n; while((n=tw.nextNode())) if(/^\s*\d+\s*$/.test(n.textContent)) last=n; return last; };
+  const nth=(L,key)=>{ const k=(pend[key]=(pend[key]||0)+1)-1; return L[L.length-1-k]||null; };
   list.forEach((a,i)=>{
     if (a.type==='steps'){ return runSteps(a.kind,a.c,a.from,a.to); }
     if (a.type==='tokup'){ const els=[...document.querySelectorAll(`[data-tok="${a.c}-${a.i}"]`)];
@@ -2043,13 +2045,20 @@ function runAnims(){
       return;
     }
     const f=anchorRect(a.from), t=anchorRect(a.to); if(!f||!t) return;
-    const hid = a.to.hideSel ? document.querySelector(a.to.hideSel) : (a.to.hide ? document.querySelector(`.t[data-zt="${a.to.zone}"]`) : null); if (hid) hid.style.opacity=0;
+    let hid = a.to.hideSel ? document.querySelector(a.to.hideSel) : (a.to.hide ? document.querySelector(`.t[data-zt="${a.to.zone}"]`) : null), num=null;
+    if (!hid && a.to.zone) hid=nth([...document.querySelectorAll(`.t[data-fz="${a.to.zone}"]`)],'z'+a.to.zone);
+    else if (!hid && t.el){
+      if (t.el.matches('.arena[data-arena]')) hid=nth([...document.querySelectorAll(`[data-am="${t.el.dataset.arena}-${t.el.dataset.side}"] img`)],'a'+t.el.dataset.arena+t.el.dataset.side);
+      else if (/^#frp-/.test(a.to.sel||'')) hid=t.el;
+      else { num=numNode(t.el); if (num){ num.textContent=Math.max(0,parseInt(num.textContent)-1); } }
+    }
+    if (hid) hid.style.opacity=0;
     const bw=$('#board').getBoundingClientRect().width, size=a.size||Math.max(26,bw*0.045);
     const im=document.createElement('img'); im.src=a.img; im.className='flyer';
     im.style.cssText=`width:${size}px;left:${f.x-size/2}px;top:${f.y-size/2}px`;
     document.body.appendChild(im);
     setTimeout(()=>{ im.style.left=(t.x-size/2)+'px'; im.style.top=(t.y-size/2)+'px'; im.style.transform='scale(.7)'; }, 40+(a.delay||0)+i*120);
-    setTimeout(()=>{ im.remove(); if(hid) hid.style.opacity=1; if(t.el){ t.el.classList.remove('bump'); void t.el.offsetWidth; t.el.classList.add('bump'); } }, 900+(a.delay||0)+i*120);
+    setTimeout(()=>{ im.remove(); if(hid) hid.style.opacity=1; if(num&&num.isConnected) num.textContent=parseInt(num.textContent)+1; if(t.el){ t.el.classList.remove('bump'); void t.el.offsetWidth; t.el.classList.add('bump'); } }, 900+(a.delay||0)+i*120);
   });
 }
 
@@ -2061,9 +2070,9 @@ function stackHTML(z){
   if (st.piece && st.piece.type==='base') layers.push({src:TOK(`${st.piece.owner}_base_r`),w:4.8});
   if (st.piece && st.piece.type==='prod') layers.push({src:TOK(`${st.piece.owner}_${st.piece.kind}_${st.piece.weak?'v':'r'}`),w:4.8,zt:z.id});
   if (st.res) layers.push({src:TOK(st.res==='or'?'or_r':'petrole_r'),w:4.6});
-  for (let i=0;i<st.forest;i++) layers.push({src:TOK('foret_r'),w:4.6});
+  for (let i=0;i<st.forest;i++) layers.push({src:TOK('foret_r'),w:4.6,fz:z.id});
   let h='', y=0;
-  layers.forEach((l,i)=>{ h+=`<div class="t" ${l.zt?`data-zt="${l.zt}"`:''} style="left:${c.x}%;top:${c.y}%;width:${l.w}cqw;margin-top:${-y}cqw;z-index:${i+1}"><img src="${l.src}"></div>`; y+=1.15; });
+  layers.forEach((l,i)=>{ h+=`<div class="t" ${l.zt?`data-zt="${l.zt}"`:''} ${l.fz?`data-fz="${l.fz}"`:''} style="left:${c.x}%;top:${c.y}%;width:${l.w}cqw;margin-top:${-y}cqw;z-index:${i+1}"><img src="${l.src}"></div>`; y+=1.15; });
   if (st.meeple) h+=`<div class="t" data-mz="${z.id}" style="left:${c.x}%;top:${c.y}%;width:3.4cqw;margin-top:${-y+0.35}cqw;z-index:9"><img src="${TOK('foret_meeple_r')}"></div>`;
   return h;
 }
@@ -2090,7 +2099,7 @@ function renderBoard(){
       else for (const c of EXPL) for(let i=0;i<S.arenas[a][c];i++) imgs+=`<img src="${TOK(c+'_meeple_r')}">`;
       const isT = fa ? side==='F' : !!T.arenas[a+'|'+side];
       h+=`<div class="arena ${isT?'tgt':''}" data-arena="${a}" data-side="${side}" style="left:${x0/BW*100}%;top:${y0/BH*100}%;width:${(x1-x0)/BW*100}%;height:${(y1-y0)/BH*100}%"></div>`;
-      h+=`<div class="arena" style="pointer-events:none;left:${x0/BW*100}%;top:${y0/BH*100}%;width:${(x1-x0)/BW*100}%;height:${(y1-y0)/BH*100}%">${imgs}</div>`;
+      h+=`<div class="arena" data-am="${a}-${side}" style="pointer-events:none;left:${x0/BW*100}%;top:${y0/BH*100}%;width:${(x1-x0)/BW*100}%;height:${(y1-y0)/BH*100}%">${imgs}</div>`;
     }
   }
   $('#board').innerHTML=h;
@@ -2197,7 +2206,9 @@ function renderBar(){
   if (S.over){ b.innerHTML=`<div class="row">${who(S.over.winner,'🏆 Victoire')}<span class="prompt">${esc(S.over.why)}</span><span class="spacer"></span>${btn('Nouvelle partie','data-a="new"','pri')}</div>`; return; }
   if (NET.game && !amCtrl() && !S.pending.length){ const w=aiWho(); if (S.turn&&w){ b.classList.add('wbar'); b.innerHTML=watchBar(w); return; } b.innerHTML=`<div class="row"><span class="prompt">⏳ En attente…</span></div>`; return; }
   const pd=S.pending[0];
-  if (pd){
+  if (pd){ const ow=pd.type==='discardAt'?pd.c:'F';
+    if (!localHuman(ow)){ const what={refill:'complète la Rivière…',forestArena:'place un Peuple chassé dans une Arène…',discardEnq:'défausse des Enquêtes…',discardAt:'défausse des cartes (main pleine)…'}[pd.type]||'réfléchit…';
+      b.innerHTML=`<div class="row watch">${who(ow)}<span class="prompt wst">${isAI(ow)?'🤖 L’IA':esc(S.online?(S.online.names[S.online.seats[ow]]||'L’autre joueur'):'')} ${what}</span></div>`; return; }
     if (pd.type==='forestArena') h=`<div class="row">${who('F')}<span class="prompt">Un Peuple a été chassé : cliquez une Arène (partie verte) pour l’y placer.</span></div>`;
     if (pd.type==='refill'){
       const hasEn=S.river.some(r=>r&&r.k==='en');
@@ -2206,7 +2217,7 @@ function renderBar(){
         ${S.forest.hand.map(id=>`<button class="btn fillc" data-a="fill-en" data-id="${id}" ${hasEn?'disabled':''} title="${hasEn?'La Rivière contient déjà une Enquête (max 1)':'Compléter avec cette Enquête (face cachée)'}">${VIEW==='F'?`<div class="card" data-zoom="${CARD[id].img}"><img src="${CARD[id].img}"></div>`:`<img src="${BACK.en}">`}<span>Compléter avec cette Enquête</span></button>`).join('')}</div>`;
     }
     if (pd.type==='discardAt'){ const e=S.expl[pd.c], isCt=pd.kind==='ct', need=isCt?e.contrats.length-MAX_HAND_CT:e.atouts.length-MAX_HAND_AT, sel=(UI.discSel||[]).length;
-      h=`<div class="row">${who(pd.c)}<span class="prompt">Main limitée à 3 ${isCt?'Contrats':'Atouts'} : cliquez dans votre main les ${need} carte(s) à défausser (${sel}/${need}).</span><span class="spacer"></span>${sel===need?btn('Valider ?','data-a="disc-ok"','pri'):''}</div>`; }
+      h=`<div class="row">${who(pd.c)}<span class="prompt">Main limitée à ${isCt?MAX_HAND_CT:MAX_HAND_AT} ${isCt?'Contrats':'Atouts'} : cliquez dans votre main les ${need} carte(s) à défausser (${sel}/${need}).</span><span class="spacer"></span>${sel===need?btn('Valider ?','data-a="disc-ok"','pri'):''}</div>`; }
     if (pd.type==='discardEnq'){ const need=S.forest.hand.length-3, L=UI.discSel||[];
       h=`<div class="row">${who('F')}<span class="prompt">Plus de 3 Enquêtes : cliquez ${need>1?`les ${need} Enquêtes`:'l’Enquête'} à défausser, ici ou dans la colonne de droite (${L.length}/${need}).</span>${S.forest.hand.map(id=>`<button class="btn fillc ${L.includes(id)?'dsel':''}" data-disc="${id}"><img src="${VIEW==='F'?CARD[id].img:BACK.en}"><span>${L.includes(id)?'✕ Défaussée':'Défausser'}</span></button>`).join('')}<span class="spacer"></span>${L.length===need?btn('Valider ?','data-a="disc-ok"','pri'):''}</div>`; }
     b.innerHTML=h; return;
@@ -2557,12 +2568,12 @@ const TUTO = [
    <div>${TI('orange_exploiter.webp')}<p><b>Exploiter</b> : poser une culture (Soja, Bétail ou Coca) sur une zone vide adjacente, ou affaiblir la culture d’un rival.</p></div>
    <div>${TI('orange_recolter.webp')}<p><b>Récolter</b> tous les jetons d’un type : le bois stocké (1 $ chacun), le Soja, le Bétail (selon les zones vides reliées) ou la Coca (selon les voisins). Une culture récoltée s’affaiblit, puis disparaît.</p></div>
    <div>${TI('orange_acheter.webp')}<p><b>Acheter</b> : une carte de la Rivière, un Bien de luxe (10 $ + Conscience), un Atout de sa main… ou faire un <b>don</b> à la Fondation Amazonie.</p></div>
-   <div>${TI('orange_influencer.webp')}<p><b>Influencer</b> : placer un meeple dans une Arène, ou piocher un Atout ou un Contrat.</p></div></div>
+   <div>${TI('orange_influencer.webp')}<p><b>Influencer</b> : placer un meeple dans une Arène, ou piocher un Atout ou un Contrat (5 de chaque au maximum en main).</p></div></div>
    <p class="tip">« Adjacent » = touchant une zone où tu as déjà un jeton (camp de base, culture, meeple…).</p>` },
  { t:'Cartes des Exploitants', img:['img/cards/at01.webp','img/cards/ct01.webp','img/cards/ob01.webp'], h:`
    <ul><li><b>Cartes Forêt achetées</b> : glissées sous ton plateau, elles donnent des bonus. Chaque Animal rapporte 2 $ par manche, 2 Personnes retournent un jeton d’action sur sa face verso, et 3 Esprits donnent 1 ⭐.</li>
-   <li><b>Atouts</b> : des coups spéciaux à acheter depuis ta main (3 cartes max).</li>
-   <li><b>Contrats</b> : des défis. Quand tu remplis la condition, le Contrat se glisse sous une action et la <b>renforce pour toujours</b>. Tous les 3 Contrats : 1 ⭐.</li>
+   <li><b>Atouts</b> : des coups spéciaux à acheter depuis ta main (5 Atouts max).</li>
+   <li><b>Contrats</b> : des défis. Quand tu remplis la condition, le Contrat se glisse sous une action et la <b>renforce pour toujours</b>. Tous les 3 Contrats : 1 ⭐. Tu peux garder 5 Contrats en main.</li>
    <li><b>Objectifs</b> : former un motif précis sur le plateau, dans n’importe quel sens. Tous les participants gagnent de l’argent, et l’Objectif devient une nouvelle action.</li></ul>` },
  { t:'Le tour de la Forêt', img:['img/boards/foret.webp'], h:`
    <p>La Forêt prend <b>1, 2 ou 3 jetons</b> ${TT('foret_r')} dans sa réserve <b>A</b> et les pose sur une action : c’est la <b>force X</b> de l’action.</p>
@@ -2649,7 +2660,7 @@ const COACH=[
  {t:'Exploitant 2 · Acheter', seat:'bleu', only:{a:'eact',k:'acheter'}, hl:['[data-a="tok"]','[data-a="eact"][data-k="acheter"]'], wait:()=>UI.flow&&UI.flow.act==='acheter', txt:()=>`Au tour de l’<b>Exploitant 2</b>, le rival du premier.<br>👉 Clique un jeton, puis <b>Acheter</b>.`},
  {t:'Acheter une carte', seat:'bleu', hl:['#river'], wait:()=>!UI.flow&&tActs()>=1, txt:()=>`👉 Clique une carte de la <b>Rivière</b> que tu peux payer (tu as <b>${S.expl.bleu.money} $</b>).<br>Elle se glisse sous ton plateau :<br>• chaque <b>Animal</b> rapporte 2 $ par manche ;<br>• <b>2 Personnes</b> retournent un jeton d’action sur sa face ② ;<br>• <b>3 Esprits</b> donnent 1 ⭐.`},
  {t:'Influencer', seat:'bleu', only:{a:'eact',k:'influencer'}, hl:['[data-a="tok"]','[data-a="eact"][data-k="influencer"]'], wait:()=>UI.flow&&UI.flow.act==='influencer', txt:()=>`👉 Jeton, puis <b>Influencer</b>.`},
- {t:'Les Arènes', seat:'bleu', hl:['#abar','#board'], wait:()=>tSeat()!=='bleu', txt:()=>`👉 Place un meeple dans une <b>Arène</b>, ou pioche un Atout ou un Contrat.<br>En fin de manche, le camp <b>majoritaire</b> de chaque Arène déplace l’Alignement vers lui. Les Alignements changent les règles : gains des Objectifs, nombre de cartes piochées, zones boisées minimum…`},
+ {t:'Les Arènes', seat:'bleu', hl:['#abar','#board'], wait:()=>tSeat()!=='bleu', txt:()=>`👉 Place un meeple dans une <b>Arène</b>, ou pioche un Atout ou un Contrat (5 de chaque au maximum en main).<br>En fin de manche, le camp <b>majoritaire</b> de chaque Arène déplace l’Alignement vers lui. Les Alignements changent les règles : gains des Objectifs, nombre de cartes piochées, zones boisées minimum…`},
  {t:'Compléter la Rivière', hl:['#abar','#river'], wait:()=>!S.pending.length, txt:()=>`L’Exploitant 2 a pris une carte : la Rivière se décale et la <b>Forêt</b> comble le trou.<br>👉 Choisis une carte Forêt du paquet, ou glisse une de tes Enquêtes (1 au maximum).`},
  // ---- Forêt
  {t:'Tour de la Forêt · force', seat:'F', hl:['[data-a="fx"]','#sum-F'], wait:()=>UI.fx||UI.flow, txt:()=>`Au tour de <b>la Forêt</b>. Elle n’a pas de jetons d’action : elle prend <b>1, 2 ou 3 jetons Forêt</b> dans sa réserve <b>A</b>. Leur nombre est la <b>force X</b> de l’action.<br>👉 Clique la <b>pile de 2 jetons</b>.`},
@@ -2668,7 +2679,7 @@ function startCoach(){ UNDO=[]; TURNSNAP=null; newGame(3); S.ai={F:false,orange:
   $('#startm').classList.add('off'); $('#tuto').classList.add('off'); render(); }
 function stopCoach(){ TUT.on=false; if(S) delete S.tuto; $('#coach').style.display='none'; document.querySelectorAll('.tuthl').forEach(x=>x.classList.remove('tuthl')); }
 function tutPend(s){ const pd=S.pending[0]; if(!pd||s.t==='Compléter la Rivière') return '';
-  const m={discardAt:'✋ <b>Main trop pleine</b> (3 cartes de chaque type au maximum) : clique dans la main les cartes à défausser, puis <b>Valider</b>.',discardEnq:'✋ <b>Plus de 3 Enquêtes</b> : clique celles à défausser.',refill:'🌊 La Forêt doit <b>compléter la Rivière</b> : choisis une carte dans la barre.',forestArena:'🌿 Un Peuple a été chassé : clique une <b>Arène</b> (partie verte) pour l’y placer.'}[pd.type];
+  const m={discardAt:'✋ <b>Main trop pleine</b> (5 Atouts et 5 Contrats au maximum) : clique dans la main les cartes à défausser, puis <b>Valider</b>.',discardEnq:'✋ <b>Plus de 3 Enquêtes</b> : clique celles à défausser.',refill:'🌊 La Forêt doit <b>compléter la Rivière</b> : choisis une carte dans la barre.',forestArena:'🌿 Un Peuple a été chassé : clique une <b>Arène</b> (partie verte) pour l’y placer.'}[pd.type];
   return m?`<div class="cpend">${m}</div>`:''; }
 function tutTick(){
   const box=$('#coach'); if(!TUT.on||!S||!S.tuto){ if(box) box.style.display='none'; return; }
