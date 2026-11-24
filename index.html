@@ -329,7 +329,7 @@ main{min-width:0}
 .hov{position:fixed;z-index:260;pointer-events:none;opacity:0;transition:opacity .18s}
 .hov.on{opacity:1}
 .hov img{display:block;max-height:62vh;max-width:44vw;border-radius:14px;box-shadow:0 14px 50px #000d}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#24402f;border:1px solid #4f7a5f;padding:10px 16px;border-radius:10px;font-weight:700;z-index:250;opacity:0;transition:opacity .3s;pointer-events:none;max-width:80vw}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#24402f;border:1px solid #4f7a5f;padding:10px 16px;border-radius:10px;font-weight:700;z-index:600;opacity:0;transition:opacity .3s;pointer-events:none;max-width:80vw}
 .toast.on{opacity:1}
 .modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:280}
 .modal.on{display:flex}
@@ -1550,11 +1550,12 @@ function fbDB(){
   if (!firebase.apps.length) firebase.initializeApp(FBCONF);
   const db=firebase.database(), ready=firebase.auth().signInAnonymously().then(c=>c.user.uid);
   return { ready,
-    set:(p,v)=>db.ref(p).set(v), update:(p,o)=>db.ref(p).update(o), remove:p=>db.ref(p).remove(), push:(p,v)=>db.ref(p).push(v),
-    on(p,cb,lim){ let q=db.ref(p); if(lim) q=q.orderByKey().limitToLast(lim); const h=s=>cb(s.val()); q.on('value',h,()=>{}); return ()=>q.off('value',h); },
+    set:(p,v)=>db.ref(p).set(v).catch(fbErr), update:(p,o)=>db.ref(p).update(o).catch(fbErr), remove:p=>db.ref(p).remove().catch(fbErr), push:(p,v)=>db.ref(p).push(v).catch(fbErr),
+    on(p,cb,lim){ let q=db.ref(p); if(lim) q=q.orderByKey().limitToLast(lim); const h=s=>cb(s.val()); q.on('value',h,fbErr); return ()=>q.off('value',h); },
     onDisc(p){ try{ db.ref(p).onDisconnect().remove(); }catch(e){} },
     claim(p,uid){ return db.ref(p).transaction(v=>v?undefined:uid).then(r=>r.committed); } };
 }
+function fbErr(e){ console.error('Firebase',e); NET.err='Firebase refuse l’accès ('+((e&&(e.code||e.message))||e)+'). Vérifie les règles de la base (bloc "am") puis recharge la page.'; lobbyRender(); }
 function fakeDB(){ // tests hors ligne : base partagée entre onglets (localStorage)
   const K='amfake', uid='u'+Math.random().toString(36).slice(2,9), subs=[], discs=[];
   const read=()=>{ try{ return JSON.parse(localStorage.getItem(K))||{}; }catch(e){ return {}; } };
@@ -1575,7 +1576,7 @@ function fakeDB(){ // tests hors ligne : base partagée entre onglets (localStor
     claim(p,u){ const tr=read(); if(get(tr,p)) return Promise.resolve(false); put(tr,p,u); write(tr); return Promise.resolve(true); } };
 }
 const NET={ on:false, db:null, uid:null, tid:null, table:null, tables:{}, players:{}, chat:{}, invites:{}, game:false, v:0, lastJs:'', unsub:[], gunsub:null, err:'' };
-const myName = () => { try{ return localStorage.getItem('am_name')||''; }catch(e){ return ''; } };
+const myName = () => { const x=document.getElementById('lName'); const v=x&&x.value.trim(); if (v){ try{ if(localStorage.getItem('am_name')!==v) localStorage.setItem('am_name',v.slice(0,18)); }catch(e){} return v.slice(0,18); } try{ return localStorage.getItem('am_name')||''; }catch(e){ return ''; } };
 const mySeats = () => (S&&S.online) ? Object.keys(S.online.seats).filter(k=>S.online.seats[k]===NET.uid) : [];
 const iAmHost = () => !!(S&&S.online&&S.online.host===NET.uid);
 function ctrlUid(){ const who=aiWho(); if(!who||!S.online) return null; const o=S.online.seats[who]; return o==='ai'?S.online.host:o; }
@@ -1673,7 +1674,7 @@ function lobbyRender(){
   const el=$('#lobbyIn'); if(!el||$('#lobby').classList.contains('off')) return;
   const keep={}; ['lName','lMsg','lCode'].forEach(id=>{ const x=document.getElementById(id); if(x) keep[id]=[x.value, document.activeElement===x]; });
   _setTimeout(()=>{ for(const id in keep){ const x=document.getElementById(id); if(x){ x.value=keep[id][0]; if(keep[id][1]) x.focus(); } } },0);
-  if (NET.err){ el.innerHTML=`<p class="lerr">${esc(NET.err)}</p>`; return; }
+  if (NET.err){ el.innerHTML=`<p class="lerr">${esc(NET.err)}</p><div class="lrow">${btn('Réessayer','data-l="retry"','pri')}${btn('← Menu','data-l="back"')}</div>`; return; }
   if (!NET.uid){ el.innerHTML='<p class="sub">Connexion au lobby…</p>'; return; }
   const name=myName(), t=NET.tid&&NET.tables[NET.tid];
   let left='';
@@ -1706,6 +1707,7 @@ function lobbyClick(t){
   const l=t.closest('[data-l]'); if(!l||l.disabled) return false; const k=l.dataset.l;
   if (k==='name'){ const v=($('#lName').value||'').trim().slice(0,18); if(!v) return toast('Pseudo vide.'), true; try{ localStorage.setItem('am_name',v); }catch(e){} netPresence(NET.tid?'table':'lobby'); toast('Pseudo enregistré.'); lobbyRender(); }
   if (k==='back'){ hideLobby(); showStart(); }
+  if (k==='retry'){ location.reload(); }
   if (k==='quick') quickMatch();
   if (k==='create') createTable(+l.dataset.n);
   if (k==='join') joinTable(l.dataset.t);
