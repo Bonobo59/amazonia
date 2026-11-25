@@ -1345,7 +1345,7 @@ const OBJ = {
           E:()=>matchMulti([[0,0,onMine(pP)],[-1,1,pP]],2),
           actF:{lbl:'1 Peuple sur un gisement minier boisé',run:placePeuple('Alliances',()=>allZ().filter(id=>ZB[id].kind==='mine'&&isWooded(id)))},
           actE:{lbl:'Récolter vos productions sur gisements miniers (+2 $ chacune)',run(c,done){ const ids=myProds(c).filter(id=>ZB[id].kind==='mine'); harvestCustom(c,ids,1,false,'récolte sur gisements miniers'); if(ids.length){ S.expl[c].money+=2*ids.length; statM(c,'+Récolte des cultures',2*ids.length); } done(); }} },
-  Obj14:{ F:()=>fAr('Obj14') && !allZ().some(isEmpty),
+  Obj14:{ F:()=>fAr('Obj14') && !allZ().some(isEmpty) && allZ().filter(id=>Z(id).meeple).length>=3,
           E:()=>{ const m=matchMulti([[0,0,pE],[1,0,pP],[2,0,pE]],2); return m?[m[1],m[4]]:null; },
           actF:{lbl:'Déplacer X Peuples vers des zones boisées',run(done,X=1){ let left=X; const one=()=>{ if(left<=0||!allZ().some(id=>Z(id).meeple)) return done(); let from=null;
             pickZones('Écotourisme',`Cliquez un Peuple à déplacer (${X-left+1}/${X})`,()=>allZ().filter(id=>Z(id).meeple),1,id=>{ from=id; },()=>{ if(!from) return done(); pickZones('Écotourisme','Cliquez une zone boisée de destination',()=>allZ().filter(z=>isWooded(z)&&!Z(z).meeple),1,to=>{ Z(from).meeple=false; Z(to).meeple=true; left--; },one); }); };
