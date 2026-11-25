@@ -632,6 +632,7 @@ const CARD = Object.fromEntries([...PROTECTEURS,...ENQUETES,...LUXE,...EVENEMENT
 const BACK = { pr:'img/cards/back_pr.webp', en:'img/cards/back_en.webp', lx:'img/cards/back_lx.webp', ev:'img/cards/back_ev.webp' };
 const TOK = n => `img/tok/${n}.png`;
 let EXPL = ['orange','bleu'];
+const ANIMAL_INC = 1; // $ par Animal à chaque fin de manche
 const NAMES = { F:'le Protecteur', orange:'Orange', bleu:'Bleu', blanc:'Blanc' };
 const CAP = t => t.charAt(0).toUpperCase()+t.slice(1);
 const NAME = s => s==='F' ? 'le Protecteur' : (EXPL.includes(s) ? 'Exploitant '+(EXPL.indexOf(s)+1) : (NAMES[s]||s));
@@ -1009,7 +1010,7 @@ function endRound(){
     for (const c of EXPL){ S.expl[c].meeplesHand+=S.arenas[a][c]; } S.arenas[a]=Object.fromEntries(S.seats.map(x=>[x,0]));
   }
   // c) Revenus
-  for (const c of EXPL){ const n=S.expl[c].cards.Animal.length; if(n){ S.expl[c].money+=2*n; statM(c,'+Revenus des Animaux',2*n); log(`${CAP(NAME(c))} : revenus +${2*n} $ (${n} Animal).`); } }
+  for (const c of EXPL){ const n=S.expl[c].cards.Animal.length; if(n){ S.expl[c].money+=ANIMAL_INC*n; statM(c,'+Revenus des Animaux',ANIMAL_INC*n); log(`${CAP(NAME(c))} : revenus +${ANIMAL_INC*n} $ (${n} Animal).`); } }
   // d) Victoire des Exploitants
   const top=Math.max(...EXPL.map(c=>S.expl[c].vp));
   if (top>=4){ const cands=EXPL.filter(c=>S.expl[c].vp===top).sort((a,b)=>S.expl[b].money-S.expl[a].money); S.over={winner:cands[0],why:`${CAP(NAME(cands[0]))} atteint ${top} Prestige.`}; log(`🏆 ${NAME(cands[0])} gagne la partie !`, true); render(); return; }
@@ -1276,8 +1277,8 @@ function matchMulti(cells, k){ // k groupes disjoints du même motif, n'importe 
   return rec(0,new Set()) ? pick.flat() : null; }
 const arenaOk = (a,n) => S.arenas[a].F>=n;
 // Arène et nombre de Peuples demandés par chaque Objectif de la Forêt
-const OBJ_AR = { Obj01:['judiciaire',2], Obj02:['politique',3], Obj03:['judiciaire',3], Obj04:['politique',3], Obj05:['judiciaire',2], Obj06:['politique',2], Obj07:['politique',2], Obj08:['judiciaire',2],
-  Obj09:['media',2], Obj10:['media',2], Obj11:['media',2], Obj12:['media',2], Obj13:['judiciaire',2], Obj14:['media',4], Obj15:['politique',3] };
+const OBJ_AR = { Obj01:['judiciaire',3], Obj02:['politique',3], Obj03:['judiciaire',3], Obj04:['politique',3], Obj05:['judiciaire',2], Obj06:['politique',2], Obj07:['politique',3], Obj08:['judiciaire',2],
+  Obj09:['media',2], Obj10:['media',2], Obj11:['media',2], Obj12:['media',2], Obj13:['judiciaire',3], Obj14:['media',4], Obj15:['politique',3] };
 const fAr = id => arenaOk(...OBJ_AR[id]);
 const destroyProd = id => { const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; log(`${PROD[p.kind]} ${NAME(p.owner)} détruit.`); };
 function bestLine(id, filt){ // meilleure ligne (3 axes) passant par id : zones qui passent le filtre
@@ -1299,7 +1300,7 @@ const OBJ = {
           actF:{lbl:'Placer 2 Forêt du C',run(done){ pickZones('Coopérative','Cliquez une zone vide ou boisée',()=>S.forest.C?allZ().filter(canPlaceForest):[],2,id=>placeFromC(id),done); }},
           actE:{lbl:'Récolter 2 fois vos Bétail',run(c,done){ harvestKind(c,'betail'); harvestKind(c,'betail'); done(); }} },
   Obj03:{ F:()=>fAr('Obj03') && !prodZones('coca').length,
-          E:()=>matchPattern([[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP],[-1,1,pP]]),
+          E:()=>matchPattern([[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP]]),
           actF:{lbl:'Détruire 1 Coca',run(done){ pickZones('Narcotrafic','Cliquez la Coca à détruire',()=>prodZones('coca'),1,destroyProd,done); }},
           actE:{lbl:'Récolter 2 fois vos Coca',run(c,done){ harvestKind(c,'coca'); harvestKind(c,'coca'); done(); }} },
   Obj04:{ F:()=>fAr('Obj04') && !prodZones('soja').length,
@@ -1315,7 +1316,7 @@ const OBJ = {
           actF:{lbl:'1 Peuple sur une zone boisée adjacente à une production',run:placePeuple('Patrouilles',()=>allZ().filter(id=>isWooded(id)&&ZB[id].adj.some(isProd)))},
           actE:{lbl:'Retirer 2 jetons Forêt n’importe où',run(c,done){ pickZones('Scierie','Cliquez une zone boisée sans Peuple (1 jeton retiré)',()=>allZ().filter(id=>isWooded(id)&&!Z(id).meeple),2,id=>{ const z=Z(id); z.forest--; S.forest.C++; fly(TOK('foret_r'),{zone:id},{sel:'#sum-F .c-C'}); if(!z.forest&&z.res){ S.expl[c].storage[z.res]++; log(`${CAP(NAME(c))} prend 1 ${z.res==='or'?'Or':'Pétrole'} !`, true); z.res=null; } log('Scierie : 1 jeton Forêt retiré (vers C).'); },done,{repeat:true}); }} },
   Obj07:{ F:()=>fAr('Obj07') && !!matchMulti([[0,0,pD],[0,1,pM]],3),
-          E:()=>matchPattern([[0,0,pP],[-1,1,pP],[-2,2,pP],[-2,3,pP],[-2,4,pP]]),
+          E:()=>matchPattern([[0,0,pP],[1,0,pP],[2,0,pP],[1,1,pP]]),
           actF:{lbl:'Régénérer 3',run(done){ regenerate(3); done(); }},
           actE:{lbl:'Renforcer vos productions sur une ligne',run(c,done){ pickZones('Ligne électrique','Cliquez une de vos productions affaiblies : toutes celles de la même ligne sont renforcées',()=>myProds(c).filter(id=>Z(id).piece.weak),1,id=>{ bestLine(id,z=>{ const p=Z(z).piece; return p&&p.type==='prod'&&p.owner===c&&p.weak; }).forEach(z=>{ Z(z).piece.weak=false; ANIM.push({type:'flip',zone:z,from:TOK(`${c}_${Z(z).piece.kind}_v`),to:TOK(`${c}_${Z(z).piece.kind}_r`)}); }); log(`${CAP(NAME(c))} renforce ses productions sur une ligne.`); },done); }} },
   Obj08:{ F:()=>fAr('Obj08') && !!matchMulti([[0,0,onOil(pP)],[0,1,pM]],2),
@@ -1625,10 +1626,10 @@ function refreshT(){ UI.T = S.over ? EMPTYT() : S.pending.length ? (/^align/.tes
 
 /* ---------- Poids (appris d'une partie à l'autre) ---------- */
 const W0 = { // v3.1 : valeur de l'argent et des cultures calculée d'après les règles, ré-entraîné
-  E:{ vp:2.331, money:-0.197, res:3.125, prod:0.635, harvest:0.033, cards:0.747, ctDone:1.425, ctHand:0.368, atouts:0.354, donation:0.455, arena:0.686, frontier:0.132, forestTok:0.01, conscience:-8.665, rivalVp:-2.19, align:0.19, objProg:3, luxeReady:1.324, threat:-0.621, rivalObj:-0.8, forestObj:-2.289, forestArena:-0.999, objNear:2.5, moneyPV:3.855, prodPot:1.918 },
+  E:{ vp:2.331, money:-0.197, res:3.125, prod:0.635, harvest:0.033, cards:0.747, ctDone:1.425, ctHand:0.368, atouts:0.354, donation:0.455, arena:0.686, frontier:0.132, forestTok:0.01, conscience:-8.665, rivalVp:-2.19, align:0.19, objProg:3, luxeReady:1.324, threat:-0.621, rivalObj:-0.8, forestObj:-2.289, forestArena:-0.999, objNear:2.5, coop:1.5, moneyPV:3.855, prodPot:1.918 },
   F:{ conscience:20.018, wooded:1.961, forestTok:1.083, dense:0.949, meeples:0.852, arena:1.2, tokens:0.912, published:5.68, fresque:3.33, hand:0.715, explVp:-7.866, explProd:-3.991, explMoney:-0.483, align:2.274, objProg:7.769, pubReady:2.565, exposed:-0.418, explObj:-2.468, explNear:-3 },
 };
-function aiStore(){ try{ return JSON.parse(localStorage.getItem('amazonia_ai_v31')||'null'); }catch(e){ return null; } }
+function aiStore(){ try{ return JSON.parse(localStorage.getItem('amazonia_ai_v32')||'null'); }catch(e){ return null; } }
 function freshRole(r,w){ return { champ:{...w}, chall:mutate(w), cg:0, cs:0, xg:0, xs:0, gen:1, games:0, promos:0 }; }
 function aiBrain(){ // cerveau : champion + challenger testé à tour de rôle (partagé en ligne si possible)
   let b=aiStore();
@@ -1636,14 +1637,14 @@ function aiBrain(){ // cerveau : champion + challenger testé à tour de rôle (
   for (const r of ['E','F']) for (const k in W0[r]){ if(b.roles[r].champ[k]===undefined) b.roles[r].champ[k]=W0[r][k]; if(b.roles[r].chall[k]===undefined) b.roles[r].chall[k]=b.roles[r].champ[k]; }
   return b;
 }
-function aiSaveBrain(b){ try{ localStorage.setItem('amazonia_ai_v31', JSON.stringify(b)); }catch(e){} }
+function aiSaveBrain(b){ try{ localStorage.setItem('amazonia_ai_v32', JSON.stringify(b)); }catch(e){} }
 function gauss(){ return Math.sqrt(-2*Math.log(Math.random()||1e-9))*Math.cos(2*Math.PI*Math.random()); }
 function mutate(w){ const o={}; for (const k in w) o[k]=+(w[k]*(1+0.12*gauss())).toFixed(3); return o; }
 let BRAIN=null, BDB=null;
 function brainDB(){ if (BDB!==null) return BDB; try{ BDB = /fbfake/.test(location.hash) ? fakeDB() : fbDB(); }catch(e){ BDB=false; } return BDB; }
 function brainSync(){ // récupère le cerveau partagé
   const db=brainDB(); if(!db) return;
-  db.ready.then(()=>db.get(`${R}/brain31`)).then(v=>{ if (v&&v.roles&&v.roles.F&&v.roles.F.champ){ BRAIN=v; aiSaveBrain(v); if(!STARTED) showStart(); } else { const b=BRAIN||aiBrain(); db.tx(`${R}/brain31`, cur=>cur||b); } }).catch(()=>{});
+  db.ready.then(()=>db.get(`${R}/brain32`)).then(v=>{ if (v&&v.roles&&v.roles.F&&v.roles.F.champ){ BRAIN=v; aiSaveBrain(v); if(!STARTED) showStart(); } else { const b=BRAIN||aiBrain(); db.tx(`${R}/brain32`, cur=>cur||b); } }).catch(()=>{});
 }
 function aiAssign(){ // au lancement d'une partie : chaque camp IA reçoit le champion ou le challenger
   const b=BRAIN||(BRAIN=aiBrain()); S.aiW={}; S.aiUse={}; S.aiGen={};
@@ -1669,7 +1670,7 @@ function aiLearn(){
   const b=BRAIN||(BRAIN=aiBrain()); b.games=(b.games||0)+1;
   for (const r in res) b.roles[r]=learnRole(b.roles[r], S.aiUse[r], S.aiGen[r], res[r]);
   aiSaveBrain(b);
-  const db=brainDB(); if (db) db.ready.then(()=>{ for (const r in res) db.tx(`${R}/brain31/roles/${r}`, cur=>learnRole(cur, S.aiUse[r], S.aiGen[r], res[r])); db.tx(`${R}/brain31/games`, n=>(n||0)+1); }).catch(()=>{});
+  const db=brainDB(); if (db) db.ready.then(()=>{ for (const r in res) db.tx(`${R}/brain32/roles/${r}`, cur=>learnRole(cur, S.aiUse[r], S.aiGen[r], res[r])); db.tx(`${R}/brain32/games`, n=>(n||0)+1); }).catch(()=>{});
   log('🤖 L’IA retient cette partie pour s’améliorer.');
 }
 
@@ -1677,11 +1678,11 @@ function aiLearn(){
 const OBJ_PART = { // motifs côté Exploitant (progrès partiel pour l'IA)
   Obj01:()=>SHAPE.line.map(c=>[...c,pP]),
   Obj02:()=>[[0,0,pK('betail')],[1,0,pE],[0,1,pE],[1,1,pK('betail')]],
-  Obj03:()=>[[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP],[-1,1,pP]],
+  Obj03:()=>[[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP]],
   Obj04:()=>[[0,0,pK('soja')],[1,-1,pK('soja')],[1,0,pK('soja')],[0,1,pBase]],
   Obj05:()=>SHAPE.zig5.map(c=>[...c,pP]),
   Obj06:()=>[[0,0,pD],[-1,1,pD],[1,0,pP],[0,1,pP],[-1,2,pP]],
-  Obj07:()=>[[0,0,pP],[-1,1,pP],[-2,2,pP],[-2,3,pP],[-2,4,pP]],
+  Obj07:()=>[[0,0,pP],[1,0,pP],[2,0,pP],[1,1,pP]],
   Obj08:()=>[[0,0,onOil(pP)],[-1,1,pP],[-1,2,onOil(pP)]],
   Obj09:()=>[[0,0,pP],[0,1,onMine(pP)],[-1,2,pP],[1,1,pP]],
   Obj10:()=>[[0,0,pP],[1,0,pP],[1,1,pP],[2,1,pP]],
@@ -1708,18 +1709,18 @@ function partialPatF(key){ let best=0; for (const pl of placements('F'+key, CELL
     if (!bad && ok/pl.length>best) best=ok/pl.length; } return best; }
 function objInfo(){ // IA opportuniste : motifs partagés, participation possible, motifs à 1 coup de la fin
   const adj=Object.fromEntries(EXPL.map(c=>[c,new Set(explAdj(c))]));
-  const R={prog:{},near:{},excl:{},anyNear:0}; EXPL.forEach(c=>{ R.prog[c]=0; R.near[c]=0; R.excl[c]=0; });
+  const R={prog:{},near:{},excl:{},coop:{},anyNear:0}; EXPL.forEach(c=>{ R.prog[c]=0; R.near[c]=0; R.excl[c]=0; R.coop[c]=0; });
   for (const id of S.objectifs){ const cells=OBJ_CELLS[id]; if(!cells) continue;
-    const best={}, nb={}, ex={}; EXPL.forEach(c=>{ best[c]=0; nb[c]=0; ex[c]=0; }); let anyN=0;
+    const best={}, nb={}, ex={}, co={}; EXPL.forEach(c=>{ best[c]=0; nb[c]=0; ex[c]=0; co[c]=0; }); let anyN=0;
     for (const pl of placements('E'+id, cells)){ let ok=0, bad=false; const own=new Set(), miss=[];
       for (const [z,f] of pl){ if (f(z)){ ok++; const p=Z(z).piece; if(p&&p.owner) own.add(p.owner); } else if (Z(z).piece){ bad=true; break; } else miss.push(z); }
       if (bad||!ok) continue; const v=ok/pl.length;
       for (const c of EXPL){ const mine=own.has(c), join=miss.some(z=>adj[c].has(z)&&isEmpty(z));
-        const x=v*(mine?1:join?0.8:0.3); if (x>best[c]) best[c]=x;
+        const x=v*(mine?1:join?0.95:0.3); if (x>best[c]) best[c]=x; if (mine && own.size>=2 && v>co[c]) co[c]=v;
         if (miss.length===1 && isEmpty(miss[0]) && (mine||join) && (adj[c].has(miss[0])||mine)) nb[c]=1;
         if (!mine && !join && own.size && v>ex[c]) ex[c]=v; }
       if (miss.length===1 && isEmpty(miss[0]) && EXPL.some(c=>adj[c].has(miss[0]))) anyN=1; }
-    EXPL.forEach(c=>{ R.prog[c]+=best[c]*best[c]; R.near[c]+=nb[c]; R.excl[c]+=ex[c]*ex[c]; }); R.anyNear+=anyN; }
+    EXPL.forEach(c=>{ R.prog[c]+=best[c]*best[c]; R.near[c]+=nb[c]; R.excl[c]+=ex[c]*ex[c]; R.coop[c]+=co[c]*co[c]; }); R.anyNear+=anyN; }
   return R;
 }
 function objProgAll(){ return objInfo().prog; }
@@ -1752,13 +1753,13 @@ function evalSeat(seat){
     const e=S.expl[seat], mine=prods.filter(id=>Z(id).piece.owner===seat);
     f.vp=e.vp + (S.over? (S.over.winner===seat?20:-20):0); f.money=e.money; f.res=e.storage.or*5+e.storage.petrole*3+e.storage.forest;
     f.prod=mine.reduce((n,id)=>n+(Z(id).piece.weak?0.5:1),0); f.harvest=mine.reduce((n,id)=>n+harvestValue(id)*(Z(id).piece.weak?0.6:1),0);
-    f.cards=e.cards.Animal.length*2+e.cards.Personne.length*1.2+e.cards.Esprit.length*1.3+e.luxe.length;
+    f.cards=e.cards.Animal.length*ANIMAL_INC+e.cards.Personne.length*1.2+e.cards.Esprit.length*1.3+e.luxe.length;
     f.ctDone=(e.ctDone||[]).length; f.ctHand=e.contrats.filter(id=>ctOk(seat,id)).length*3+e.contrats.length*0.2; f.atouts=e.atouts.length;
     f.donation=e.donation; f.arena=ARENAS.reduce((n,a)=>n+S.arenas[a][seat]-S.arenas[a].F*0.4,0);
     f.frontier=explAdj(seat).filter(id=>isEmpty(id)||isWooded(id)).length; f.forestTok=forestTok; f.conscience=S.conscience;
     f.rivalVp=Math.max(0,...EXPL.filter(c=>c!==seat).map(c=>S.expl[c].vp)); f.align=ARENAS.reduce((n,a)=>n+(2-S.align[a]),0);
     if (w.moneyPV!==undefined){ const lc=10+S.conscience; f.moneyPV=Math.min(e.money,40)/lc; f.prodPot=mine.reduce((n,id)=>n+harvestValue(id)*(Z(id).piece.weak?1:1.8),0)/lc;  f.res=(e.storage.or*5+e.storage.petrole*3+e.storage.forest)/lc; }
-    if (w.objProg!==undefined){ const OI=objInfo(), OP=OI.prog; f.objProg=OP[seat]; f.objNear=OI.near[seat]; f.luxeReady=S.luxe.length?Math.min(1,e.money/(10+S.conscience)):0; f.threat=threatE(seat); f.rivalObj=OI.excl[seat]; f.forestObj=objProgF(); f.forestArena=ARENAS.reduce((n,a)=>n+Math.min(2,S.arenas[a].F),0); }
+    if (w.objProg!==undefined){ const OI=objInfo(), OP=OI.prog; f.objProg=OP[seat]; f.objNear=OI.near[seat]; f.luxeReady=S.luxe.length?Math.min(1,e.money/(10+S.conscience)):0; f.threat=threatE(seat); f.rivalObj=OI.excl[seat]; f.coop=OI.coop[seat]; f.forestObj=objProgF(); f.forestArena=ARENAS.reduce((n,a)=>n+Math.min(2,S.arenas[a].F),0); }
   }
   let sc=0; for (const k in f) sc+=(w[k]||0)*f[k]; return sc;
 }
@@ -2697,7 +2698,7 @@ const TUTO = [
      <ul><li><b>Politique</b> : en bas, la Forêt régénère 3 jetons ; en haut, chaque Exploitant présent gagne 1 $ et pioche 1 Atout.</li>
      <li><b>Judiciaire</b> : en bas, la Forêt reboise 2 (gratuit) ; en haut, chaque Exploitant présent pose 1 production (comme Exploiter).</li>
      <li><b>Médiatique</b> : en bas, la Forêt pose 1 Peuple sur une zone boisée ; en haut, chaque Exploitant présent peut défausser X Atouts pour gagner X+1 $.</li></ul></li>
-   <li><b>Revenus</b> : chaque carte Animal achetée rapporte 2 $.</li>
+   <li><b>Revenus</b> : chaque carte Animal achetée rapporte 1 $.</li>
    <li><b>Victoire ?</b> Un Exploitant à 4 ⭐ ou plus gagne.</li>
    <li><b>Conscience</b> : le pion avance d’une case.</li>
    <li><b>Récupération</b> : la Forêt régénère ses jetons, les Exploitants reprennent leurs jetons d’action.</li>
@@ -2721,7 +2722,7 @@ const TUTO = [
    <div>${TI('orange_influencer.webp')}<p><b>Influencer</b> : placer un meeple dans une Arène, ou piocher un Atout ou un Contrat (5 de chaque au maximum en main).</p></div></div>
    <p class="tip">« Adjacent » = touchant une zone où tu as déjà un jeton (camp de base, culture, meeple…).</p>` },
  { t:'Cartes des Exploitants', img:['img/cards/at01.webp','img/cards/ct01.webp','img/cards/ob01.webp'], h:`
-   <ul><li><b>Cartes Forêt achetées</b> : glissées sous ton plateau, elles donnent des bonus. Chaque Animal rapporte 2 $ par manche, 2 Personnes retournent un jeton d’action sur sa face verso, et 3 Esprits donnent 1 ⭐.</li>
+   <ul><li><b>Cartes Forêt achetées</b> : glissées sous ton plateau, elles donnent des bonus. Chaque Animal rapporte 1 $ par manche, 2 Personnes retournent un jeton d’action sur sa face verso, et 3 Esprits donnent 1 ⭐.</li>
    <li><b>Atouts</b> : des coups spéciaux à acheter depuis ta main (5 Atouts max).</li>
    <li><b>Contrats</b> : des défis. Quand tu remplis la condition, le Contrat se glisse sous une action et la <b>renforce pour toujours</b>. Tous les 3 Contrats : 1 ⭐. Tu peux garder 5 Contrats en main.</li>
    <li><b>Objectifs</b> : former un motif précis sur le plateau, dans n’importe quel sens. Tous les participants gagnent de l’argent, et l’Objectif devient une nouvelle action.</li></ul>` },
@@ -2822,7 +2823,7 @@ const COACH=[
  {t:'À toi de jouer', wait:()=>!S.turn&&!S.pending.length, txt:()=>{ const s=tSeat(); const tip=!s?'':s==='F'?`<b>Protéger</b> pose un Peuple sur une zone dense, qu’on ne peut alors plus déforester. <b>Résister</b> affaiblit les cultures voisines d’un Peuple.`:`Essaie <b>Récolter</b> pour vendre ton bois ou tes cultures. <b>Influencer</b> peut aussi piocher des <b>Contrats</b> : quand tu en remplis un, il renforce une action pour toujours.`;
    return `Chaque camp a <b>3 tours</b> par manche, soit 6 jetons d’action. Finis la manche librement : seuls les coups permis sont cliquables, et <b>↶</b> annule.<br><br>💡 ${tip}${s&&s!=='F'&&tRes(s)?'<br>💡 Pense à ton Or/Pétrole !':''}`; }},
  {t:'Fin de manche', hl:['[data-a="endround"]'], wait:()=>S.round>=2, txt:()=>S.turn===null&&!S.pending.length?`La phase Actions est finie.<br>👉 Clique <b>Résoudre la fin de manche</b>.`:`La fin de manche est en cours…`},
- {t:'Ce qui s’est passé', next:true, hl:['#sumbar','#log'], txt:()=>`La fin de manche s’est jouée automatiquement :<br>1. <b>Rapport de force</b> dans les Arènes (avec un bonus si l’Alignement était déjà au bout de sa piste) ;<br>2. <b>Revenus</b> (2 $ par Animal) ;<br>3. la <b>Conscience</b> avance d’une case ;<br>4. la Forêt <b>régénère</b> ses jetons (C → A, B → C), les Exploitants reprennent leurs jetons ;<br>5. <b>pioche</b> selon l’Alignement médiatique ;<br>6. la Rivière se décale.<br>Tout est noté dans le <b>Journal</b>.`},
+ {t:'Ce qui s’est passé', next:true, hl:['#sumbar','#log'], txt:()=>`La fin de manche s’est jouée automatiquement :<br>1. <b>Rapport de force</b> dans les Arènes (avec un bonus si l’Alignement était déjà au bout de sa piste) ;<br>2. <b>Revenus</b> (1 $ par Animal) ;<br>3. la <b>Conscience</b> avance d’une case ;<br>4. la Forêt <b>régénère</b> ses jetons (C → A, B → C), les Exploitants reprennent leurs jetons ;<br>5. <b>pioche</b> selon l’Alignement médiatique ;<br>6. la Rivière se décale.<br>Tout est noté dans le <b>Journal</b>.`},
  {t:'Tu sais jouer !', end:true, txt:()=>`Bravo ! Tu connais l’essentiel.<br>Pour les détails, chaque carte et chaque bouton ont une info-bulle au survol.<br>Que veux-tu faire ?`},
 ];
 function startCoach(){ UNDO=[]; TURNSNAP=null; newGame(3); S.ai={F:false,orange:false,bleu:false}; S.tuto=true; VIEW='orange'; TUT={on:true,i:0}; STARTED=true;
