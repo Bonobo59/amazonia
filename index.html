@@ -624,7 +624,9 @@ const LUXE = ['Voitures de luxe','Jet privé','Penthouse','Bijoux en diamants','
   .map((name,i) => ({ id:'L'+String(i+1).padStart(2,'0'), name, img:`img/cards/lx${String(i+1).padStart(2,'0')}.webp` }));
 const EVENEMENTS = ['Glissement de terrain','Incendie incontrôlable','Sécheresse extrême','Épidémie','Érosion des sols','Pluie torrentielle','Pluie torrentielle','Recul des habitats']
   .map((name,i) => ({ id:'Ev'+(i+1), name, img:`img/cards/ev${String(i+1).padStart(2,'0')}.webp` }));
-const OBJECTIFS = [['Surveillance de la déforestation','Piste d’atterrissage'],['Coopérative d’agroforesterie','Abattoir'],['Résistance contre le narcotrafic','Laboratoire'],['Pépinière communautaire','Front pionnier de soja'],['Autodémarcation des territoires','Barrage hydroélectrique']]
+const OBJECTIFS = [['Surveillance de la déforestation','Piste d’atterrissage'],['Coopérative d’agroforesterie','Abattoir'],['Résistance contre le narcotrafic','Laboratoire'],['Pépinière communautaire','Front pionnier de soja'],['Autodémarcation des territoires','Barrage hydroélectrique'],
+  ['Patrouilles des Gardiens de la forêt','Scierie'],['Réseaux solaires locaux','Ligne électrique haute tension'],['Relevé des fuites de pétrole','Oléoduc'],['Siège d’un site d’extraction','Mine d’or'],['Barrage routier autochtone','Route transamazonienne'],
+  ['Occupation des entrepôts','Entrepôt de stockage'],['Documentaire sur la déforestation','Chemin de fer'],['Alliances pour la protection des bassins sacrés','Stations d’orpaillage'],['Écotourisme amazonien','Complexe immobilier'],['Référendum sur les extractions fossiles','Forages pétroliers']]
   .map(([f,e],i) => ({ id:'Obj'+String(i+1).padStart(2,'0'), foret:f, expl:e, img:`img/cards/ob${String(i+1).padStart(2,'0')}.webp`, back:`img/cards/obb${String(i+1).padStart(2,'0')}.webp` }));
 const CARD = Object.fromEntries([...PROTECTEURS,...ENQUETES,...LUXE,...EVENEMENTS,...OBJECTIFS].map(c => [c.id, c]));
 const BACK = { pr:'img/cards/back_pr.webp', en:'img/cards/back_en.webp', lx:'img/cards/back_lx.webp', ev:'img/cards/back_ev.webp' };
@@ -1257,30 +1259,106 @@ const SHAPE = {
   line:  [[0,0],[1,-1],[2,-2]],                    // Surveillance / Piste : 3 en ligne droite
   zig5:  [[0,0],[1,0],[-1,0],[1,-1],[-1,1]],         // Autodémarcation / Barrage
 };
-let OBJ_ARENA = 2; // Peuples requis dans l’Arène pour les Objectifs de la Forêt
+// Prédicats de cellules : Peuple, production, zone vide (aucun jeton), zone dense, gisements
+const pD = id => isDense(id);
+const onMine = f => id => ZB[id].kind==='mine' && f(id), onOil = f => id => ZB[id].kind==='oil' && f(id);
+function allMatches(cells){ const out=[], seen=new Set();
+  for (const T of SYM){ const m=cells.map(([q,r,f])=>[...T([q,r]),f]);
+    for (const z of ZONES){ const ids=[]; let ok=true;
+      for (const [dq,dr,f] of m){ const id=ZQR[(z.q+dq)+','+(z.r+dr)]; if(!id||!f(id)){ ok=false; break; } ids.push(id); }
+      if (ok){ const k=[...ids].sort().join(); if(!seen.has(k)){ seen.add(k); out.push(ids); } } } }
+  return out; }
+function matchMulti(cells, k){ // k groupes disjoints du même motif, n'importe où sur le plateau
+  const L=allMatches(cells); const pick=[];
+  const rec=(i,used)=>{ if (pick.length===k) return true;
+    for (let j=i;j<L.length;j++){ if (L[j].some(id=>used.has(id))) continue; pick.push(L[j]); const u=new Set([...used,...L[j]]); if (rec(j+1,u)) return true; pick.pop(); }
+    return false; };
+  return rec(0,new Set()) ? pick.flat() : null; }
+const arenaOk = (a,n) => S.arenas[a].F>=n;
+// Arène et nombre de Peuples demandés par chaque Objectif de la Forêt
+const OBJ_AR = { Obj01:['judiciaire',2], Obj02:['politique',3], Obj03:['judiciaire',3], Obj04:['politique',3], Obj05:['judiciaire',2], Obj06:['politique',2], Obj07:['politique',2], Obj08:['judiciaire',2],
+  Obj09:['media',2], Obj10:['media',2], Obj11:['media',2], Obj12:['media',2], Obj13:['judiciaire',2], Obj14:['media',4], Obj15:['politique',3] };
+const fAr = id => arenaOk(...OBJ_AR[id]);
+const destroyProd = id => { const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; log(`${PROD[p.kind]} ${NAME(p.owner)} détruit.`); };
+function lineThrough(id, filt){ // meilleure ligne (3 axes) passant par id : zones qui passent le filtre
+  const z0=ZONES.find(z=>z.id===id); let best=[id];
+  for (const [dq,dr] of [[1,0],[0,1],[1,-1]]){ const L=[id];
+    for (const sg of [1,-1]){ let q=z0.q, r=z0.r; for(;;){ q+=sg*dq; r+=sg*dr; const nid=ZQR[q+','+r]; if(!nid) break; if (filt(nid)) L.push(nid); } }
+    if (L.length>best.length) best=L; }
+  return best; }
+const myProds = c => allZ().filter(id=>{ const p=Z(id).piece; return p&&p.type==='prod'&&p.owner===c; });
+const placePeuple = (title, cand) => done => pickZones(title,'Cliquez la zone où placer un Peuple',()=>forestAvail()>0?cand().filter(id=>!Z(id).meeple):[],1,id=>{ Z(id).meeple=true; fly(TOK('foret_meeple_r'),{sel:'#sum-F h3'},{zone:id}); },done);
 const OBJ = {
-  Obj01:{ F:()=>S.arenas.judiciaire.F>=OBJ_ARENA && !!matchPattern(SHAPE.line.map(c=>[...c,pM])),
+  Obj01:{ F:()=>fAr('Obj01') && !!matchPattern(SHAPE.line.map(c=>[...c,pM])),
           E:()=>matchPattern(SHAPE.line.map(c=>[...c,pP])),
-          actF:{lbl:'Détruire 1 production',run(done){ pickZones('Piste','Cliquez la production à détruire',()=>prodZones(),1,id=>{ const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; },done); }},
+          actF:{lbl:'Détruire 1 production',run(done){ pickZones('Surveillance','Cliquez la production à détruire',()=>prodZones(),1,destroyProd,done); }},
           actE:{lbl:'Placer 1 production n’importe où',run(c,done){ const e=S.expl[c];
             ask({title:'Piste d’atterrissage',prompt:'Quelle production ?',buttons:['betail','coca','soja'].map(q=>({lbl:PROD[q],dis:!e.prod[q],fn:()=>{ UI.ask=null; pickZones('Piste','Cliquez une zone vide',()=>allZ().filter(isEmpty),1,id=>{ e.prod[q]--; Z(id).piece={type:'prod',kind:q,owner:c,weak:false}; },done); }}))}); }} },
-  Obj02:{ F:()=>S.arenas.politique.F>=OBJ_ARENA && !prodZones('betail').length,
-          E:()=>{ const m=matchPattern([[0,0,pK('betail')],[1,0,pE],[0,1,pE],[1,1,pK('betail')]]); return m?[m[0],m[3]]:null; }, // Abattoir : losange Bétail / vide / vide / Bétail
+  Obj02:{ F:()=>fAr('Obj02') && !prodZones('betail').length,
+          E:()=>{ const m=matchPattern([[0,0,pK('betail')],[1,0,pE],[0,1,pE],[1,1,pK('betail')]]); return m?[m[0],m[3]]:null; },
           actF:{lbl:'Placer 2 Forêt du C',run(done){ pickZones('Coopérative','Cliquez une zone vide ou boisée',()=>S.forest.C?allZ().filter(canPlaceForest):[],2,id=>placeFromC(id),done); }},
           actE:{lbl:'Récolter 2 fois vos Bétail',run(c,done){ harvestKind(c,'betail'); harvestKind(c,'betail'); done(); }} },
-  Obj03:{ F:()=>S.arenas.judiciaire.F>=OBJ_ARENA && !prodZones('coca').length,
-          E:()=>matchPattern([[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP],[-1,1,pP]]), // Laboratoire : Coca + 4 productions autour
-          actF:{lbl:'Détruire 1 Coca',run(done){ pickZones('Narcotrafic','Cliquez la Coca à détruire',()=>prodZones('coca'),1,id=>{ const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; },done); }},
+  Obj03:{ F:()=>fAr('Obj03') && !prodZones('coca').length,
+          E:()=>matchPattern([[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP],[-1,1,pP]]),
+          actF:{lbl:'Détruire 1 Coca',run(done){ pickZones('Narcotrafic','Cliquez la Coca à détruire',()=>prodZones('coca'),1,destroyProd,done); }},
           actE:{lbl:'Récolter 2 fois vos Coca',run(c,done){ harvestKind(c,'coca'); harvestKind(c,'coca'); done(); }} },
-  Obj04:{ F:()=>S.arenas.politique.F>=OBJ_ARENA && !prodZones('soja').length,
-          E:()=>matchPattern([[0,0,pK('soja')],[1,-1,pK('soja')],[1,0,pK('soja')],[0,1,pBase]]), // Front pionnier : 3 Soja + camp de base
+  Obj04:{ F:()=>fAr('Obj04') && !prodZones('soja').length,
+          E:()=>matchPattern([[0,0,pK('soja')],[1,-1,pK('soja')],[1,0,pK('soja')],[0,1,pBase]]),
           actF:{lbl:'Régénérer (1 par Peuple sur zone boisée)',run(done){ regenerate(allZ().filter(id=>Z(id).meeple&&isWooded(id)).length); done(); }},
           actE:{lbl:'Récolter 2 fois vos Soja',run(c,done){ harvestKind(c,'soja'); harvestKind(c,'soja'); done(); }} },
-  Obj05:{ F:()=>S.arenas.judiciaire.F>=OBJ_ARENA && !!matchPattern(SHAPE.zig5.map(c=>[...c,pM])),
+  Obj05:{ F:()=>fAr('Obj05') && !!matchPattern(SHAPE.zig5.map(c=>[...c,pM])),
           E:()=>matchPattern(SHAPE.zig5.map(c=>[...c,pP])),
           actF:{lbl:'1 Peuple sur 2 zones denses',run(done){ pickZones('Autodémarcation','Cliquez une zone dense',()=>forestAvail()>0?allZ().filter(id=>isDense(id)&&!Z(id).meeple):[],2,id=>{ Z(id).meeple=true; },done); }},
           actE:{lbl:'+② à votre prochaine action',run(c,done){ S.expl[c].bonusNext=2; log(`${CAP(NAME(c))} : +2 à sa prochaine action.`); done(); }} },
+  Obj06:{ F:()=>fAr('Obj06') && !!matchPattern([[0,0,pM],[1,0,pM],[-1,1,pM],[0,1,pP],[-1,2,pM]]),
+          E:()=>{ const m=matchPattern([[0,0,pD],[-1,1,pD],[1,0,pP],[0,1,pP],[-1,2,pP]]); return m?m.slice(2):null; },
+          actF:{lbl:'1 Peuple sur une zone boisée adjacente à une production',run:placePeuple('Patrouilles',()=>allZ().filter(id=>isWooded(id)&&ZB[id].adj.some(isProd)))},
+          actE:{lbl:'Retirer 2 jetons Forêt n’importe où',run(c,done){ pickZones('Scierie','Cliquez une zone boisée sans Peuple (1 jeton retiré)',()=>allZ().filter(id=>isWooded(id)&&!Z(id).meeple),2,id=>{ const z=Z(id); z.forest--; S.forest.C++; fly(TOK('foret_r'),{zone:id},{sel:'#sum-F .c-C'}); if(!z.forest&&z.res){ S.expl[c].storage[z.res]++; log(`${CAP(NAME(c))} prend 1 ${z.res==='or'?'Or':'Pétrole'} !`, true); z.res=null; } log('Scierie : 1 jeton Forêt retiré (vers C).'); },done,{repeat:true}); }} },
+  Obj07:{ F:()=>fAr('Obj07') && !!matchMulti([[0,0,pD],[0,1,pM]],3),
+          E:()=>matchPattern([[0,0,pP],[-1,1,pP],[-2,2,pP],[-2,3,pP],[-2,4,pP]]),
+          actF:{lbl:'Régénérer 3',run(done){ regenerate(3); done(); }},
+          actE:{lbl:'Renforcer vos productions sur une ligne',run(c,done){ pickZones('Ligne électrique','Cliquez une de vos productions affaiblies : toutes celles de la même ligne sont renforcées',()=>myProds(c).filter(id=>Z(id).piece.weak),1,id=>{ lineThrough(id,z=>{ const p=Z(z).piece; return p&&p.type==='prod'&&p.owner===c&&p.weak; }).forEach(z=>{ Z(z).piece.weak=false; ANIM.push({type:'flip',zone:z,from:TOK(`${c}_${Z(z).piece.kind}_v`),to:TOK(`${c}_${Z(z).piece.kind}_r`)}); }); log(`${CAP(NAME(c))} renforce ses productions sur une ligne.`); },done); }} },
+  Obj08:{ F:()=>fAr('Obj08') && !!matchMulti([[0,0,onOil(pP)],[0,1,pM]],2),
+          E:()=>matchPattern([[0,0,onOil(pP)],[-1,1,pP],[-1,2,onOil(pP)]]),
+          actF:{lbl:'Détruire 1 production sur un gisement pétrolier',run(done){ pickZones('Relevé des fuites','Cliquez la production à détruire',()=>prodZones().filter(id=>ZB[id].kind==='oil'),1,destroyProd,done); }},
+          actE:{lbl:'Récolter vos productions sur gisements pétroliers (+1 $ chacune)',run(c,done){ const ids=myProds(c).filter(id=>ZB[id].kind==='oil'); harvestCustom(c,ids,1,false,'récolte sur gisements pétroliers'); if(ids.length){ S.expl[c].money+=ids.length; statM(c,'+Récolte des cultures',ids.length); } done(); }} },
+  Obj09:{ F:()=>fAr('Obj09') && !!matchPattern([[0,0,pM],[0,1,onMine(pP)],[-1,2,pM],[1,1,pM]]),
+          E:()=>matchPattern([[0,0,pP],[0,1,onMine(pP)],[-1,2,pP],[1,1,pP]]),
+          actF:{lbl:'Détruire 1 production sur un gisement minier',run(done){ pickZones('Siège','Cliquez la production à détruire',()=>prodZones().filter(id=>ZB[id].kind==='mine'),1,destroyProd,done); }},
+          actE:{lbl:'1 gisement minier occupé → 1 Or',run(c,done){ if (occupies(c,'mine')>=1){ S.expl[c].storage.or++; log(`${CAP(NAME(c))} prend 1 Or (Mine d’or).`, true); } else log('Mine d’or : aucun gisement minier occupé.'); done(); }} },
+  Obj10:{ F:()=>fAr('Obj10') && !!matchPattern([[0,0,pM],[-1,1,pM],[0,1,pP],[-1,2,pM],[1,1,pP]]),
+          E:()=>matchPattern([[0,0,pP],[1,0,pP],[1,1,pP],[2,1,pP]]),
+          actF:{lbl:'Affaiblir 2 fois une production entourée d’au moins 2 Peuples',run(done){ pickZones('Barrage routier','Cliquez la production',()=>prodZones().filter(id=>ZB[id].adj.filter(a=>Z(a).meeple).length>=2),1,id=>{ weaken(id); weaken(id); },done); }},
+          actE:{lbl:'Déplacer une de vos productions',run(c,done){ let from=null; pickZones('Route','Cliquez la production à déplacer',()=>myProds(c).filter(id=>ZB[id].adj.some(isEmpty)),1,id=>{ from=id; },()=>{ if(!from) return done(); pickZones('Route','Cliquez la zone vide adjacente',()=>ZB[from].adj.filter(isEmpty),1,to=>{ Z(to).piece=Z(from).piece; Z(from).piece=null; log(`${CAP(NAME(c))} déplace une production.`); },done); }); }} },
+  Obj11:{ F:()=>fAr('Obj11') && !!matchPattern([[0,0,pM],[-1,1,pP],[0,1,pK('betail')],[-1,2,pM]]),
+          E:()=>matchPattern([[0,0,pP],[-1,1,pK('soja')],[0,1,pK('betail')],[-1,2,pP]]),
+          actF:{lbl:'Affaiblir une production déjà affaiblie',run(done){ pickZones('Entrepôts','Cliquez une production affaiblie',()=>prodZones().filter(id=>Z(id).piece.weak),1,id=>weaken(id),done); }},
+          actE:{lbl:'Récolter 2 types de productions',run(c,done){ const e=S.expl[c], kinds=['soja','betail','coca'].filter(k=>myProds(c).some(id=>Z(id).piece.kind===k)), ch=[];
+            const step=()=>{ if (ch.length>=2||kinds.length===ch.length){ ch.forEach(k=>harvestKind(c,k)); return askDone(done); }
+              ask({title:'Entrepôt de stockage',prompt:`Choisissez le type n°${ch.length+1} à récolter`,buttons:kinds.filter(k=>!ch.includes(k)).map(k=>({lbl:PROD[k],fn:()=>{ ch.push(k); UI.ask=null; step(); }}))}); };
+            step(); }} },
+  Obj12:{ F:()=>fAr('Obj12') && !!matchMulti([[0,0,pM],[0,1,pP],[0,2,pM]],2),
+          E:()=>matchPattern([[0,0,pP],[0,1,pP],[0,2,pP],[0,3,pP]]),
+          actF:{lbl:'Tous les Exploitants perdent 1 $',run(done){ EXPL.forEach(c=>pay(c,1,'Documentaire')); log('Documentaire : chaque Exploitant perd 1 $.', true); done(); }},
+          actE:{lbl:'Récolter vos productions sur une ligne',run(c,done){ pickZones('Chemin de fer','Cliquez une de vos productions : toute la ligne la plus fournie est récoltée',()=>myProds(c),1,id=>{ harvestCustom(c,lineThrough(id,z=>{ const p=Z(z).piece; return p&&p.type==='prod'&&p.owner===c; }),1,false,'récolte une ligne'); },done); }} },
+  Obj13:{ F:()=>fAr('Obj13') && !!matchMulti([[0,0,onMine(pM)],[-1,1,pM]],2),
+          E:()=>matchMulti([[0,0,onMine(pP)],[-1,1,pP]],2),
+          actF:{lbl:'1 Peuple sur un gisement minier boisé',run:placePeuple('Alliances',()=>allZ().filter(id=>ZB[id].kind==='mine'&&isWooded(id)))},
+          actE:{lbl:'Récolter vos productions sur gisements miniers (+2 $ chacune)',run(c,done){ const ids=myProds(c).filter(id=>ZB[id].kind==='mine'); harvestCustom(c,ids,1,false,'récolte sur gisements miniers'); if(ids.length){ S.expl[c].money+=2*ids.length; statM(c,'+Récolte des cultures',2*ids.length); } done(); }} },
+  Obj14:{ F:()=>fAr('Obj14') && !allZ().some(isEmpty),
+          E:()=>{ const m=matchMulti([[0,0,pE],[1,0,pP],[2,0,pE]],2); return m?[m[1],m[4]]:null; },
+          actF:{lbl:'Déplacer X Peuples vers des zones boisées',run(done,X=1){ let left=X; const one=()=>{ if(left<=0||!allZ().some(id=>Z(id).meeple)) return done(); let from=null;
+            pickZones('Écotourisme',`Cliquez un Peuple à déplacer (${X-left+1}/${X})`,()=>allZ().filter(id=>Z(id).meeple),1,id=>{ from=id; },()=>{ if(!from) return done(); pickZones('Écotourisme','Cliquez une zone boisée de destination',()=>allZ().filter(z=>isWooded(z)&&!Z(z).meeple),1,to=>{ Z(from).meeple=false; Z(to).meeple=true; left--; },one); }); };
+            one(); }},
+          actE:{lbl:'Piocher 3 Atouts, en garder 2',run(c,done){ const e=S.expl[c], got=[]; for(let i=0;i<3;i++){ const a=S.decks.atouts.shift(); if(a) got.push(a); }
+            if (got.length<=2){ e.atouts.push(...got); return done(); }
+            ask({title:'Complexe immobilier',prompt:'Quel Atout défausser ?',buttons:got.map(a=>({lbl:CARD[a].name,fn:()=>{ got.filter(x=>x!==a).forEach(x=>e.atouts.push(x)); (S.discardAt=S.discardAt||[]).push(a); if (e.atouts.length>MAX_HAND_AT && !S.pending.some(p=>p.type==='discardAt'&&p.c===c)) S.pending.push({type:'discardAt',c}); askDone(done); }}))}); }} },
+  Obj15:{ F:()=>fAr('Obj15') && !prodZones().some(id=>ZB[id].kind==='oil'),
+          E:()=>matchPattern([[0,0,onOil(pP)],[-1,1,pP],[0,1,pP],[-1,2,onOil(pP)]]),
+          actF:{lbl:'1 Peuple sur un gisement pétrolier boisé',run:placePeuple('Référendum',()=>allZ().filter(id=>ZB[id].kind==='oil'&&isWooded(id)))},
+          actE:{lbl:'2 gisements pétroliers occupés → 1 Pétrole',run(c,done){ if (occupies(c,'oil')>=2){ S.expl[c].storage.petrole++; log(`${CAP(NAME(c))} prend 1 Pétrole (Forages pétroliers).`, true); } else log('Forages pétroliers : moins de 2 gisements pétroliers occupés.'); done(); }} },
 };
+
 function checkObjectives(){
   if (!S.turn||S.over) return;
   const seat=cur();
@@ -1595,12 +1673,22 @@ function aiLearn(){
 }
 
 /* ---------- Progrès vers les Objectifs (moyen terme) ---------- */
-const OBJ_PART = { // motifs côté Exploitant : prédicats de cellule
+const OBJ_PART = { // motifs côté Exploitant (progrès partiel pour l'IA)
   Obj01:()=>SHAPE.line.map(c=>[...c,pP]),
   Obj02:()=>[[0,0,pK('betail')],[1,0,pE],[0,1,pE],[1,1,pK('betail')]],
   Obj03:()=>[[0,0,pK('coca')],[0,-1,pP],[-1,0,pP],[1,-1,pP],[-1,1,pP]],
   Obj04:()=>[[0,0,pK('soja')],[1,-1,pK('soja')],[1,0,pK('soja')],[0,1,pBase]],
   Obj05:()=>SHAPE.zig5.map(c=>[...c,pP]),
+  Obj06:()=>[[0,0,pD],[-1,1,pD],[1,0,pP],[0,1,pP],[-1,2,pP]],
+  Obj07:()=>[[0,0,pP],[-1,1,pP],[-2,2,pP],[-2,3,pP],[-2,4,pP]],
+  Obj08:()=>[[0,0,onOil(pP)],[-1,1,pP],[-1,2,onOil(pP)]],
+  Obj09:()=>[[0,0,pP],[0,1,onMine(pP)],[-1,2,pP],[1,1,pP]],
+  Obj10:()=>[[0,0,pP],[1,0,pP],[1,1,pP],[2,1,pP]],
+  Obj11:()=>[[0,0,pP],[-1,1,pK('soja')],[0,1,pK('betail')],[-1,2,pP]],
+  Obj12:()=>[[0,0,pP],[0,1,pP],[0,2,pP],[0,3,pP]],
+  Obj13:()=>[[0,0,onMine(pP)],[-1,1,pP],[3,0,onMine(pP)],[2,1,pP]],
+  Obj14:()=>[[0,0,pE],[1,0,pP],[2,0,pE],[0,2,pE],[1,2,pP],[2,2,pE]],
+  Obj15:()=>[[0,0,onOil(pP)],[-1,1,pP],[0,1,pP],[-1,2,onOil(pP)]],
 };
 const PLC={}; // placements précalculés des motifs
 function placements(key, cells){
@@ -1635,11 +1723,11 @@ function objInfo(){ // IA opportuniste : motifs partagés, participation possibl
 }
 function objProgAll(){ return objInfo().prog; }
 function objProgE(seat){ return objProgAll()[seat]; }
-function objProgF(){ let s=0; for (const id of S.objectifs){
-    const arena = (id==='Obj01'||id==='Obj03'||id==='Obj05')?'judiciaire':'politique', ar=Math.min(1,S.arenas[arena].F/OBJ_ARENA);
+function objProgF(){ let s=0; for (const id of S.objectifs){ if(!OBJ_AR[id]) continue;
+    const [arena,need]=OBJ_AR[id], ar=Math.min(1,S.arenas[arena].F/need);
     let v;
     if (CELLS_M[id]) v=partialPatF(id);
-    else { const k={Obj02:'betail',Obj03:'coca',Obj04:'soja'}[id]; v=1/(1+prodZones(k).length); }
+    else { const keep=S.arenas[arena].F; S.arenas[arena].F=99; let ok=false; try{ ok=OBJ[id].F(); }catch(e){} S.arenas[arena].F=keep; v=ok?1:0.25; }
     s+=(0.5*ar+0.5*v)*(0.5*ar+0.5*v); } return s; }
 function threatE(seat){ // mes cultures menacées par un Peuple voisin (Résister)
   let t=0; for (const id of occupied(seat)){ const p=Z(id).piece; if(!p||p.type!=='prod') continue; if (ZB[id].adj.some(a=>Z(a).meeple)) t+=p.weak?1:0.6; } return t; }
@@ -2074,7 +2162,7 @@ function vpPopup(c, n, why, from, to){
     after:()=>{ ANIM.push({type:'fly',img:TOK(c+'_vp_r'),from:{sel:'#pop'},to:{sel:`#sum-${c} .vpsm`}}); runAnims(); setTimeout(()=>runSteps('vp',c,from,to,()=>render()),950); }});
 }
 function doPact(id){ const seat=cur(); snapshot();
-      if (seat==='F'){ const X=UI.fx; UI.fx=null; S.turn.last={owner:'F',pact:id,X}; statAct('F','projet|'+X); S.forest.A-=X; S.forest.B+=X; S.turn.actions++; log(`Le Protecteur utilise le Projet « ${CARD[id].foret} ».`, true); UI.effDone=finishEffect; return OBJ[id].actF.run(finishEffect); }
+      if (seat==='F'){ const X=UI.fx; UI.fx=null; S.turn.last={owner:'F',pact:id,X}; statAct('F','projet|'+X); S.forest.A-=X; S.forest.B+=X; S.turn.actions++; log(`Le Protecteur utilise le Projet « ${CARD[id].foret} ».`, true); UI.effDone=finishEffect; return OBJ[id].actF.run(finishEffect, X); }
       const e=S.expl[seat]; S.turn.last={owner:seat,pact:id,v:e.tokens[UI.tok].v}; statAct('E','projet|'+e.tokens[UI.tok].v); e.tokens[UI.tok].used='projet'; UI.tok=null; S.turn.actions++; log(`${CAP(NAME(seat))} utilise le Projet « ${CARD[id].expl} ».`, true); UI.effDone=finishEffect; return OBJ[id].actE.run(seat, finishEffect); }
 function stepTrack(kind,c,from,to){ if(from===to) return; (kind==='vp'?DISPVP:DISPDON)[c]=from; ANIM.push({type:'steps',kind,c,from,to}); }
 function runSteps(kind,c,from,to,done){
