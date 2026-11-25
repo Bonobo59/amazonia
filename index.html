@@ -1280,7 +1280,7 @@ const OBJ_AR = { Obj01:['judiciaire',2], Obj02:['politique',3], Obj03:['judiciai
   Obj09:['media',2], Obj10:['media',2], Obj11:['media',2], Obj12:['media',2], Obj13:['judiciaire',2], Obj14:['media',4], Obj15:['politique',3] };
 const fAr = id => arenaOk(...OBJ_AR[id]);
 const destroyProd = id => { const p=Z(id).piece; Z(id).piece=null; S.expl[p.owner].prod[p.kind]++; log(`${PROD[p.kind]} ${NAME(p.owner)} détruit.`); };
-function lineThrough(id, filt){ // meilleure ligne (3 axes) passant par id : zones qui passent le filtre
+function bestLine(id, filt){ // meilleure ligne (3 axes) passant par id : zones qui passent le filtre
   const z0=ZONES.find(z=>z.id===id); let best=[id];
   for (const [dq,dr] of [[1,0],[0,1],[1,-1]]){ const L=[id];
     for (const sg of [1,-1]){ let q=z0.q, r=z0.r; for(;;){ q+=sg*dq; r+=sg*dr; const nid=ZQR[q+','+r]; if(!nid) break; if (filt(nid)) L.push(nid); } }
@@ -1317,7 +1317,7 @@ const OBJ = {
   Obj07:{ F:()=>fAr('Obj07') && !!matchMulti([[0,0,pD],[0,1,pM]],3),
           E:()=>matchPattern([[0,0,pP],[-1,1,pP],[-2,2,pP],[-2,3,pP],[-2,4,pP]]),
           actF:{lbl:'Régénérer 3',run(done){ regenerate(3); done(); }},
-          actE:{lbl:'Renforcer vos productions sur une ligne',run(c,done){ pickZones('Ligne électrique','Cliquez une de vos productions affaiblies : toutes celles de la même ligne sont renforcées',()=>myProds(c).filter(id=>Z(id).piece.weak),1,id=>{ lineThrough(id,z=>{ const p=Z(z).piece; return p&&p.type==='prod'&&p.owner===c&&p.weak; }).forEach(z=>{ Z(z).piece.weak=false; ANIM.push({type:'flip',zone:z,from:TOK(`${c}_${Z(z).piece.kind}_v`),to:TOK(`${c}_${Z(z).piece.kind}_r`)}); }); log(`${CAP(NAME(c))} renforce ses productions sur une ligne.`); },done); }} },
+          actE:{lbl:'Renforcer vos productions sur une ligne',run(c,done){ pickZones('Ligne électrique','Cliquez une de vos productions affaiblies : toutes celles de la même ligne sont renforcées',()=>myProds(c).filter(id=>Z(id).piece.weak),1,id=>{ bestLine(id,z=>{ const p=Z(z).piece; return p&&p.type==='prod'&&p.owner===c&&p.weak; }).forEach(z=>{ Z(z).piece.weak=false; ANIM.push({type:'flip',zone:z,from:TOK(`${c}_${Z(z).piece.kind}_v`),to:TOK(`${c}_${Z(z).piece.kind}_r`)}); }); log(`${CAP(NAME(c))} renforce ses productions sur une ligne.`); },done); }} },
   Obj08:{ F:()=>fAr('Obj08') && !!matchMulti([[0,0,onOil(pP)],[0,1,pM]],2),
           E:()=>matchPattern([[0,0,onOil(pP)],[-1,1,pP],[-1,2,onOil(pP)]]),
           actF:{lbl:'Détruire 1 production sur un gisement pétrolier',run(done){ pickZones('Relevé des fuites','Cliquez la production à détruire',()=>prodZones().filter(id=>ZB[id].kind==='oil'),1,destroyProd,done); }},
@@ -1340,7 +1340,7 @@ const OBJ = {
   Obj12:{ F:()=>fAr('Obj12') && !!matchMulti([[0,0,pM],[0,1,pP],[0,2,pM]],2),
           E:()=>matchPattern([[0,0,pP],[0,1,pP],[0,2,pP],[0,3,pP]]),
           actF:{lbl:'Tous les Exploitants perdent 1 $',run(done){ EXPL.forEach(c=>pay(c,1,'Documentaire')); log('Documentaire : chaque Exploitant perd 1 $.', true); done(); }},
-          actE:{lbl:'Récolter vos productions sur une ligne',run(c,done){ pickZones('Chemin de fer','Cliquez une de vos productions : toute la ligne la plus fournie est récoltée',()=>myProds(c),1,id=>{ harvestCustom(c,lineThrough(id,z=>{ const p=Z(z).piece; return p&&p.type==='prod'&&p.owner===c; }),1,false,'récolte une ligne'); },done); }} },
+          actE:{lbl:'Récolter vos productions sur une ligne',run(c,done){ pickZones('Chemin de fer','Cliquez une de vos productions : toute la ligne la plus fournie est récoltée',()=>myProds(c),1,id=>{ harvestCustom(c,bestLine(id,z=>{ const p=Z(z).piece; return p&&p.type==='prod'&&p.owner===c; }),1,false,'récolte une ligne'); },done); }} },
   Obj13:{ F:()=>fAr('Obj13') && !!matchMulti([[0,0,onMine(pM)],[-1,1,pM]],2),
           E:()=>matchMulti([[0,0,onMine(pP)],[-1,1,pP]],2),
           actF:{lbl:'1 Peuple sur un gisement minier boisé',run:placePeuple('Alliances',()=>allZ().filter(id=>ZB[id].kind==='mine'&&isWooded(id)))},
@@ -1370,6 +1370,7 @@ function checkObjectives(){
 }
 function realize(id, side, owners){
   const [perTok,cons]=POLITIQUE_GAIN[S.align.politique], card=CARD[id];
+  if(FAST&&!SIM){ const st=S.st||(S.st={vp:{},cons:{}}); st.obj=st.obj||{}; st.obj[id+side]=(st.obj[id+side]||0)+1; }
   objPopup(id, side, side==='F'?{F:cons}:Object.fromEntries(Object.keys(owners).map(c=>[c,perTok*owners[c]])));
   S.objectifs=S.objectifs.filter(x=>x!==id);
   if (side==='F'){ log(`★ Le Protecteur réalise « ${card.foret} ».`, true); moveConscience(cons,'Objectif'); }
