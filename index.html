@@ -1626,8 +1626,8 @@ function refreshT(){ UI.T = S.over ? EMPTYT() : S.pending.length ? (/^align/.tes
 
 /* ---------- Poids (appris d'une partie à l'autre) ---------- */
 const W0 = { // v3.1 : valeur de l'argent et des cultures calculée d'après les règles, ré-entraîné
-  E:{ vp:2.331, money:-0.197, res:3.125, prod:0.635, harvest:0.033, cards:0.747, ctDone:1.425, ctHand:0.368, atouts:0.354, donation:0.455, arena:0.686, frontier:0.132, forestTok:0.01, conscience:-8.665, rivalVp:-2.19, align:0.19, objProg:3, luxeReady:1.324, threat:-0.621, rivalObj:-0.8, forestObj:-2.289, forestArena:-0.999, objNear:2.5, coop:1.5, moneyPV:3.855, prodPot:1.918 },
-  F:{ conscience:20.018, wooded:1.961, forestTok:1.083, dense:0.949, meeples:0.852, arena:1.2, tokens:0.912, published:5.68, fresque:3.33, hand:0.715, explVp:-7.866, explProd:-3.991, explMoney:-0.483, align:2.274, objProg:7.769, pubReady:2.565, exposed:-0.418, explObj:-2.468, explNear:-3 },
+  E:{ vp:2.115, money:-0.133, res:2.488, prod:0.441, harvest:0.217, cards:0.923, ctDone:1.403, ctHand:0.397, atouts:0.3, donation:0.538, arena:0.712, frontier:0.117, forestTok:-0.115, conscience:-11.458, rivalVp:-3.191, align:-0.006, objProg:2.619, luxeReady:1.063, threat:-0.398, rivalObj:-0.958, forestObj:-2.281, forestArena:-0.767, objNear:1.761, moneyPV:3.342, prodPot:1.597, coop:2.253 },
+  F:{ conscience:20.822, wooded:1.779, forestTok:0.881, dense:0.76, meeples:0.971, arena:1.131, tokens:1.216, published:5.707, fresque:3.816, hand:0.711, explVp:-6.947, explProd:-4.347, explMoney:-0.582, align:1.19, objProg:6.608, pubReady:4.466, exposed:-0.309, explObj:-2.625, explNear:-3.444 },
 };
 function aiStore(){ try{ return JSON.parse(localStorage.getItem('amazonia_ai_v32')||'null'); }catch(e){ return null; } }
 function freshRole(r,w){ return { champ:{...w}, chall:mutate(w), cg:0, cs:0, xg:0, xs:0, gen:1, games:0, promos:0 }; }
